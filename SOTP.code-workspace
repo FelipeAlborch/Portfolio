@@ -1,0 +1,33 @@
+{
+	"folders": [
+		{
+			"name": "consola",
+			"path": "consola"
+		},
+		{
+			"name": "kernel",
+			"path": "kernel"
+		},
+		{
+			"name": "cpu",
+			"path": "cpu"
+		},
+		{
+			"name": "memoria",
+			"path": "memoria"
+		},
+		{
+			"name": "filesystem",
+			"path": "filesystem"
+		},
+		{
+			"name": "static",
+			"path": "static"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"main.h": "c"
+		}
+	}
+}
