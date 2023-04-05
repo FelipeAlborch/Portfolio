@@ -6,23 +6,23 @@ int SOCKET_FS;
 
 int iniciar_servicio_memoria(config_de_memoria configuracion_memoria)
 {
-    t_log* logger = iniciar_logger_modulo(MEMORIA_LOGGER);
-    log_info(logger,"iniciando servidor de memoria");
+  t_log* logger = iniciar_logger_modulo(MEMORIA_LOGGER);
+  log_info(logger,"iniciando servidor de memoria");
 
-    int socket_servicio_memoria = iniciar_servidor_en("127.0.0.1",configuracion_memoria.PUERTO_ESCUCHA);
+  int socket_servicio_memoria = iniciar_servidor_en("127.0.0.1",configuracion_memoria.PUERTO_ESCUCHA);
     
-    if(socket_servicio_memoria < 0)
-    {
-        log_error(logger,"Error creando el servicio de memoria");
-        return EXIT_FAILURE;
-    }
+  if(socket_servicio_memoria < 0)
+  {
+    log_error(logger,"Error creando el servicio de memoria");
+    return EXIT_FAILURE;
+  }
 
-    //log_info(logger, "Servicio de memoria abierto. Esperando conexiones");
+  //log_info(logger, "Servicio de memoria abierto. Esperando conexiones");
 	log_info(logger, "Servidor Memoria iniciado correctamente.");
-  	log_info(logger, "Esperando a los clientes CPU, Kernel y File System...");
-    log_destroy(logger);
+  log_info(logger, "Esperando a los clientes CPU, Kernel y File System...");
+  log_destroy(logger);
 
-    return socket_servicio_memoria;
+  return socket_servicio_memoria;
 }
 
 void manejar_paquetes_clientes(int socketCliente)
@@ -33,36 +33,37 @@ void manejar_paquetes_clientes(int socketCliente)
   switch (recibir_operacion(socketCliente))
   {
     case DESCONEXION:
-        log_warning(logger, "Se desconecto un cliente.");
-        return;
+      log_warning(logger, "Se desconecto un cliente.");
+      return;
 
     case MENSAJE:
-        esKernel = es_kernel(socketCliente);
-		esCPU = es_cpu(socketCliente);
+      esKernel = es_kernel(socketCliente);
+		  esCPU = es_cpu(socketCliente);
 
-        if (esKernel)
-        {
-          SOCKET_KERNEL = socketCliente;
-          log_info(logger, "Se conecto Kernel.\n");
-          //escuchar_kernel(socketCliente);
-        }
-        else if(es_cpu)
-        {
-          SOCKET_CPU = socketCliente;
-          log_info(logger, "Se conecto CPU.");
-          //escuchar_cpu(socketCliente);
-        }
-		else
-		{
-			SOCKET_FS = socketCliente;
-			log_info(logger, "Se conecto FILE SYSTEM.");
-			//escuchar_file_system(socketCliente);
-		}
-        break;
-
-    default:
+      if (esKernel)
+      {
+        SOCKET_KERNEL = socketCliente;
+        log_info(logger, "Se conecto Kernel.\n");
+        //escuchar_kernel(socketCliente);
+      }
+      else if(es_cpu)
+      {
+        SOCKET_CPU = socketCliente;
+        log_info(logger, "Se conecto CPU.");
+        //escuchar_cpu(socketCliente);
+      }
+		  else
+		  {
+		  	SOCKET_FS = socketCliente;
+		  	log_info(logger, "Se conecto FILE SYSTEM.");
+		  	//escuchar_file_system(socketCliente);
+		  }
+      
+      break;
+      
+      default:
         log_info(logger, "Cliente desconocido.");
-        break;
+      break;
   }
 
   log_destroy(logger);
