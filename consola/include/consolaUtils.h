@@ -5,9 +5,7 @@
 #define FAILURE -1
 
 #include <consolaConfig.h>
-#include <commons/string.h>
 #include <commons/txt.h>
-#include <utils/conexion.h>
 
 extern int socket_kernel;
 
