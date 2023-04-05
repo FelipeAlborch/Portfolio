@@ -14,7 +14,7 @@ typedef struct{
     int TAM_MAX_SEGMENTO;
 }config_de_cpu;
 
-extern config_de_cpu configuracion_cpu;
+extern config_de_cpu configuracionCPU;
 
 
 /**

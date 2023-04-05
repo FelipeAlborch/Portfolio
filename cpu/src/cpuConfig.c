@@ -1,20 +1,20 @@
 #include "cpuConfig.h"
 
-config_de_cpu configuracion_cpu;
+config_de_cpu configuracionCPU;
 
-config_de_cpu obtener_valores_de_configuracion_cpu(t_config* cpu_config){
-    configuracion_cpu.RETARDO_INSTRUCCION= config_get_int_value(cpu_config, "RETARDO_INSTRUCCION");
-    configuracion_cpu.IP_MEMORIA = config_get_string_value(cpu_config, "IP_MEMORIA");
-    configuracion_cpu.PUERTO_MEMORIA = config_get_string_value(cpu_config, "PUERTO_MEMORIA");
-    configuracion_cpu.PUERTO_ESCUCHA = config_get_string_value(cpu_config, "PUERTO_ESCUCHA");
-    configuracion_cpu.TAM_MAX_SEGMENTO = config_get_int_value(cpu_config, "TAM_MAX_SEGMENTO");
-    return configuracion_cpu;
+config_de_cpu obtener_valores_de_configuracion_cpu(t_config* cpuConfig){
+    configuracionCPU.RETARDO_INSTRUCCION= config_get_int_value(cpuConfig, "RETARDO_INSTRUCCION");
+    configuracionCPU.IP_MEMORIA = config_get_string_value(cpuConfig, "IP_MEMORIA");
+    configuracionCPU.PUERTO_MEMORIA = config_get_string_value(cpuConfig, "PUERTO_MEMORIA");
+    configuracionCPU.PUERTO_ESCUCHA = config_get_string_value(cpuConfig, "PUERTO_ESCUCHA");
+    configuracionCPU.TAM_MAX_SEGMENTO = config_get_int_value(cpuConfig, "TAM_MAX_SEGMENTO");
+    return configuracionCPU;
 }
 
-void mostrar_valores_de_configuracion_cpu(config_de_cpu configuracion_cpu){
-    printf("RETARDO_INSTRUCCION = %d\n", configuracion_cpu.RETARDO_INSTRUCCION);
-    printf("IP_MEMORIA = %s\n", configuracion_cpu.IP_MEMORIA);
-    printf("PUERTO_MEMORIA = %s\n", configuracion_cpu.PUERTO_MEMORIA);
-    printf("PUERTO_ESCUCHA = %s\n", configuracion_cpu.PUERTO_ESCUCHA);
-    printf("TAM_MAX_SEGMENTO = %d\n", configuracion_cpu.TAM_MAX_SEGMENTO);
+void mostrar_valores_de_configuracion_cpu(config_de_cpu configuracionCPU){
+    printf("RETARDO_INSTRUCCION = %d\n", configuracionCPU.RETARDO_INSTRUCCION);
+    printf("IP_MEMORIA = %s\n", configuracionCPU.IP_MEMORIA);
+    printf("PUERTO_MEMORIA = %s\n", configuracionCPU.PUERTO_MEMORIA);
+    printf("PUERTO_ESCUCHA = %s\n", configuracionCPU.PUERTO_ESCUCHA);
+    printf("TAM_MAX_SEGMENTO = %d\n", configuracionCPU.TAM_MAX_SEGMENTO);
 }

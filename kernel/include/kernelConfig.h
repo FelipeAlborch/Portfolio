@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <commons/config.h>
+#include <utils/generales.h>
 
 typedef struct{
     char* IP_MEMORIA;
@@ -21,7 +22,7 @@ typedef struct{
     char** INSTANCIAS_RECURSOS;
 }config_de_kernel;
 
-extern config_de_kernel configuracion_kernel;
+extern config_de_kernel configuracionKernel;
 
 
 /**

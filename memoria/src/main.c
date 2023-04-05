@@ -3,25 +3,35 @@
 
 int main(int argc, char *argv[]) {
 
-  t_log* logger_memoria = iniciar_logger_modulo(MEMORIA_LOGGER);
+  Logger* loggerMemoria = iniciar_logger_modulo(MEMORIA_LOGGER);
 
-  log_info(logger_memoria, "Esto es la memoria D:");  
+  log_info(loggerMemoria, "Esto es la memoria D:");  
 
-  t_config* memoria_config = config_create(argv[1]);
-  configuracion_memoria = obtener_valores_de_configuracion_memoria(memoria_config);
-  mostrar_valores_de_configuracion_memoria(configuracion_memoria);
+  Config* memoriaConfig = config_create(argv[1]);
+  configuracionMemoria = obtener_valores_de_configuracion_memoria(memoriaConfig);
+  mostrar_valores_de_configuracion_memoria(configuracionMemoria);
 
-  int socket_servicio_memoria = iniciar_servicio_memoria(configuracion_memoria);
-  int socket_de_un_cliente = esperar_cliente(socket_servicio_memoria);
+  int socketServicioMemoria = iniciar_servicio_memoria(configuracionMemoria);
+  //int socket_de_un_cliente = esperar_cliente(socket_servicio_memoria);
+  //printf("EL socket de servicio es: %d", socket_servicio_memoria);
+  //printf("EL socket del cliente es: %d", socket_de_un_cliente);
 
+  Hilo hiloCliente1, hiloCliente2, hiloCliente3;
+  int socketCliente = esperar_cliente(socketServicioMemoria);
+  pthread_create(&hiloCliente1, NULL, (void *)manejar_paquetes_clientes, (void *)socketCliente);
 
-  printf("EL socket de servicio es: %d", socket_servicio_memoria);
-  printf("EL socket del cliente es: %d", socket_de_un_cliente);
+  socketCliente = esperar_cliente(socketServicioMemoria);
+  pthread_create(&hiloCliente2, NULL, (void *)manejar_paquetes_clientes, (void *)socketCliente);
 
+  socketCliente = esperar_cliente(socketServicioMemoria);
+  pthread_create(&hiloCliente3, NULL, (void *)manejar_paquetes_clientes, (void *)socketCliente);
 
+  pthread_join(hiloCliente1, NULL);
+  pthread_join(hiloCliente2, NULL);
+  pthread_join(hiloCliente3, NULL);
 
-  log_destroy(logger_memoria);
-  config_destroy(memoria_config);
+  log_destroy(loggerMemoria);
+  config_destroy(memoriaConfig);
     
   return 0;
 }

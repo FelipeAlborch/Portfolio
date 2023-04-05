@@ -14,6 +14,13 @@
 #include <netdb.h>
 #include <commons/collections/list.h>
 #include <assert.h>
+#include <commons/config.h>
+
+typedef t_config Config;
+typedef t_list Lista;
+typedef t_log Logger;
+typedef pthread_t Hilo;
+typedef sem_t Semaforo;
 
 typedef enum
 {

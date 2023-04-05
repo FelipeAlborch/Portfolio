@@ -51,4 +51,8 @@ void escucha_kernel(int);
 */
 void escucha_cpu(int);
 
+void manejar_paquetes_clientes(int);
+bool es_kernel(int);
+bool es_cpu(int);
+
 #endif

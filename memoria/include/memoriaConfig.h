@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <commons/config.h>
+#include <utils/generales.h>
 
 
 typedef struct{
@@ -16,7 +17,7 @@ typedef struct{
     char* ALGORITMO_ASIGNACION;
 }config_de_memoria;
 
-extern config_de_memoria configuracion_memoria;
+extern config_de_memoria configuracionMemoria;
 
 /**
 * @NAME: obtener_valores_de_configuracion_memoria
@@ -26,7 +27,7 @@ extern config_de_memoria configuracion_memoria;
 * @RETURN:
 *        retorna la config_de_memoria creada.
 */
-config_de_memoria obtener_valores_de_configuracion_memoria(t_config*);
+config_de_memoria obtener_valores_de_configuracion_memoria(Config*);
 
 /**
 * @NAME: mostrar_valores_de_configuracion_memoria

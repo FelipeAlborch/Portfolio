@@ -3,23 +3,24 @@
 
 int main(int argc, char *argv[]) {
 
-    t_log* logger_kernel = iniciar_logger_modulo(KERNEL_LOGGER);
+    Logger* loggerKernel = iniciar_logger_modulo(KERNEL_LOGGER);
 
-    log_info(logger_kernel, "Esto es el kernel :D");
+    log_info(loggerKernel, "Esto es el kernel :D");
 
-    t_config* kernel_config = config_create(argv[1]);
-    configuracion_kernel = obtener_valores_de_configuracion_kernel(kernel_config);
-    mostrar_valores_de_configuracion_kernel(configuracion_kernel);
+    Config* kernelConfig = config_create(argv[1]);
+    configuracionKernel = obtener_valores_de_configuracion_kernel(kernelConfig);
+    mostrar_valores_de_configuracion_kernel(configuracionKernel);
     
-    int socket_memoria = conectar_con_memoria(configuracion_kernel);
+    int socketMemoria = conectar_con_memoria(configuracionKernel);
+    int socketCPU = conectar_con_cpu(configuracionKernel);
     // conectar_con_cpu
     // conectar_con_filesystem
 
     // conectar_con_consola(s)
     // conexion_con_consolas(configuracion_kernel);
 
-    log_destroy(logger_kernel);
-    config_destroy(kernel_config);
+    log_destroy(loggerKernel);
+    config_destroy(kernelConfig);
 
     return 0;
 }
