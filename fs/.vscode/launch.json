@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/${workspaceFolderBasename}.out",
-            "args": ["filesystem.config"],
+            "args": ["fs.config"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],

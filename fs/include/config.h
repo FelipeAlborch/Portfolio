@@ -1,9 +1,5 @@
-#ifndef FILESYSTEMCONFIG_H_
-#define FILESYSTEMCONFIG_H_
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <commons/config.h>
+#ifndef CONFIG_H_
+#define CONFIG_H_
 
 typedef struct{
     char* IP_MEMORIA;
@@ -14,9 +10,9 @@ typedef struct{
     char* PATH_BLOQUES;
     char* PATH_FCB;
     int RETARDO_ACCESO_BLOQUE;
-}configDeFileSystem;
+}config_de_filesystem;
 
-extern configDeFileSystem configuracionFileSystem;
+extern config_de_filesystem configuracion_filesystem;
 
 /**
 * @NAME: obtener_valores_de_configuracion_filesystem
