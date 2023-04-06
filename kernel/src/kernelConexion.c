@@ -120,3 +120,22 @@ int conectar_con_memoria(config_de_kernel configuracion_kernel){
 	return socketMemoria;
 }
 
+int conectar_con_filesystem(config_de_kernel configuracionKernel)
+{
+	Logger* logger = iniciar_logger_modulo(KERNEL_LOGGER);
+	log_info(logger, "Conectando con memoria");
+
+	int socketFS = crear_conexion(configuracionKernel.IP_FILESYSTEM, configuracionKernel.PUERTO_FILESYSTEM);
+
+	if(socketFS < 0)
+    {
+		log_error(logger, "Error al conectarse con FileSystem");
+		return EXIT_FAILURE;
+	}
+	
+	log_info(logger, "Conexion con el FileSystem realizada con exito!");
+    
+	log_destroy(logger);
+
+	return socketFS;
+}

@@ -11,10 +11,9 @@ int main(int argc, char *argv[]) {
     configuracionKernel = obtener_valores_de_configuracion_kernel(kernelConfig);
     mostrar_valores_de_configuracion_kernel(configuracionKernel);
     
-    //int socketMemoria = conectar_con_memoria(configuracionKernel);
-    //int socketCPU = conectar_con_cpu(configuracionKernel);
-    // conectar_con_cpu
-    // conectar_con_filesystem
+    int socketMemoria = conectar_con_memoria(configuracionKernel);
+    int socketCPU = conectar_con_cpu(configuracionKernel);
+    //int socketFS = conectar_con_filesystem(configuracionKernel);
 
     int socketServicioConsolas = iniciar_servidor_para_consolas(configuracionKernel);
     
