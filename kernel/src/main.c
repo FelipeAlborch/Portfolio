@@ -17,16 +17,14 @@ int main(int argc, char *argv[]) {
     // conectar_con_filesystem
 
     int socketServicioConsolas = iniciar_servidor_para_consolas(configuracionKernel);
-
-    Hilo hiloConsolas; 
-    pthread_create(&hiloConsolas, NULL, (void*)&esperar_consolas, (void*)socketServicioConsolas);
-    pthread_detach(hiloConsolas);
+    
+    pthread_t hiloConsolas; 
+    pthread_create(&hiloConsolas, NULL, (void*)esperar_consolas, (void*)socketServicioConsolas);
     pthread_join(hiloConsolas, NULL);
 
     // conectar_con_consola(s)
     // conexion_con_consolas(configuracion_kernel);
 
-    while (1); // TODO: Hacer que el kernel se cierre con un comando
 
     log_destroy(loggerKernel);
     config_destroy(kernelConfig);

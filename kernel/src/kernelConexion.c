@@ -40,12 +40,45 @@ void* esperar_consolas(int socketServidorConsolas)
 		pthread_detach(hiloConsola);
 	}
 
+	log_destroy(logger);
 }
 
-void escuchar_consola(int socketCliente){
-	Logger* logger = iniciar_logger_modulo(KERNEL_LOGGER);
-	log_info(logger, "Dentro del thread escuchar_consola: %d", socketCliente);
-	sleep(10);
+void escuchar_consola(int socketConsola)
+{
+	//Logger* logger = iniciar_logger_modulo(KERNEL_LOGGER);
+	//log_info(logger, "Dentro del thread escuchar_consola: %d", socketCliente);
+	//sleep(10);
+
+	t_list* lista_de_contenido_recibido;
+	t_log* logger;
+    while(true)
+    {
+        logger = iniciar_logger_modulo(KERNEL_LOGGER);
+
+        switch(recibir_operacion(socketConsola))
+        {
+            case MENSAJE:
+                recibir_mensaje(socketConsola, logger);
+				
+            break;
+			/*
+            case LISTA_INSTRUCCIONES:
+            
+			ACA SE CREA EL PCB Y SE LO MANDA A NEW
+            
+            break;
+
+            case DESCONEXION:
+			break;
+            */
+            default:
+                log_warning(logger, "Operacion Desconocida");
+                return;
+            break;
+        }
+        log_destroy(logger);
+
+    }
 }
 
 int conectar_con_cpu(config_de_kernel configuracionKernel){  
