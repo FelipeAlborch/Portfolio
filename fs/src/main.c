@@ -1,18 +1,21 @@
 #include <utils.h>
+#include <config.h>
 
 int main(int argc, char *argv[]) {
     
-    Logger* loggerFilesystem = iniciar_logger_modulo(FILESYSTEM_LOGGER);
-    Config* filesystemConfig = config_create(argv[1]);
+    // Logger* logger = iniciar_logger_modulo(FILESYSTEM_LOGGER);
 
-    configuracionFileSystem = obtener_valores_de_configuracion_filesystem(filesystemConfig);
-    mostrar_valores_de_configuracion_filesystem(configuracionFileSystem);
+    fs_config *fs_config = fs_config_create(argv[1]);
 
-    //int socketFileSystem = iniciar_servidor_en("127.0.0.1", configuracionFilesystem.)
-    int socketMemoria = conectar_con_memoria(configuracionFileSystem);
+    fs_config_print(fs_config);
 
-    log_destroy(loggerFilesystem);
-    config_destroy(filesystemConfig);
+    // int fs_socket = iniciar_servidor_en("127.0.0.1", config..)
+
+    // int mem_socket = conectar_con_memoria("127.0.0.1", config..);
+
+    // log_destroy(logger);
+
+    fs_config_destroy(fs_config);
         
     return 0;
 }

@@ -1,18 +1,17 @@
-#ifndef CONFIG_H_
-#define CONFIG_H_
+#ifndef FSCONFIG_H_
+#define FSCONFIG_H_
+#include <commons/config.h>
 
-typedef struct{
-    char* IP_MEMORIA;
-    char* PUERTO_MEMORIA;
-    char* PUERTO_ESCUCHA;
-    char* PATH_SUPERBLOQUE;
-    char* PATH_BITMAP;
-    char* PATH_BLOQUES;
-    char* PATH_FCB;
+typedef struct fs_config{
+    char *IP_MEMORIA;
+    char *PUERTO_MEMORIA;
+    char *PUERTO_ESCUCHA;
+    char *PATH_SUPERBLOQUE;
+    char *PATH_BITMAP;
+    char *PATH_BLOQUES;
+    char *PATH_FCB;
     int RETARDO_ACCESO_BLOQUE;
-}config_de_filesystem;
-
-extern config_de_filesystem configuracion_filesystem;
+}fs_config;
 
 /**
 * @NAME: obtener_valores_de_configuracion_filesystem
@@ -22,7 +21,7 @@ extern config_de_filesystem configuracion_filesystem;
 * @RETURN:
 *        retorna la config_de_filesystem creada.
 */
-config_de_filesystem obtener_valores_de_configuracion_filesystem(t_config*);
+fs_config *fs_config_create(char *);
 
 /**
 * @NAME: mostrar_valores_de_configuracion_filesystem
@@ -30,6 +29,8 @@ config_de_filesystem obtener_valores_de_configuracion_filesystem(t_config*);
 * @PARAMS:
 *        config_de_filesystem configuracion_filesystem - La configuracion creada previamente a partir del t_config*
 */
-void mostrar_valores_de_configuracion_filesystem(config_de_filesystem);
+void fs_config_print(fs_config *);
+
+void fs_config_destroy(fs_config *);
 
 #endif
