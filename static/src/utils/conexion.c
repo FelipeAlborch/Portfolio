@@ -14,21 +14,32 @@ int iniciar_servidor_en(char* ip, char* puerto)
 	hints.ai_flags = AI_PASSIVE;
 
 	getaddrinfo(ip, puerto, &hints, &servinfo);
+	
+	bool conecto = false;
 
 	// Creamos el socket
-    if ((socket_servidor = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol)) < 0)
+	for(struct addrinfo *p = servinfo; p != NULL; p = p->ai_next)
 	{
-		perror("Error al crear el socket");
-		//close(socket_servidor);
-		//exit(EXIT_FAILURE);
+		if ((socket_servidor = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0)
+		{
+			continue; // Basicamente vamos al siguiente servinfo;
+		}
+    	//Asociamos el socket
+    	if (bind(socket_servidor, p->ai_addr, p->ai_addrlen) == -1) 
+		{
+    	    close(socket_servidor);
+    	    continue;
+    	}
+
+		conecto = true;
+		break;
+	} 
+
+	if(!conecto)
+	{
+		free(servinfo);
+		return 0;
 	}
-    //Asociamos el socket
-    if (bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen) == -1) 
-	{
-		perror("Error al bindear el socket");
-        //close(socket_servidor);
-        //exit(EXIT_FAILURE);
-    }
 
     if(listen(socket_servidor, SOMAXCONN) == -1){					
 
