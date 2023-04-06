@@ -17,8 +17,8 @@
 			"path": "memoria"
 		},
 		{
-			"name": "filesystem",
-			"path": "filesystem"
+			"name": "fs",
+			"path": "fs"
 		},
 		{
 			"name": "static",
