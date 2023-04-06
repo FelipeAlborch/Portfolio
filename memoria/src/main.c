@@ -17,14 +17,14 @@ int main(int argc, char *argv[]) {
   //printf("EL socket del cliente es: %d", socket_de_un_cliente);
 
   Hilo hiloCliente1, hiloCliente2, hiloCliente3;
-  int socketCliente = esperar_cliente(socketServicioMemoria);
-  pthread_create(&hiloCliente1, NULL, (void *)manejar_paquetes_clientes, (void *)socketCliente);
+  int socketCliente1 = esperar_cliente(socketServicioMemoria);
+  pthread_create(&hiloCliente1, NULL, (void *)manejar_paquetes_clientes, (void *)socketCliente1);
 
-  socketCliente = esperar_cliente(socketServicioMemoria);
-  pthread_create(&hiloCliente2, NULL, (void *)manejar_paquetes_clientes, (void *)socketCliente);
+  int socketCliente2 = esperar_cliente(socketServicioMemoria);
+  pthread_create(&hiloCliente2, NULL, (void *)manejar_paquetes_clientes, (void *)socketCliente2);
 
-  socketCliente = esperar_cliente(socketServicioMemoria);
-  pthread_create(&hiloCliente3, NULL, (void *)manejar_paquetes_clientes, (void *)socketCliente);
+  int socketCliente3 = esperar_cliente(socketServicioMemoria);
+  pthread_create(&hiloCliente3, NULL, (void *)manejar_paquetes_clientes, (void *)socketCliente3);
 
   pthread_join(hiloCliente1, NULL);
   pthread_join(hiloCliente2, NULL);
