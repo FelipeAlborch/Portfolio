@@ -3,7 +3,7 @@
 int iniciar_servidor_para_consolas(config_de_kernel configuracionKernel)
 {
     Logger* logger = iniciar_logger_modulo(KERNEL_LOGGER);
-    int socketServidorConsolas = iniciar_servidor_en("127.0.0.1",configuracionKernel.PUERTO_ESCUCHA);
+    int socketServidorConsolas = iniciar_servidor_en("127.0.0.1", configuracionKernel.PUERTO_ESCUCHA);
 
     if(socketServidorConsolas < 0)
     {
@@ -15,6 +15,37 @@ int iniciar_servidor_para_consolas(config_de_kernel configuracionKernel)
     log_destroy(logger);
 
     return socketServidorConsolas;
+}
+
+void* esperar_consolas(int socketServidorConsolas)
+{
+
+	Logger* logger = iniciar_logger_modulo(KERNEL_LOGGER);
+	log_info(logger, "Esperando consolas");
+
+	while(true)
+	{
+		int socketConsola = esperar_cliente(socketServidorConsolas);
+
+		if(socketConsola < 0)
+		{
+			log_error(logger, "Error en la conexion de la consola");
+			return;
+		}
+		log_info(logger, "Cliente conectado: %d", socketConsola);
+		
+		Hilo hiloConsola; 
+		pthread_create(&hiloConsola, NULL, (void*)escuchar_consola, (void*) socketConsola);
+		pthread_join(hiloConsola, NULL);
+		pthread_detach(hiloConsola);
+	}
+
+}
+
+void escuchar_consola(int socketCliente){
+	Logger* logger = iniciar_logger_modulo(KERNEL_LOGGER);
+	log_info(logger, "Dentro del thread escuchar_consola: %d", socketCliente);
+	sleep(10);
 }
 
 int conectar_con_cpu(config_de_kernel configuracionKernel){  

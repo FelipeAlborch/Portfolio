@@ -3,19 +3,17 @@
 
 int main(int argc, char *argv[]) {
     
-    t_log* logger_filesystem = iniciar_logger_modulo(FILESYSTEM_LOGGER);
+    Logger* loggerFilesystem = iniciar_logger_modulo(FILESYSTEM_LOGGER);
+    Config* filesystemConfig = config_create(argv[1]);
 
-    log_info(logger_filesystem, "Este es el filesystem :D");
+    configuracionFileSystem = obtener_valores_de_configuracion_filesystem(filesystemConfig);
+    mostrar_valores_de_configuracion_filesystem(configuracionFileSystem);
 
-    t_config* filesystem_config = config_create(argv[1]);
-    configuracion_filesystem = obtener_valores_de_configuracion_filesystem(filesystem_config);
-    mostrar_valores_de_configuracion_filesystem(configuracion_filesystem);
+    //int socketFileSystem = iniciar_servidor_en("127.0.0.1", configuracionFilesystem.)
+    int socketMemoria = conectar_con_memoria(configuracionFileSystem);
 
-
-
-
-    log_destroy(logger_filesystem);
-    config_destroy(filesystem_config);
+    log_destroy(loggerFilesystem);
+    config_destroy(filesystemConfig);
         
     return 0;
 }

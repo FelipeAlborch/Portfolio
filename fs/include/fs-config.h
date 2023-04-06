@@ -14,9 +14,9 @@ typedef struct{
     char* PATH_BLOQUES;
     char* PATH_FCB;
     int RETARDO_ACCESO_BLOQUE;
-}config_de_filesystem;
+}configDeFileSystem;
 
-extern config_de_filesystem configuracion_filesystem;
+extern configDeFileSystem configuracionFileSystem;
 
 /**
 * @NAME: obtener_valores_de_configuracion_filesystem

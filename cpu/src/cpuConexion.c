@@ -15,7 +15,8 @@ int conectar_con_memoria(config_de_cpu configuracionCPU){
 		return EXIT_FAILURE;
 	}
 
-	log_info(logger, "Enviando mensaje al servidor Memoria...");
+	log_info(logger, "Conexion con Memoria realizada");
+  log_info(logger, "Enviando mensaje al servidor Memoria...");
 	enviar_mensaje("CPU", socketMemoria);
 	log_info(logger, "Mensaje enviado correctametne!");
 

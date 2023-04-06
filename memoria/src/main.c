@@ -12,9 +12,6 @@ int main(int argc, char *argv[]) {
   mostrar_valores_de_configuracion_memoria(configuracionMemoria);
 
   int socketServicioMemoria = iniciar_servicio_memoria(configuracionMemoria);
-  //int socket_de_un_cliente = esperar_cliente(socket_servicio_memoria);
-  //printf("EL socket de servicio es: %d", socket_servicio_memoria);
-  //printf("EL socket del cliente es: %d", socket_de_un_cliente);
 
   Hilo hiloCliente1, hiloCliente2, hiloCliente3;
   int socketCliente1 = esperar_cliente(socketServicioMemoria);

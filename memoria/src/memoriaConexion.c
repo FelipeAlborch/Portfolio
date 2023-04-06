@@ -37,36 +37,39 @@ void manejar_paquetes_clientes(int socketCliente)
       return;
 
     case MENSAJE:
-      esKernel = es_kernel(socketCliente);
-		  esCPU = es_cpu(socketCliente);
-
-      if (esKernel)
-      {
-        SOCKET_KERNEL = socketCliente;
-        log_info(logger, "Se conecto Kernel.\n");
-        //escuchar_kernel(socketCliente);
-      }
-      else if(es_cpu)
-      {
-        SOCKET_CPU = socketCliente;
-        log_info(logger, "Se conecto CPU.");
-        //escuchar_cpu(socketCliente);
-      }
-		  else
-		  {
-		  	SOCKET_FS = socketCliente;
-		  	log_info(logger, "Se conecto FILE SYSTEM.");
-		  	//escuchar_file_system(socketCliente);
-		  }
       
-      break;
-      
-      default:
+      switch(interpretar_origen_conexion(socketCliente))
+      {
+        case KERNEL:
+          SOCKET_KERNEL = socketCliente;
+          log_info(logger, "Se conecto Kernel.\n");
+          //escuchar_kernel(socketCliente);
+        break;
+        case CPU:
+          SOCKET_CPU = socketCliente;
+          log_info(logger, "Se conecto CPU.");
+          //escuchar_cpu(socketCliente);
+        break;
+        case FILE_SYSTEM:
+          SOCKET_FS = socketCliente;
+		  	  log_info(logger, "Se conecto FILE SYSTEM.");
+		  	  //escuchar_file_system(socketCliente);
+        break;
+        default:
         log_info(logger, "Cliente desconocido.");
-      break;
+        break;
+      }
   }
 
   log_destroy(logger);
+}
+
+modulo interpretar_origen_conexion(int socketAConexion)
+{
+  char* mensaje = obtener_mensaje_del_cliente(socketAConexion);
+  if(!strcmp(mensaje,"Kernel")) return KERNEL;
+  if(!strcmp(mensaje,"CPU")) return CPU;
+  if(!strcmp(mensaje,"FileSystem")) return FILE_SYSTEM;
 }
 
 bool es_kernel(int socketCliente)

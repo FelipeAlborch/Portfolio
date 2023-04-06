@@ -25,4 +25,8 @@ int conectar_con_memoria(config_de_kernel);
 */
 int conectar_con_cpu(config_de_kernel);
 
+void* esperar_consolas(int);
+
+void escuchar_consola(int socketCliente);
+
 #endif

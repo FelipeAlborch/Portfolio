@@ -27,7 +27,9 @@
 	],
 	"settings": {
 		"files.associations": {
-			"main.h": "c"
+			"main.h": "c",
+			"consolaconfig.h": "c",
+			"kernelconexion.h": "c"
 		}
 	}
 }

@@ -36,6 +36,15 @@ typedef enum
     FILESYSTEM_LOGGER_EXTRA
 }codigo_logger;
 
+typedef enum
+{
+	CONSOLA,
+	KERNEL,
+	CPU,
+	FILE_SYSTEM,
+	MEMORIA
+}modulo;
+
 
 /**
 * @NAME: iniciar_logger_modulo
