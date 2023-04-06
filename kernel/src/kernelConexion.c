@@ -45,11 +45,6 @@ void* esperar_consolas(int socketServidorConsolas)
 
 void escuchar_consola(int socketConsola)
 {
-	//Logger* logger = iniciar_logger_modulo(KERNEL_LOGGER);
-	//log_info(logger, "Dentro del thread escuchar_consola: %d", socketCliente);
-	//sleep(10);
-
-	t_list* lista_de_contenido_recibido;
 	t_log* logger;
     while(true)
     {
