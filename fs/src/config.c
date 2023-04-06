@@ -1,6 +1,6 @@
+#include <commons/config.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <commons/config.h>
 
 config_de_filesystem configuracion_filesystem;
 
