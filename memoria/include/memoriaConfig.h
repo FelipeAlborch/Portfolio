@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <commons/config.h>
 #include <utils/generales.h>
-
+#include <commons/config.h>
 
 typedef struct{
     char* PUERTO_ESCUCHA; 
@@ -15,6 +15,8 @@ typedef struct{
     int RETARDO_MEMORIA;
     int RETARDO_COMPACTACION;
     char* ALGORITMO_ASIGNACION;
+    int tam_maximo;
+
 }config_de_memoria;
 
 extern config_de_memoria configuracionMemoria;
@@ -27,7 +29,7 @@ extern config_de_memoria configuracionMemoria;
 * @RETURN:
 *        retorna la config_de_memoria creada.
 */
-config_de_memoria obtener_valores_de_configuracion_memoria(Config*);
+void obtener_valores_de_configuracion_memoria(t_config*);
 
 /**
 * @NAME: mostrar_valores_de_configuracion_memoria
@@ -35,6 +37,8 @@ config_de_memoria obtener_valores_de_configuracion_memoria(Config*);
 * @PARAMS:
 *        config_de_memoria configuracion_memoria - La configuracion creada previamente a partir del t_config*
 */
-void mostrar_valores_de_configuracion_memoria(config_de_memoria);
+void mostrar_valores_de_configuracion_memoria();
 
+void sigHandler_sigint(int signo);
+void startSigHandlers(void);
 #endif

@@ -3,17 +3,18 @@
 
 int main(int argc, char *argv[]) {
 
-  Logger* loggerMemoria = iniciar_logger_modulo(MEMORIA_LOGGER);
+	startSigHandlers();
+  loggerMemoria = iniciar_logger_modulo(MEMORIA_LOGGER);
 
   log_info(loggerMemoria, "Esto es la memoria D:");  
 
-  Config* memoriaConfig = config_create(argv[1]);
-  configuracionMemoria = obtener_valores_de_configuracion_memoria(memoriaConfig);
-  mostrar_valores_de_configuracion_memoria(configuracionMemoria);
+  memoriaConfig = config_create(argv[1]);
+  obtener_valores_de_configuracion_memoria(memoriaConfig);
+  mostrar_valores_de_configuracion_memoria();
 
   int socketServicioMemoria = iniciar_servicio_memoria(configuracionMemoria);
 
-  Hilo hiloCliente1, hiloCliente2, hiloCliente3;
+  pthread_t hiloCliente1, hiloCliente2, hiloCliente3;
   int socketCliente1 = esperar_cliente(socketServicioMemoria);
   pthread_create(&hiloCliente1, NULL, (void *)manejar_paquetes_clientes, (void *)socketCliente1);
 
@@ -27,8 +28,8 @@ int main(int argc, char *argv[]) {
   pthread_join(hiloCliente2, NULL);
   pthread_join(hiloCliente3, NULL);
 
-  log_destroy(loggerMemoria);
-  config_destroy(memoriaConfig);
-    
+  
+  //log_info(loggerMemoria,"antes de terminar programa");
+	terminar_programa(conexion, loggerMemoria, memoriaConfig);  
   return 0;
 }

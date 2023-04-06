@@ -16,6 +16,7 @@
 #include <assert.h>
 #include <commons/config.h>
 
+
 typedef t_config Config;
 typedef t_list Lista;
 typedef t_log Logger;
@@ -44,6 +45,26 @@ typedef enum
 	FILE_SYSTEM,
 	MEMORIA
 }modulo;
+
+typedef enum
+{
+	CREATE_SEGMENT = 100,
+	DELETE_SEGMENT,
+	INICIO_COMPACTAR,
+	FIN_COMPACTAR,
+	M_READ,
+	M_WRITE,
+	INICIO_PROCESO,
+	FIN_PROCESO,
+	OK
+
+}msj_memoria;
+
+typedef struct{
+	int pid;
+	t_list* lista_segmentos;
+
+}t_proceso;
 
 
 /**
