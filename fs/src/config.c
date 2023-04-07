@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <config.h>
+#include <string.h>
 
 fs_config *fs_config_create(char *path) {
 
@@ -8,14 +9,14 @@ fs_config *fs_config_create(char *path) {
 
     fs_config *fs_config = malloc(sizeof(struct fs_config));
 
-    fs_config->IP_MEMORIA = config_get_string_value(t_config, "IP_MEMORIA");
-    fs_config->PUERTO_MEMORIA = config_get_string_value(t_config, "PUERTO_MEMORIA");
-    fs_config->PUERTO_ESCUCHA = config_get_string_value(t_config, "PUERTO_ESCUCHA");
-    fs_config->PATH_SUPERBLOQUE = config_get_string_value(t_config, "PATH_SUPERBLOQUE");
-    fs_config->PATH_BITMAP = config_get_string_value(t_config,"PATH_BITMAP");
-    fs_config->PATH_BLOQUES = config_get_string_value(t_config,"PATH_BLOQUES");
-    fs_config->PATH_FCB = config_get_string_value(t_config,"PATH_FCB");
-    fs_config->RETARDO_ACCESO_BLOQUE = config_get_int_value(t_config,"RETARDO_ACCESO_BLOQUE");
+    fs_config->IP_MEMORIA = strdup(config_get_string_value(t_config, "IP_MEMORIA"));
+    fs_config->PUERTO_MEMORIA = strdup(config_get_string_value(t_config, "PUERTO_MEMORIA"));
+    fs_config->PUERTO_ESCUCHA = strdup(config_get_string_value(t_config, "PUERTO_ESCUCHA"));
+    fs_config->PATH_SUPERBLOQUE = strdup(config_get_string_value(t_config, "PATH_SUPERBLOQUE"));
+    fs_config->PATH_BITMAP = strdup(config_get_string_value(t_config, "PATH_BITMAP"));
+    fs_config->PATH_BLOQUES = strdup(config_get_string_value(t_config, "PATH_BLOQUES"));
+    fs_config->PATH_FCB = strdup(config_get_string_value(t_config, "PATH_FCB"));
+    fs_config->RETARDO_ACCESO_BLOQUE = config_get_int_value(t_config, "RETARDO_ACCESO_BLOQUE");
 
     config_destroy(t_config);
     
