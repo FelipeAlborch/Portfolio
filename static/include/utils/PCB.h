@@ -41,4 +41,28 @@ typedef struct pcb
     int estimado_prox_rafaga;
 } pcb;
 
+typedef struct LineaInstruccion
+{
+  char *identificador;
+  int parametros[3];
+} LineaInstruccion;
+
+typedef enum parametros
+{
+  AX,
+  BX,
+  CX,
+  DX,
+  EAX,
+  EBX,
+  ECX,
+  EDX,
+  RAX,
+  RBX,
+  RCX,
+  RDX,
+  DISCO,
+  ARCHIVO,
+} parametros;
+
 #endif
