@@ -1,6 +1,5 @@
 #include <main.h>
 
-
 int main(int argc, char *argv[]) {
 
 	startSigHandlers();
@@ -12,7 +11,7 @@ int main(int argc, char *argv[]) {
   obtener_valores_de_configuracion_memoria(memoriaConfig);
   mostrar_valores_de_configuracion_memoria();
 
-  int socketServicioMemoria = iniciar_servicio_memoria(configuracionMemoria);
+  int socketServicioMemoria = iniciar_servicio_memoria(config_memo);
 
   pthread_t hiloCliente1, hiloCliente2, hiloCliente3;
   int socketCliente1 = esperar_cliente(socketServicioMemoria);
