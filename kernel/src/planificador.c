@@ -39,7 +39,10 @@ pthread_t hilo_largo_plazo;
 pthread_t hilo_corto_plazo;
 
 void inicializar_planificadores(config_de_kernel config_kernel) {
-    log_info(loggerKernel, "Iniciando planificadores... ");
+    logger_planificador_extra = iniciar_logger_modulo(KERNEL_LOGGER_EXTRA);
+    logger_planificador_obligatorio = iniciar_logger_modulo(KERNEL_LOGGER);
+    
+    log_info(logger_planificador_extra, "Iniciando planificadores... ");
 
     // Inicializo los semaforos.
     sem_init(&activar_largo_plazo, 0, 0);
@@ -68,18 +71,18 @@ void inicializar_planificadores(config_de_kernel config_kernel) {
 
 void planificador_largo_plazo() {
     while(1) {
-        log_info(loggerKernel, "Esperando proceso en cola NEW...");
+        log_info(logger_planificador_extra, "Esperando proceso en cola NEW...");
         sem_wait(&activar_largo_plazo);
-        log_info(loggerKernel, "Proceso en cola NEW!");
+        log_info(logger_planificador_extra, "Proceso en cola NEW!");
         // TO-DO: Implementar el planificador largo plazo.
     }
 }
 
 void planificador_corto_plazo() {
     while(1) {
-        log_info(loggerKernel, "Esperando proceso en cola READY...");
+        log_info(logger_planificador_extra, "Esperando proceso en cola READY...");
         sem_wait(&activar_corto_plazo);
-        log_info(loggerKernel, "Proceso en cola READY!");
+        log_info(logger_planificador_extra, "Proceso en cola READY!");
         // TO-DO: Implementar el planificador corto plazo.
     }
 }

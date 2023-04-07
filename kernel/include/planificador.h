@@ -18,4 +18,18 @@ extern t_queue* cola_new;
 
 void inicializar_planificadores(config_de_kernel);
 
+void planificador_largo_plazo();
+
+void planificador_corto_plazo();
+
+void agregar_proceso_new(pcb*);
+
+void agregar_proceso_ready(pcb*);
+
+void agregar_proceso_exec(pcb*);
+
+void agregar_proceso_terminated(pcb*);
+
+void agregar_proceso_block(pcb*);
+
 #endif
