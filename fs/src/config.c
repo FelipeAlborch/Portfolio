@@ -1,14 +1,22 @@
+#include <commons/config.h>
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <config.h>
 #include <string.h>
 
-fs_config *fs_config_create(char *path) {
+#define CONFIG_FILE "fs.config"
+
+fs_config *fs_config_create() {
+    return fs_config_create_from_file(CONFIG_FILE);
+}
+
+fs_config *fs_config_create_from_file(char *path) {
 
     t_config *t_config = config_create(path);
 
     fs_config *fs_config = malloc(sizeof(struct fs_config));
 
+    fs_config->IP_FSYSTEM = strdup(config_get_string_value(t_config, "IP_FSYSTEM"));
     fs_config->IP_MEMORIA = strdup(config_get_string_value(t_config, "IP_MEMORIA"));
     fs_config->PUERTO_MEMORIA = strdup(config_get_string_value(t_config, "PUERTO_MEMORIA"));
     fs_config->PUERTO_ESCUCHA = strdup(config_get_string_value(t_config, "PUERTO_ESCUCHA"));

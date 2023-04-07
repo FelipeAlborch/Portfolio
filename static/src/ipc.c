@@ -1,9 +1,16 @@
+#include <ipc.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include <unistd.h>
+#include <assert.h>
 #include <netdb.h>
-#include <ipc.h>
+
+#define LOCALHOST "127.0.0.1"
+
+int conn_create_localhost(Host host_type, char *puerto)
+{
+    return conn_create(host_type, LOCALHOST, puerto);
+}
 
 int conn_create(Host host_type, char *ip, char *puerto)
 {

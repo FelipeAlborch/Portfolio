@@ -1,8 +1,8 @@
 #ifndef FSCONFIG_H_
 #define FSCONFIG_H_
-#include <commons/config.h>
 
 typedef struct fs_config {
+    char *IP_FSYSTEM;
     char *IP_MEMORIA;
     char *PUERTO_MEMORIA;
     char *PUERTO_ESCUCHA;
@@ -13,7 +13,9 @@ typedef struct fs_config {
     int RETARDO_ACCESO_BLOQUE;
 } fs_config;
 
-fs_config *fs_config_create(char *);
+fs_config *fs_config_create();
+
+fs_config *fs_config_create_from_file(char *);
 
 void fs_config_print(fs_config *);
 

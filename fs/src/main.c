@@ -1,14 +1,11 @@
+#include <log.h>
+#include <ipc.h>
 #include <utils.h>
 #include <config.h>
-#include <ipc.h>
-#include <commons/log.h>
+#include <strings.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <assert.h>
-
-#define CONFIG_FILE "fs.config"
-#define LOG_FILE "fs.log"
-#define PS_NAME "FS"
-#define LOCALHOST "127.0.0.1"
 
 void *connection_handler(void *socket_fd);
 
@@ -17,9 +14,9 @@ main(int argc, char *argv[])
 {
     print_cwd();
 
-    t_log *log = log_create(LOG_FILE, PS_NAME, 1, LOG_LEVEL_INFO);
+    t_log *log = fs_log_create();
 
-    fs_config *config = fs_config_create(CONFIG_FILE);
+    fs_config *config = fs_config_create();
 
     fs_config_print(config);
 
@@ -27,7 +24,7 @@ main(int argc, char *argv[])
 
     log_info(log, "mem socket: %d", mem_socket_fd);
 
-    int fs_socket_fd = conn_create(SERVER, LOCALHOST, config->PUERTO_ESCUCHA);
+    int fs_socket_fd = conn_create(SERVER, config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
 
     log_info(log, "fs socket: %d", fs_socket_fd);
 
