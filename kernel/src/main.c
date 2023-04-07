@@ -15,15 +15,24 @@ int main(int argc, char *argv[]) {
     int socketCPU = conectar_con_cpu(configuracionKernel);
     //int socketFS = conectar_con_filesystem(configuracionKernel);
 
+    inicializar_planificadores(configuracionKernel);
+
+    socket_cpu_planificador = socketCPU;
+
     int socketServicioConsolas = iniciar_servidor_para_consolas(configuracionKernel);
-    
+
+    //pcb* unPcb = malloc(sizeof(pcb));
+    //memcpy(unPcb->AX,"HOLA",4);
+    //printf("en ax se guardo: %c", unPcb->AX[0]);
+    //memcpy(unPcb->EAX,"HOLACHAU",8);
+    //log_info(loggerKernel,"En EAX se guardo: %c", unPcb->EAX[7]);
+
     pthread_t hiloConsolas; 
     pthread_create(&hiloConsolas, NULL, (void*)esperar_consolas, (void*)socketServicioConsolas);
     pthread_join(hiloConsolas, NULL);
 
-    // conectar_con_consola(s)
-    // conexion_con_consolas(configuracion_kernel);
 
+    // void *memcpy(void *dest, const void *src, size_t n);
 
     log_destroy(loggerKernel);
     config_destroy(kernelConfig);
