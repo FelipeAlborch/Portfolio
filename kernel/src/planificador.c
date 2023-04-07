@@ -11,3 +11,6 @@ t_log* logger_planificador_extra;
 
 // DICCIONARIO DE CONSOLAS: UNA MANERA DE GUARDAR SOCKETS DE LAS CONSOLAS, PARA LOS PIDS CREADOS.
 t_dictionary* diccionario_de_consolas;
+
+// variable global para el process id
+int pid_global = 0;

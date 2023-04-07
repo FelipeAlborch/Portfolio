@@ -15,11 +15,7 @@ int main(int argc, char *argv[]) {
 
     log_info(logger_consola, "Me conecte al kernel!");
 
-    /*
-    if(conectar_con_kernel() == SUCCESS)
-    {
-        
-    }*/
+    sleep(10);
 
     log_destroy(logger_consola);
     config_destroy(consola_config);

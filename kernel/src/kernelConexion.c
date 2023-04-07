@@ -32,11 +32,11 @@ void* esperar_consolas(int socketServidorConsolas)
 			log_error(logger, "Error en la conexion de la consola");
 			return;
 		}
-		log_info(logger, "Cliente conectado: %d", socketConsola);
-		
+		log_info(logger, "Consola conectada: %d", socketConsola);
+
 		Hilo hiloConsola; 
 		pthread_create(&hiloConsola, NULL, (void*)escuchar_consola, (void*) socketConsola);
-		pthread_join(hiloConsola, NULL);
+		//pthread_join(hiloConsola, NULL);
 		pthread_detach(hiloConsola);
 	}
 
