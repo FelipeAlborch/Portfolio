@@ -23,10 +23,15 @@ typedef struct
 
 extern config_de_memoria configuracionMemoria;
 
+
 void terminar_programa(int conexion, t_log* logger, t_config* configMemoria);
 void liberar_memoria();
 void liberar_listas();
 void liberar_conexion_memoria(int conexion);
 void liberar_t_config();
+
+void inicializar_configuracion();
+void inicializar_memoria();
+void inicializar_segmentos();
 
 #endif

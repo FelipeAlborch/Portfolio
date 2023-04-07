@@ -22,4 +22,13 @@ void liberar_conexion_memoria(int conexion){
 void liberar_t_config(){
     /* TO DO */
 };
-	
+void inicializar_configuracion(){
+    /* TO DO */
+};
+
+void inicializar_memoria(){
+    /* TO DO */
+};
+void inicializar_segmentos(){
+    /* TO DO */
+};	
