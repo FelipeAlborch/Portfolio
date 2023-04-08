@@ -2,16 +2,23 @@
 #include <ipc.h>
 #include <utils.h>
 #include <config.h>
-#include <strings.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <assert.h>
+#include <commons/memory.h>
 
 void *connection_handler(void *socket_fd);
 
 int 
 main(int argc, char *argv[])
 {
+    int fs_socket_fd, mem_socket_fd, client_socket_fd, error;
+
+    pthread_t thread_id;
+
     print_cwd();
 
     t_log *log = fs_log_create();
@@ -20,24 +27,31 @@ main(int argc, char *argv[])
 
     fs_config_print(config);
 
-    int mem_socket_fd = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
+    mem_socket_fd = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
+    assert(mem_socket_fd >= 0);
 
     log_info(log, "mem socket: %d", mem_socket_fd);
 
-    int fs_socket_fd = conn_create(SERVER, config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
+    fs_socket_fd = conn_create(SERVER, config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
+    assert(fs_socket_fd >= 0);
 
     log_info(log, "fs socket: %d", fs_socket_fd);
 
-    pthread_t thread_id;
-
-    int client_socket_fd, error;
-    
     while ((client_socket_fd = conn_accept(fs_socket_fd)))
     {
+        assert(client_socket_fd >= 0);
+
         error = pthread_create(&thread_id, NULL, connection_handler, (void *) &client_socket_fd);
         assert(error == 0);
+
+        // pthread_join(client_socket_fd, NULL);
+
+        // close(client_socket_fd);
     }
-    assert(client_socket_fd >= 0);
+
+    close(mem_socket_fd);
+
+    close(fs_socket_fd);
 
     fs_config_destroy(config);
 
@@ -48,17 +62,25 @@ main(int argc, char *argv[])
 
 void *connection_handler(void *p_socket_fd)
 {
-    int n; char buffer[256];
+    int n;
 
     int socket_fd = *(int *)p_socket_fd;
-    
-    bzero(buffer, 256);
 
-    n = read(socket_fd, buffer, 255);
+    t_payload *payload = payload_create();
 
-    assert(n < 0);
+    n = read_socket(socket_fd, payload);
+    assert(n >= 0);
 
-    printf("Bytes received: %s\n", buffer);
+    printf("%s\n", mem_hexstring(payload->buffer, payload->size));
+
+    payload_destroy(payload);
+
+    payload = payload_string_create("filesystem a memoria");
+
+    n = write_socket(socket_fd, payload);
+    assert(n >= 0);
+
+    payload_destroy(payload);
     
     conn_close(socket_fd);
 

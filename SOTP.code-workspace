@@ -28,9 +28,7 @@
 	"settings": {
 		"files.associations": {
 			"*.c": "c",
-			"*.h": "c",
-			"*.tcc": "c",
-			"fstream": "c"
+			"*.h": "c"
 		}
 	}
 }
