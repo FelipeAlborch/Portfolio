@@ -7,7 +7,10 @@
 
 
 t_list* todos_los_segmentos; //tipo t_segmento
-
+pthread_t hilo_cpu;
+pthread_t hilo_kernel;
+pthread_t hilo_fs;
+//pthread_t hiloConexion;
 int resto_memoria;
 
 

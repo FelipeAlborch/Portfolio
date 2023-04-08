@@ -51,7 +51,7 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente)
 	free(a_enviar);
 }
 
-t_list* recibir_paquete(int socket_cliente)
+t_list* _recibir_paquete(int socket_cliente)
 {
 	int size;
 	int desplazamiento = 0;
@@ -81,4 +81,38 @@ void eliminar_paquete(t_paquete* paquete)
 	free(paquete->buffer->stream);
 	free(paquete->buffer);
 	free(paquete);
+}
+t_paquete* recibir_paquete (int socket) {
+	int codigo_operacion;
+
+	t_log* logger = log_create("logs.log","",true,LOG_LEVEL_ERROR);
+
+	if (recv(socket, &codigo_operacion, sizeof(int), MSG_WAITALL) <= 0) {
+		log_error(logger, "Ocurrio un error al recibir op_code");
+		codigo_operacion = ERROR;
+	}
+
+	int size;
+	if (recv(socket, &size, sizeof(int32_t), MSG_WAITALL) <= 0) {
+		log_error(logger, "Ocurrio un error al recibir size");
+		codigo_operacion = ERROR;
+	}
+
+	void* stream = malloc(size);
+	if (recv(socket, stream, size, MSG_WAITALL) <= 0) {
+		log_error(logger, "Ocurrio un error al recibir stream");
+		codigo_operacion = ERROR;
+	}
+
+
+	t_paquete* paquete = malloc(sizeof(t_paquete));
+	paquete->buffer = malloc(sizeof(t_buffer));
+
+	paquete->codigo_operacion = codigo_operacion;
+	paquete->buffer->stream = stream;
+	paquete->buffer->size = size;
+
+	free(stream);
+	log_destroy(logger);
+	return paquete;
 }

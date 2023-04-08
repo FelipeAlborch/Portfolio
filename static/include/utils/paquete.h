@@ -56,7 +56,7 @@ void enviar_paquete(t_paquete*, int);
 * @RETURN:
 *        retorna la lista con los valores cargados.
 */
-t_list* recibir_paquete(int);
+t_list* _recibir_paquete(int);
 
 /**
 * @NAME: eliminar_paquete
@@ -65,5 +65,7 @@ t_list* recibir_paquete(int);
 *        t_paquete* paquete - El paquete que queres eliminar.
 */
 void eliminar_paquete(t_paquete*);
+
+t_paquete* recibir_paquete(int);
 
 #endif

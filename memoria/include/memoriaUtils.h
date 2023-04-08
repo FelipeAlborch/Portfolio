@@ -4,9 +4,17 @@
 // Este include ya tiene incluidos muchos archivos de las commons y cosas tipo stdlib, stdio etc, tambien pcb y cosas del estilo.
 #include <utils/conexion.h>
 
+extern t_log* mlogger;
 extern t_log* loggerMemoria;
+extern int clientes[4];
 extern int conexion;
+extern int running;
+extern int server_m;
 extern t_config* memoriaConfig;
+extern pthread_t hilo_cpu;
+extern pthread_t hilo_kernel;
+extern pthread_t hilo_fs;
+extern pthread_t hiloConexion;
 
 /*typedef struct
 {
@@ -25,10 +33,10 @@ extern t_config* memoriaConfig;
 void sigHandler_sigint(int signo);
 void startSigHandlers(void);
 
-void terminar_programa(int conexion, t_log* logger, t_config* configMemoria);
+void terminar_programa(t_log* logger, t_config* configMemoria);
 void liberar_memoria();
 void liberar_listas();
-void liberar_conexion_memoria(int conexion);
+void liberar_conexion_memoria();
 void liberar_t_config();
 
 void inicializar_configuracion();
@@ -37,6 +45,7 @@ void inicializar_segmentos();
 
 
 // Lo del conexion:
+void conectar();
 int iniciar_servicio_memoria(config_de_memoria);
 
 void manejar_paquetes_clientes(int);
@@ -47,18 +56,23 @@ void escucha_kernel(int);
 
 void escucha_cpu(int);
 
+void ejecutar_kernel();
 
 // Lo del config:
 
 typedef struct{
-    char* PUERTO_ESCUCHA; 
-    int TAM_MEMORIA;
-    int TAM_SEGMENTO_0;
-    int CANT_SEGMENTOS;
-    int RETARDO_MEMORIA;
-    int RETARDO_COMPACTACION;
-    char* ALGORITMO_ASIGNACION;
+    char* puerto;
+    char* algoritmo;
+    char* ip; 
+    int tam_memo;
+    int tam_seg_0;
+    int cant_seg;
+    int retardo;
+    int compactacion;
     int tam_maximo;
+    int cpu;    // para guardar la conexion
+    int fs;     // para guardar la conexion
+    int kernel; // para guardar la conexion
 
 }config_de_memoria;
 
@@ -67,5 +81,8 @@ extern config_de_memoria config_memo;
 void obtener_valores_de_configuracion_memoria(t_config*);
 
 void mostrar_valores_de_configuracion_memoria();
+
+
+void loggear(int tipo, int level,void* algo,...);
 
 #endif
