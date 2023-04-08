@@ -1,6 +1,4 @@
 #include <tlv.h>
-#include <stdlib.h>
-#include <string.h>
 
 t_tlv *tlv_create() {
     t_tlv *tlv = malloc(sizeof(t_tlv));
@@ -10,9 +8,17 @@ t_tlv *tlv_create() {
     return tlv;
 }
 
+t_list *tlv_list_create() {
+    return list_create();
+}
+
 void tlv_destroy(t_tlv *tlv) {
     free(tlv->value);
     free(tlv);
+}
+
+void tlv_list_destroy(t_list *tlv_list) {
+    list_destroy_and_destroy_elements(tlv_list, (void *)tlv_destroy);
 }
 
 void *tlv_serialize(t_tlv *tlv) {
@@ -38,12 +44,39 @@ t_tlv *tlv_deserialize(void *buffer) {
     return tlv;
 }
 
+t_tlv *tlv_create_int(int value) {
+    t_tlv *tlv = tlv_create();
+    tlv->type = INTEGER;
+    tlv->length = sizeof(int);
+    tlv->value = malloc(tlv->length);
+    memcpy(tlv->value, &value, tlv->length);
+    return tlv;
+}
+
 int tlv_get_int(t_tlv *tlv) {
     return *(int *)tlv->value;
 }
 
+t_tlv *tlv_create_double(double value) {
+    t_tlv *tlv = tlv_create();
+    tlv->type = DOUBLE;
+    tlv->length = sizeof(double);
+    tlv->value = malloc(tlv->length);
+    memcpy(tlv->value, &value, tlv->length);
+    return tlv;
+}
+
 double tlv_get_double(t_tlv *tlv) {
     return *(double *)tlv->value;
+}
+
+t_tlv *tlv_create_string(char *value) {
+    t_tlv *tlv = tlv_create();
+    tlv->type = STRING;
+    tlv->length = strlen(value) + 1;
+    tlv->value = malloc(tlv->length);
+    memcpy(tlv->value, value, tlv->length);
+    return tlv;
 }
 
 char *tlv_get_string(t_tlv *tlv) {

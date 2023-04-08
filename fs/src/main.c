@@ -1,3 +1,4 @@
+#include <commons/memory.h>
 #include <log.h>
 #include <ipc.h>
 #include <utils.h>
@@ -8,7 +9,6 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <assert.h>
-#include <commons/memory.h>
 
 void *connection_handler(void *socket_fd);
 
@@ -75,7 +75,7 @@ void *connection_handler(void *p_socket_fd)
 
     payload_destroy(payload);
 
-    payload = payload_string_create("filesystem a memoria");
+    payload = payload_create_string("filesystem a memoria");
 
     n = write_socket(socket_fd, payload);
     assert(n >= 0);

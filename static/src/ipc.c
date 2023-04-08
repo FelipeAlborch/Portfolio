@@ -1,9 +1,4 @@
 #include <ipc.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <assert.h>
-#include <netdb.h>
 
 #define LOCALHOST "127.0.0.1"
 
@@ -84,6 +79,27 @@ int read_socket(int socket_fd, t_payload *payload)
     return n;
 }
 
+int read_socket_tlv_list(int socket_fd, t_list *tlv_list)
+{
+    int n = recv(socket_fd, &tlv_list->elements_count, sizeof(int), MSG_WAITALL);
+    assert(n >= 0);
+
+    for (int i = 0; i < tlv_list->elements_count; i++)
+    {
+        t_tlv *tlv = malloc(sizeof(t_tlv));
+        n = recv(socket_fd, &tlv->type, sizeof(tlv->type), MSG_WAITALL);
+        assert(n >= 0);
+        n = recv(socket_fd, &tlv->length, sizeof(tlv->length), MSG_WAITALL);
+        assert(n >= 0);
+        tlv->value = malloc(tlv->length);
+        n = recv(socket_fd, tlv->value, tlv->length, MSG_WAITALL);
+        assert(n >= 0);
+        list_add(tlv_list, tlv);
+    }
+
+    return n;
+}
+
 int write_socket(int socket_fd, t_payload *payload)
 {
     int _buffer_size = sizeof(payload->size) + payload->size;
@@ -96,10 +112,33 @@ int write_socket(int socket_fd, t_payload *payload)
     return n;
 }
 
+int write_socket_tlv_list(int socket_fd, t_list *tlv_list)
+{
+    int buffer_size = sizeof(int);
+    void *buffer = malloc(buffer_size);
+    memcpy(buffer, &tlv_list->elements_count, sizeof(int));
+
+    for (int i = 0; i < tlv_list->elements_count; i++)
+    {
+        t_tlv *tlv = list_get(tlv_list, i);
+        buffer_size += sizeof(tlv->type) + sizeof(tlv->length) + tlv->length;
+        buffer = realloc(buffer, buffer_size);
+        memcpy(buffer + buffer_size - tlv->length - sizeof(tlv->length) - sizeof(tlv->type), &tlv->type, sizeof(tlv->type));
+        memcpy(buffer + buffer_size - tlv->length - sizeof(tlv->length), &tlv->length, sizeof(tlv->length));
+        memcpy(buffer + buffer_size - tlv->length, tlv->value, tlv->length);
+    }
+
+    int n = send(socket_fd, buffer, buffer_size, 0);
+    assert(n >= 0);
+
+    return n;
+}
+
 void *buffer_create(int size)
 {
     void *buffer = malloc(size);
     memset(buffer, 0, size);
+    
     return buffer;
 }
 
@@ -112,7 +151,7 @@ t_payload *payload_create()
     return payload;
 }
 
-t_payload *payload_string_create(char *string)
+t_payload *payload_create_string(char *string)
 {
     t_payload *payload = payload_create();
     payload->size = strlen(string) + 1;

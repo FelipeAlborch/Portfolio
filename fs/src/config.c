@@ -1,8 +1,4 @@
-#include <commons/config.h>
 #include <config.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define CONFIG_FILE "fs.config"
 

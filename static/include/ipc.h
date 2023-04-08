@@ -1,5 +1,12 @@
 #ifndef IPC_H_
 #define IPC_H_
+#include <commons/collections/list.h>
+#include <tlv.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <assert.h>
+#include <netdb.h>
 
 typedef enum Host {
     SERVER,
@@ -23,13 +30,17 @@ int peek_socket(int, void *, int);
 
 int read_socket(int, t_payload *);
 
+int read_socket_tlv_list(int, t_list *);
+
 int write_socket(int, t_payload *);
+
+int write_socket_tlv_list(int, t_list *);
 
 void *buffer_create(int);
 
 t_payload *payload_create();
 
-t_payload *payload_string_create(char *);
+t_payload *payload_create_string(char *);
 
 void payload_destroy(t_payload *payload);
 
