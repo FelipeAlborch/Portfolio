@@ -28,6 +28,17 @@ void enviar_instrucciones_a_kernel(char *nombre_archivo)
   */
   
   dump(instrucciones);
+
+  for(int i = 0; i < list_size(instrucciones); i++)
+  {
+      LineaInstruccion* una_instr = list_get(instrucciones, i);
+      free(una_instr->identificador);
+      free(una_instr->parametros[0]);
+      free(una_instr->parametros[1]);
+      free(una_instr->parametros[2]);
+      free(una_instr);
+  }
+
   list_destroy(instrucciones);
   log_destroy(logger);
   //eliminar_paquete(paquete);
@@ -109,62 +120,32 @@ int veces(char *string, char caracter)
 
 void rellenar_parametros_de_instruccion(char **tokens, int cantidad_tokens)
 {
-  if (cantidad_tokens < 2) tokens[1] = "-1";
+  if (cantidad_tokens < 2) tokens[1] = strdup("-1");
 
-  if (cantidad_tokens < 3) tokens[2] = "-1";
+  if (cantidad_tokens < 3) tokens[2] = strdup("-1");
 
-  if (cantidad_tokens < 4) tokens[3] = "-1";
+  if (cantidad_tokens < 4) tokens[3] = strdup("-1");
 }
 
 void asignar_tokens_a_linea_instruccion(LineaInstruccion *linea_instruccion, char **tokens)
 {
   linea_instruccion->identificador = strdup(tokens[0]);
   
-  linea_instruccion->parametros[0] = traducir_parametro(tokens[1]);
+  linea_instruccion->parametros[0] = strdup(tokens[1]);
 
-  linea_instruccion->parametros[1] = traducir_parametro(tokens[2]);
+  linea_instruccion->parametros[1] = strdup(tokens[2]);
 
-  linea_instruccion->parametros[2] = traducir_parametro(tokens[3]);
+  linea_instruccion->parametros[2] = strdup(tokens[3]);
 
-  free(*tokens);
-}
-
-int traducir_parametro(char *param)
-{
-  if (strcmp(param, "AX") == 0) return AX;
-
-  else if (strcmp(param, "BX") == 0) return BX;
-
-  else if (strcmp(param, "CX") == 0) return CX;
-
-  else if (strcmp(param, "DX") == 0) return DX;
-
-  else if (strcmp(param, "EAX") == 0) return EAX;
-
-  else if (strcmp(param, "EBX") == 0) return EBX;
-
-  else if (strcmp(param, "ECX") == 0) return ECX;
-
-  else if (strcmp(param, "EDX") == 0) return EDX;
-
-  else if (strcmp(param, "RAX") == 0) return RAX;
-
-  else if (strcmp(param, "RBX") == 0) return RBX;
-
-  else if (strcmp(param, "RCX") == 0) return RCX;
-
-  else if (strcmp(param, "RDX") == 0) return RDX;
-
-  else if (strcmp(param, "DISCO") == 0) return DISCO;
-
-  else if (strcmp(param, "ARCHIVO") == 0) return ARCHIVO;
-
-  else return atoi(param);
+  //free(*tokens);
 }
 
 void agregar_linea_de_instruccion_a_lista(LineaInstruccion *linea_instruccion, Lista *lista)
 {
-  if (!strcmp(linea_instruccion->identificador, "NO_OP"))
+  
+  list_add(lista, linea_instruccion);
+  
+  /*if (!strcmp(linea_instruccion->identificador, "NO_OP"))
   {
     for (int i = 0; i < linea_instruccion->parametros[0]; i++)
     {
@@ -175,7 +156,7 @@ void agregar_linea_de_instruccion_a_lista(LineaInstruccion *linea_instruccion, L
   else
   {
     list_add(lista, linea_instruccion);
-  }
+  }*/
 }
 
 void dump(Lista *instrucciones)
@@ -185,7 +166,7 @@ void dump(Lista *instrucciones)
     LineaInstruccion *lineaInstruccion = list_get(instrucciones, i);
 
     printf(
-      "Instruccion: %s %d %d %d\n", 
+      "Instruccion: %s %s %s %s\n", 
       lineaInstruccion->identificador, 
       lineaInstruccion->parametros[0], 
       lineaInstruccion->parametros[1],

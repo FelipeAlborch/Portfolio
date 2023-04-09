@@ -12,7 +12,6 @@ extern int socket_kernel;
 int conectar_con_kernel();
 void dump(Lista*);
 void agregar_linea_de_instruccion_a_lista(LineaInstruccion*, Lista*);
-int traducir_parametro(char*);
 void asignar_tokens_a_linea_instruccion(LineaInstruccion*, char**);
 void rellenar_parametros_de_instruccion(char**, int);
 int cantidad_de_tokens(char*);

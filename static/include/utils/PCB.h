@@ -44,10 +44,10 @@ typedef struct pcb
 typedef struct LineaInstruccion
 {
   char *identificador;
-  int parametros[3];
+  char *parametros[3];
 } LineaInstruccion;
 
-typedef enum parametros
+/*typedef enum parametros
 {
   AX,
   BX,
@@ -63,6 +63,6 @@ typedef enum parametros
   RDX,
   DISCO,
   ARCHIVO,
-} parametros;
+} parametros; */
 
 #endif
