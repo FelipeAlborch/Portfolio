@@ -4,7 +4,10 @@ t_paquete* crear_paquete(void)
 {
 	t_paquete* paquete = malloc(sizeof(t_paquete));
 	paquete->codigo_operacion = PAQUETE;
-	crear_buffer(paquete);
+	char* stream =string_duplicate(" ");
+	paquete->buffer = crear_buffer(stream);
+	free(stream);
+	
 	return paquete;
 }
 
@@ -12,7 +15,9 @@ t_paquete* crear_paquete_operacion(int codigo_operacion)
 {
 	t_paquete* paquete = malloc(sizeof(t_paquete));
 	paquete->codigo_operacion = codigo_operacion;
-	crear_buffer(paquete);
+	//paquete->buffer =malloc(sizeof(t_buffer));
+	paquete->buffer->stream = string_duplicate(" ");
+	paquete->buffer->size =sizeof(paquete->buffer->stream);
 	return paquete;
 }
 
@@ -78,8 +83,8 @@ t_list* _recibir_paquete(int socket_cliente)
 
 void eliminar_paquete(t_paquete* paquete)
 {
-	free(paquete->buffer->stream);
-	free(paquete->buffer);
+	//free(paquete->buffer->stream);
+	//free(paquete->buffer);
 	free(paquete);
 }
 t_paquete* recibir_paquete (int socket) {
@@ -93,11 +98,11 @@ t_paquete* recibir_paquete (int socket) {
 	}
 
 	int size;
-	if (recv(socket, &size, sizeof(int32_t), MSG_WAITALL) <= 0) {
+	if (recv(socket, &size, sizeof(int), MSG_WAITALL) <= 0) {
 		log_error(logger, "Ocurrio un error al recibir size");
 		codigo_operacion = ERROR;
 	}
-
+	printf("el valor del size %d",size);
 	void* stream = malloc(size);
 	if (recv(socket, stream, size, MSG_WAITALL) <= 0) {
 		log_error(logger, "Ocurrio un error al recibir stream");

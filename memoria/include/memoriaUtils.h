@@ -46,17 +46,21 @@ void inicializar_segmentos();
 
 // Lo del conexion:
 void conectar();
+void conectar_cpu();
+void conectar_kernel();
+void conectar_fs();
 int iniciar_servicio_memoria(config_de_memoria);
 
 void manejar_paquetes_clientes(int);
 
 modulo interpretar_origen_conexion(int);
 
-void escucha_kernel(int);
-
-void escucha_cpu(int);
-
 void ejecutar_kernel();
+void ejecutar_cpu();
+void ejecutar_fs();
+
+
+
 
 // Lo del config:
 

@@ -17,7 +17,11 @@ int conectar_con_memoria(config_de_cpu configuracionCPU){
 
 	log_info(logger, "Conexion con Memoria realizada");
   log_info(logger, "Enviando mensaje al servidor Memoria...");
-	enviar_mensaje("CPU", socketMemoria);
+
+
+  t_paquete* conectar= crear_paquete();
+	conectar->codigo_operacion= CPU;
+	enviar_paquete(conectar, socketMemoria);
 	log_info(logger, "Mensaje enviado correctametne!");
 
 	log_destroy(logger);

@@ -11,9 +11,19 @@ void* recibir_buffer(int* size, int socket_cliente)
 	return buffer;
 }
 
-void crear_buffer(t_paquete* paquete)
+void _crear_buffer(t_paquete* paquete)
 {
 	paquete->buffer = malloc(sizeof(t_buffer));
 	paquete->buffer->size = 0;
 	paquete->buffer->stream = NULL;
+}
+t_buffer* crear_buffer(void* stream){
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size=sizeof(stream);
+	buffer->stream=stream;
+	return buffer;
+}
+void eliminar_buffer(t_buffer* buffer){
+	free(buffer->stream);
+	free(buffer);
 }

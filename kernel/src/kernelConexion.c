@@ -119,7 +119,7 @@ int conectar_con_memoria(config_de_kernel configuracion_kernel){
     log_info(logger, "Mensaje enviado!");
     
 	log_destroy(logger);
-	eliminar_paquete(conectar);
+	
 	return socketMemoria;
 }
 
