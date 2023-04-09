@@ -1,8 +1,20 @@
 #include <memoriaUtils.h>
+//#include "../include/memoriaUtils.h"
 
+t_log* mlogger;
+t_log* klogger;
+t_log* clogger;
+t_log* flogger;
 t_log* loggerMemoria;
 int conexion;
+int running_cpu;
+int running_k;
+int running_fs;
+int server_m;
+int clientes[4];
 t_config* memoriaConfig;
+pthread_t hiloConexion;
+
 
 void startSigHandlers(void) {
 	signal(SIGINT, sigHandler_sigint);
@@ -11,181 +23,225 @@ void startSigHandlers(void) {
 void sigHandler_sigint(int signo) {
 	log_warning(loggerMemoria, "Tiraste un CTRL+C, macho, abortaste el proceso.");
 	//metricas();
-	//log_debug(logger,"metricas");
-	terminar_programa(conexion, loggerMemoria, memoriaConfig);
+	//log_debug(mlogger,"metricas");
+	terminar_programa(loggerMemoria, memoriaConfig);
 	printf("-------------------FINAL POR CTRL+C-------------------");
 
 	exit(-1);
 }
 
-void terminar_programa(int conexion,t_log* logger, t_config* memoria){
+void terminar_programa(t_log* milogger, t_config* memoria){
     /*LEAKS*/
 	liberar_memoria();
 	liberar_listas();
-	liberar_conexion_memoria(conexion);
-	log_destroy(logger);
-    liberar_t_config();
+	liberar_conexion_memoria();
+	
+  log_destroy(milogger);
+  liberar_t_config();
 	config_destroy(memoria);
 	printf("----------FIN------------\n");
 };
 void liberar_memoria(){
-    /* TO DO */
+    log_destroy(mlogger);
+    log_destroy(clogger);
+    log_destroy(flogger);
+    log_destroy(klogger);
 };
 void liberar_listas(){
     /* TO DO */
 };
-void liberar_conexion_memoria(int conexion){
-    /* TO DO */
+void liberar_conexion_memoria(){
+    liberar_conexion(server_m);
 };
 void liberar_t_config(){
-    /* TO DO */
+   // free(config_memo.algoritmo);
+    //free(config_memo.ip);
+  //  free(config_memo.puerto);
 };
 void inicializar_configuracion(){
-    /* TO DO */
+    obtener_valores_de_configuracion_memoria(memoriaConfig);
+    mostrar_valores_de_configuracion_memoria();
 };
 
 void inicializar_memoria(){
-    /* TO DO */
+
+    inicializar_configuracion();
+    inicializar_logs();
+    inicializar_segmentos();
+    conectar();
 };
 void inicializar_segmentos(){
     /* TO DO */
 };	
 
+void inicializar_logs(){
+    loggerMemoria = log_create("logs/memoria.log","Memoria",true,LOG_LEVEL_TRACE);
+    mlogger = log_create("logs/info.log","Info Memoria",true,LOG_LEVEL_TRACE);
+    klogger = log_create("logs/kernel.log","Memoria -> Kernel",true,LOG_LEVEL_TRACE);
+    clogger = log_create("logs/cpu.log","Memoria -> CPU",true,LOG_LEVEL_TRACE);
+    flogger = log_create("logs/file_system.log","Memoria -> FileSystem",true,LOG_LEVEL_TRACE);
+}
 // Lo del memoria conexion: 
+void conectar_cpu(){
+    config_memo.cpu=esperar_cliente(server_m);
+    t_paquete* paquete =malloc(sizeof(t_paquete));
+    paquete = recibir_paquete(config_memo.cpu);
+    if(paquete->codigo_operacion != CPU){
+      log_error(clogger,"Vos no sos el CPU. Se cancela la conexión");
+      pthread_detach(hilo_cpu);
+			pthread_exit(&hilo_cpu);
+    }
+    log_info(clogger,"Se conectó el CPU: %d \n",config_memo.cpu);
+		free(paquete);
+    running_cpu=true;
+    ejecutar_cpu();
+}
+void conectar_kernel(){
+    config_memo.kernel=esperar_cliente(server_m);
+    t_paquete* paquete =malloc(sizeof(t_paquete));
+    paquete = recibir_paquete(config_memo.kernel);
+    if(paquete->codigo_operacion != KERNEL){
+      log_error(klogger,"Vos no sos el kernel. Se cancela la conexión %d",paquete->codigo_operacion);
+      eliminar_paquete(paquete);
+      pthread_detach(hilo_kernel);
+			pthread_exit(&hilo_kernel);
+    }
+    log_info(klogger,"Se conectó el kernel: %d \n",config_memo.kernel);
+		
+    free(paquete);
+    running_k=true;
+    ejecutar_kernel();
+}
+void conectar_fs(){
+  config_memo.fs=esperar_cliente(server_m);
+    t_paquete* paquete =malloc(sizeof(t_paquete));
+    paquete = recibir_paquete(config_memo.fs);
+    if(paquete->codigo_operacion != FILE_SYSTEM){
+      log_error(flogger,"Vos no sos el FS. Se cancela la conexión %d ",paquete->codigo_operacion);
+      eliminar_paquete(paquete);
+      pthread_detach(hilo_kernel);
+			pthread_exit(&hilo_kernel);
+    }
+    log_info(flogger,"Se conectó el FileSystem: %d \n",config_memo.fs);
+		
+    free(paquete);
+    running_k=true;
+    ejecutar_fs();
+}
+void conectar(){
 
-int SOCKET_KERNEL;
-int SOCKET_CPU;
-int SOCKET_FS;
-
-int iniciar_servicio_memoria(config_de_memoria configuracion_memoria)
-{
-  t_log* logger = iniciar_logger_modulo(MEMORIA_LOGGER);
-  log_info(logger,"iniciando servidor de memoria");
-
-  int socket_servicio_memoria = iniciar_servidor_en("127.0.0.1",configuracion_memoria.PUERTO_ESCUCHA);
-    
-  if(socket_servicio_memoria < 0)
+  server_m= iniciar_servidor_en(config_memo.ip,config_memo.puerto);
+  if(server_m < 0)
   {
-    log_error(logger,"Error creando el servicio de memoria");
+    log_error(mlogger,"Error creando el servicio de memoria");
     return EXIT_FAILURE;
   }
-
-  //log_info(logger, "Servicio de memoria abierto. Esperando conexiones");
-	log_info(logger, "Servidor Memoria iniciado correctamente.");
-  log_info(logger, "Esperando a los clientes CPU, Kernel y File System...");
-  log_destroy(logger);
-
-  return socket_servicio_memoria;
+  log_info(mlogger, "El servidor Memoria se inició correctamente");
+  
 }
 
-void manejar_paquetes_clientes(int socketCliente)
-{
-  Logger *logger = iniciar_logger_modulo(MEMORIA_LOGGER);
-  bool esKernel, esCPU;
-
-  switch (recibir_operacion(socketCliente))
-  {
-    case DESCONEXION:
-      log_warning(logger, "Se desconecto un cliente.");
-      return;
-
-    case MENSAJE:
-      
-      switch(interpretar_origen_conexion(socketCliente))
-      {
-        case KERNEL:
-          SOCKET_KERNEL = socketCliente;
-          log_info(logger, "Se conecto Kernel.\n");
-          //escuchar_modulo(socketCliente);
-          //escuchar_kernel(socketCliente);
-        break;
-        case CPU:
-          SOCKET_CPU = socketCliente;
-          log_info(logger, "Se conecto CPU.");
-          //escuchar_cpu(socketCliente);
-        break;
-        case FILE_SYSTEM:
-          SOCKET_FS = socketCliente;
-		  	  log_info(logger, "Se conecto FILE SYSTEM.");
-		  	  //escuchar_file_system(socketCliente);
-        break;
-        default:
-        log_info(logger, "Cliente desconocido.");
-        break;
-      }
-  }
-
-  log_destroy(logger);
-}
-
-modulo interpretar_origen_conexion(int socketAConexion)
-{
-  char* mensaje = obtener_mensaje_del_cliente(socketAConexion);
-  if(!strcmp(mensaje,"Kernel")) return KERNEL;
-  if(!strcmp(mensaje,"CPU")) return CPU;
-  if(!strcmp(mensaje,"FileSystem")) return FILE_SYSTEM;
-}
-
-/*void conexionesMemoria(){
-	int mid;
-
-	server_memo = iniciar_servidor(config_memoria->ip, config_memoria->puerto_memo);
-	int k = 0;
-
-	log_info(logger, "iniciando servidor Memoria");
-
-	log_info(logger, "Esperando nueva conexion..");
-	cliente_memoria[k] = esperar_cliente(server_memo);
-
-	int running = 1;
-
-	t_paquete* paquete = malloc(sizeof(t_paquete));
-	paquete = recibir_mensaje_carpincho(cliente_memoria[k]);
-	while(running){
-
-		int codigo = paquete->codigo_operacion;
-
-		switch (codigo) {
-		case KERNEL:
-        log_warning(logger,
-					"Operacion desconocida. No quieras meter la pata");
-					pthread_detach(hiloConexion);
-					pthread_exit(&hiloConexion);
-					liberar_conexion(cliente_memo);
-			break;
-
-			}
-	
-		k++;
-		eliminar_paquete(paquete);
-		cliente_memoria[k] = esperar_cliente(server_memo);
-		paquete = recibir_mensaje(cliente_memoria[k]);
-		}
-        */
 
 // Lo del memoriaConfig:
 
 config_de_memoria config_memo;
 
 void obtener_valores_de_configuracion_memoria(t_config* memoriaConfig){
-    config_memo.PUERTO_ESCUCHA = config_get_string_value(memoriaConfig, "PUERTO_ESCUCHA");
-    config_memo.TAM_MEMORIA = config_get_int_value(memoriaConfig, "TAM_MEMORIA");
-    config_memo.TAM_SEGMENTO_0 = config_get_int_value(memoriaConfig,"TAM_SEGMENTO_0");
-    config_memo.CANT_SEGMENTOS = config_get_int_value(memoriaConfig,"CANT_SEGMENTOS");
-    config_memo.RETARDO_MEMORIA = config_get_int_value(memoriaConfig,"RETARDO_MEMORIA");
-    config_memo.RETARDO_COMPACTACION = config_get_int_value(memoriaConfig,"RETARDO_COMPACTACION");
-    config_memo.ALGORITMO_ASIGNACION = config_get_string_value(memoriaConfig,"ALGORITMO_ASIGNACION");
-    config_memo.tam_maximo = config_memo.TAM_MEMORIA / config_memo.CANT_SEGMENTOS;
-    
+    config_memo.puerto = config_get_string_value(memoriaConfig, "PUERTO_ESCUCHA");
+    config_memo.tam_memo = config_get_int_value(memoriaConfig, "TAM_MEMORIA");
+    config_memo.tam_seg_0 = config_get_int_value(memoriaConfig,"TAM_SEGMENTO_0");
+    config_memo.cant_seg = config_get_int_value(memoriaConfig,"CANT_SEGMENTOS");
+    config_memo.retardo = config_get_int_value(memoriaConfig,"RETARDO_MEMORIA");
+    config_memo.compactacion = config_get_int_value(memoriaConfig,"RETARDO_COMPACTACION");
+    config_memo.algoritmo = config_get_string_value(memoriaConfig,"ALGORITMO_ASIGNACION");
+    config_memo.tam_maximo = config_memo.tam_memo / config_memo.cant_seg;
+    config_memo.ip = string_duplicate("127.0.0.1");
 }
 
 void mostrar_valores_de_configuracion_memoria (){
-    printf("PUERTO_ESCUCHA = %s\n", config_memo.PUERTO_ESCUCHA);
-    printf("TAM_MEMORIA = %d\n" , config_memo.TAM_MEMORIA);
-    printf("TAM_SEGMENTO_0 = %d\n" , config_memo.TAM_SEGMENTO_0);
-    printf("CANT_SEGMENTOS = %d\n" , config_memo.CANT_SEGMENTOS);
-    printf("RETARDO_MEMORIA = %d\n" , config_memo.RETARDO_MEMORIA);
-    printf("RETARDO_COMPACTACION = %d\n", config_memo.RETARDO_COMPACTACION);
-    printf("ALGORITMO_ASIGNACION = %s\n" , config_memo.ALGORITMO_ASIGNACION);
+    printf("puerto = %s\n", config_memo.puerto);
+    printf("tam_memo = %d\n" , config_memo.tam_memo);
+    printf("tam_seg_0 = %d\n" , config_memo.tam_seg_0);
+    printf("cant_seg = %d\n" , config_memo.cant_seg);
+    printf("retardo = %d\n" , config_memo.retardo);
+    printf("compactacion = %d\n", config_memo.compactacion);
+    printf("algoritmo = %s\n" , config_memo.algoritmo);
     printf("Tamaño maximo = %d\n" , config_memo.tam_maximo);
+
 }
+
+
+  void ejecutar_kernel(){
+    int conectar=config_memo.kernel;
+    log_trace(mlogger, "Por ejecutar las tareas del kernel");
+
+    //t_paquete* paquete_cpu =malloc(size_of(t_paquete));
+    while (running_k)
+    {
+    
+      /*paquete_cpu=recibir_paquete(conectar);
+      switch (paquete_cpu->codigo_operacion)
+      {
+          case :
+            
+            break;
+          
+          default:
+            break;
+      }
+      eliminar_paquete(paquete_cpu);*/
+      running_k=false;
+      log_trace_(klogger,"terminé de ejecutar kernel");
+  }
+  }
+  void ejecutar_cpu(){
+    int conectar=config_memo.cpu;
+    log_trace(clogger, "Por ejecutar las tareas del CPU");
+
+    //t_paquete* paquete_cpu =malloc(size_of(t_paquete));
+    while (running_cpu)
+    {
+      /*paquete_cpu=recibir_paquete(conectar);
+      switch (paquete_cpu->codigo_operacion)
+      {
+          case :
+            
+            break;
+          
+          default:
+            break;
+      }
+      eliminar_paquete(paquete_cpu);*/
+      running_cpu=false;
+    }
+    log_info(clogger,"Terminando de ejecutar las tareas del CPU");
+    
+  }
+  void ejecutar_fs(){
+    int conectar=config_memo.fs;
+    log_trace(flogger, "Por ejecutar las tareas del FileSystem");
+
+    //t_paquete* paquete_cpu =malloc(size_of(t_paquete));
+    while (running_fs)
+    {
+      //printf("Por ejecutar las tareas del fileSystem\n");
+      /*paquete_cpu=recibir_paquete(conectar);
+      switch (paquete_cpu->codigo_operacion)
+      {
+          case :
+            
+            break;
+          
+          default:
+            break;
+      }
+      eliminar_paquete(paquete_cpu);*/
+      running_fs=false;
+    }
+    log_info(flogger,"Terminando de ejecutar las tareas del FileSystem");
+    
+  }
+
+  void loggear(int tipo, int level, void* algo, ...)
+  {
+
+  }

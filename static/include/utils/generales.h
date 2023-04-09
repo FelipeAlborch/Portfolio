@@ -56,7 +56,8 @@ typedef enum
 	M_WRITE,
 	INICIO_PROCESO,
 	FIN_PROCESO,
-	OK
+	OK,
+	ERROR
 
 }msj_memoria;
 

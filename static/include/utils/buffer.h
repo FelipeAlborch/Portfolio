@@ -39,6 +39,7 @@ typedef struct
 */
 void* recibir_buffer(int*, int);
 
-void crear_buffer(t_paquete*);
-
+void _crear_buffer(t_paquete*);
+t_buffer* crear_buffer(void* stream);
+void eliminar_buffer(t_buffer*);
 #endif

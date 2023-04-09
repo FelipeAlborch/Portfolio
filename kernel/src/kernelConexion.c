@@ -112,11 +112,14 @@ int conectar_con_memoria(config_de_kernel configuracion_kernel){
 	log_info(logger, "Conexion con la Memoria realizada con exito!");
 
 	log_info(logger, "Enviando un mensaje a la Memoria...");
-    enviar_mensaje("Kernel", socketMemoria);
+    
+	t_paquete* conectar= crear_paquete();
+	conectar->codigo_operacion= KERNEL;
+	enviar_paquete(conectar, socketMemoria);
     log_info(logger, "Mensaje enviado!");
     
 	log_destroy(logger);
-
+	
 	return socketMemoria;
 }
 
