@@ -62,25 +62,15 @@ main(int argc, char *argv[])
 
 void *connection_handler(void *p_socket_fd)
 {
-    int n;
-
     int socket_fd = *(int *)p_socket_fd;
 
-    t_payload *payload = payload_create();
+    char *message = read_socket_string(socket_fd);
 
-    n = read_socket(socket_fd, payload);
-    assert(n >= 0);
+    printf("%s\n", message);
 
-    printf("%s\n", mem_hexstring(payload->buffer, payload->size));
+    free(message);
 
-    payload_destroy(payload);
-
-    payload = payload_create_string("filesystem a memoria");
-
-    n = write_socket(socket_fd, payload);
-    assert(n >= 0);
-
-    payload_destroy(payload);
+    write_socket_string(socket_fd, "mensaje recibido");
     
     conn_close(socket_fd);
 

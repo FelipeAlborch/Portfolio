@@ -13,10 +13,10 @@ typedef enum Host {
     CLIENT
 } Host;
 
-typedef struct t_payload {
+typedef struct t_message {
     void *buffer;
     int size;
-} t_payload;
+} t_message;
 
 int conn_create_localhost(Host, char *);
 
@@ -28,22 +28,18 @@ int conn_close(int);
 
 int peek_socket(int, void *, int);
 
-int read_socket(int, t_payload *);
+int read_socket(int, void *, int);
 
-int read_socket_tlv_list(int, t_list *);
+char* read_socket_string(int);
 
-int write_socket(int, t_payload *);
+t_list *read_socket_tlv_list(int);
+
+int write_socket(int, void *, int);
+
+int write_socket_string(int, char *);
 
 int write_socket_tlv_list(int, t_list *);
 
 void *buffer_create(int);
-
-t_payload *payload_create();
-
-t_payload *payload_create_string(char *);
-
-char *payload_get_string(t_payload *);
-
-void payload_destroy(t_payload *);
 
 #endif

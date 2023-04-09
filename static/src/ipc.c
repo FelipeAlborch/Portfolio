@@ -67,20 +67,31 @@ int peek_socket(int socket_fd, void *buffer, int buffer_size)
     return n;
 }
 
-int read_socket(int socket_fd, t_payload *payload)
+int read_socket(int socket_fd, void *buffer, int buffer_size)
 {
-    int n = recv(socket_fd, &payload->size, sizeof(int), MSG_WAITALL);
-    assert(n >= 0);
-
-    payload->buffer = malloc(payload->size);
-    n = recv(socket_fd, payload->buffer, payload->size, MSG_WAITALL);
+    int n = recv(socket_fd, buffer, buffer_size, MSG_WAITALL);
     assert(n >= 0);
 
     return n;
 }
 
-int read_socket_tlv_list(int socket_fd, t_list *tlv_list)
+char* read_socket_string(int socket_fd)
 {
+    int buffer_size;
+    int n = recv(socket_fd, &buffer_size, sizeof(int), MSG_WAITALL);
+    assert(n >= 0);
+
+    char *string = malloc(buffer_size + 1);
+    n = recv(socket_fd, string, buffer_size, MSG_WAITALL);
+    assert(n >= 0);
+    string[buffer_size] = '\0';
+
+    return string;
+}
+
+t_list *read_socket_tlv_list(int socket_fd)
+{
+    t_list *tlv_list = list_create();
     int n = recv(socket_fd, &tlv_list->elements_count, sizeof(int), MSG_WAITALL);
     assert(n >= 0);
 
@@ -97,16 +108,24 @@ int read_socket_tlv_list(int socket_fd, t_list *tlv_list)
         list_add(tlv_list, tlv);
     }
 
+    return tlv_list;
+}
+
+int write_socket(int socket_fd, void *buffer, int buffer_size)
+{
+    int n = send(socket_fd, buffer, buffer_size, 0);
+    assert(n >= 0);
+
     return n;
 }
 
-int write_socket(int socket_fd, t_payload *payload)
+int write_socket_string(int socket_fd, char *string)
 {
-    int _buffer_size = sizeof(payload->size) + payload->size;
-    void *_buffer = malloc(_buffer_size);
-    memcpy(_buffer, &payload->size, sizeof(payload->size));
-    memcpy(_buffer + sizeof(payload->size), payload->buffer, payload->size);
-    int n = send(socket_fd, _buffer, _buffer_size, 0);
+    int buffer_size = sizeof(int) + strlen(string);
+    void *buffer = malloc(buffer_size);
+    memcpy(buffer, &buffer_size, sizeof(int));
+    memcpy(buffer + sizeof(int), string, strlen(string));
+    int n = send(socket_fd, buffer, buffer_size, 0);
     assert(n >= 0);
 
     return n;
@@ -140,39 +159,4 @@ void *buffer_create(int size)
     memset(buffer, 0, size);
     
     return buffer;
-}
-
-t_payload *payload_create()
-{
-    t_payload *payload = malloc(sizeof(t_payload));
-    payload->buffer = NULL;
-    payload->size = 0;
-
-    return payload;
-}
-
-t_payload *payload_create_string(char *value)
-{
-    t_payload *payload = payload_create();
-    payload->size = strlen(value) + 1;
-    payload->buffer = malloc(payload->size);
-    memcpy(payload->buffer, value, payload->size);
-    ((char *)payload->buffer)[payload->size - 1] = '\0';
-
-    return payload;
-}
-
-char *payload_get_string(t_payload *payload)
-{
-    if (((char *)payload->buffer)[payload->size - 1] != '\0') {
-        payload->buffer = realloc(payload->buffer, (++payload->size) * sizeof(char));
-        ((char *)payload->buffer)[payload->size - 1] = '\0';
-    }
-    return (char *)payload->buffer;;
-}
-
-void payload_destroy(t_payload *payload)
-{
-    free(payload->buffer);
-    free(payload);
 }
