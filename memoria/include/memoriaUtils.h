@@ -76,7 +76,7 @@ typedef struct{
 void obtener_valores_de_configuracion_memoria(t_config*);
 void mostrar_valores_de_configuracion_memoria();
 
-
-void loggear(int tipo, int level,void* algo,...);
+// ID --> para el id del segmento y para la direc fisica
+void loggear(int code, int pid, void* algo, int id, int size, float base);
 
 #endif
