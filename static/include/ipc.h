@@ -42,6 +42,8 @@ t_payload *payload_create();
 
 t_payload *payload_create_string(char *);
 
-void payload_destroy(t_payload *payload);
+char *payload_get_string(t_payload *);
+
+void payload_destroy(t_payload *);
 
 #endif

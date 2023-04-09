@@ -151,14 +151,23 @@ t_payload *payload_create()
     return payload;
 }
 
-t_payload *payload_create_string(char *string)
+t_payload *payload_create_string(char *value)
 {
     t_payload *payload = payload_create();
-    payload->size = strlen(string) + 1;
+    payload->size = strlen(value) + 1;
     payload->buffer = malloc(payload->size);
-    memcpy(payload->buffer, string, payload->size);
+    memcpy(payload->buffer, value, payload->size);
 
     return payload;
+}
+
+char *payload_get_string(t_payload *payload)
+{
+    if (((char *)payload->buffer)[payload->size - 1] != '\0') {
+        payload->buffer = realloc(payload->buffer, (++payload->size) * sizeof(char));
+        ((char *)payload->buffer)[payload->size - 1] = '\0';
+    }
+    return (char *)payload->buffer;;
 }
 
 void payload_destroy(t_payload *payload)

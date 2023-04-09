@@ -80,5 +80,9 @@ t_tlv *tlv_create_string(char *value) {
 }
 
 char *tlv_get_string(t_tlv *tlv) {
+    if (((char *)tlv->value)[tlv->length - 1] != '\0') {
+        tlv->value = realloc(tlv->value, (++tlv->length) * sizeof(char));
+        ((char *)tlv->value)[tlv->length - 1] = '\0';
+    }
     return (char *)tlv->value;
 }
