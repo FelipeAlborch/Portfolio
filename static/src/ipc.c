@@ -157,6 +157,7 @@ t_payload *payload_create_string(char *value)
     payload->size = strlen(value) + 1;
     payload->buffer = malloc(payload->size);
     memcpy(payload->buffer, value, payload->size);
+    ((char *)payload->buffer)[payload->size - 1] = '\0';
 
     return payload;
 }

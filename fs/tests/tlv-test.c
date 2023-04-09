@@ -3,7 +3,9 @@
 
 START_TEST (test_tlv_create_int)
 {
-    t_tlv *result = tlv_create_int(10);
-    ck_assert_int_eq(tlv_get_int(result), 10);
+    int expected = 10;
+    t_tlv *tlv = tlv_create_int(expected);
+    int actual = tlv_get_int(tlv);
+    ck_assert_int_eq(expected, actual);
 }
 END_TEST
