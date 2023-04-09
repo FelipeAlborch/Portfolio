@@ -2,15 +2,14 @@
 
 #define LOCALHOST "127.0.0.1"
 
-int conn_create_localhost(Host host_type, char *puerto)
+int conn_create_localhost(Host host_type, char *port)
 {
-    return conn_create(host_type, LOCALHOST, puerto);
+    return conn_create(host_type, LOCALHOST, port);
 }
 
 int conn_create(Host host_type, char *ip, char *port)
 {
-    int error = 0;
-    int socket_fd = -1;
+    int error = 0, socket_fd = -1;
     struct addrinfo hints = {0}, *servinfo = NULL, *p = NULL;
 
     hints.ai_family = AF_UNSPEC;

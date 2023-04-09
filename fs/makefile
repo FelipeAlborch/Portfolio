@@ -90,6 +90,10 @@ memcheck: all
 helgrind: all
 	valgrind --tool=helgrind $(HELGRIND_FLAGS) ./$(BIN) $(ARGS)
 
+	
+obj/%.o: tests/%.c $(SRCS_H) $(DEPS) | $(dir $(OBJS))
+	gcc $(CFLAGS) -c -o "$@" $< $(IDIRS:%=-I%)
+
 .PHONY: check
 check: CFLAGS = $(CDEBUG)
 check: OBJS += $(patsubst tests/%.c,obj/%.o,$(shell find tests/ -iname "*.c"))
@@ -98,5 +102,10 @@ check: $(OBJS) | $(dir $(BIN))
 	gcc $(CFLAGS) -o bin/check tests/check.c $(DEPS) $(IDIRS:%=-I%) $(LIBDIRS:%=-L%) $(LIBS:%=-l%)
 	./bin/check
 
-obj/%.o: tests/%.c $(SRCS_H) $(DEPS) | $(dir $(OBJS))
-	gcc $(CFLAGS) -c -o "$@" $< $(IDIRS:%=-I%)
+.PHONY: cunit
+cunit: CFLAGS = $(CDEBUG)
+cunit: OBJS += $(patsubst tests/%.c,obj/%.o,$(shell find tests/ -iname "*.c"))
+cunit: LIBS = cunit commons pthread m rt subunit
+cunit: $(OBJS) | $(dir $(BIN))
+	gcc $(CFLAGS) -o bin/cunit tests/cunit.c $(DEPS) $(IDIRS:%=-I%) $(LIBDIRS:%=-L%) $(LIBS:%=-l%)
+	./bin/cunit
