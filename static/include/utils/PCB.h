@@ -65,4 +65,6 @@ typedef struct LineaInstruccion
   ARCHIVO,
 } parametros; */
 
+void* liberar_instruccion(LineaInstruccion*);
+
 #endif

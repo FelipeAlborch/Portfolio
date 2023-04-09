@@ -22,5 +22,6 @@ LineaInstruccion *leer_linea_de_instruccion(FILE*);
 void rellenar_lista_de_instrucciones(Lista*, FILE*);
 void enviar_instrucciones_a_kernel(char*);
 int veces(char*, char);
+void* liberar_tokens(char**);
 
 #endif

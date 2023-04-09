@@ -28,18 +28,9 @@ void enviar_instrucciones_a_kernel(char *nombre_archivo)
   */
   
   dump(instrucciones);
+  // La funcion liberar_instruccion esta en el archivo PCB.c, la puse ahi porque ahi pusiste el struct LineaInstruccion. De todas maneras va a venir bien para liberar las instrucciones del pcb
+  list_destroy_and_destroy_elements(instrucciones, (void*)liberar_instruccion);
 
-  for(int i = 0; i < list_size(instrucciones); i++)
-  {
-      LineaInstruccion* una_instr = list_get(instrucciones, i);
-      free(una_instr->identificador);
-      free(una_instr->parametros[0]);
-      free(una_instr->parametros[1]);
-      free(una_instr->parametros[2]);
-      free(una_instr);
-  }
-
-  list_destroy(instrucciones);
   log_destroy(logger);
   //eliminar_paquete(paquete);
 }
@@ -137,7 +128,7 @@ void asignar_tokens_a_linea_instruccion(LineaInstruccion *linea_instruccion, cha
 
   linea_instruccion->parametros[2] = strdup(tokens[3]);
 
-  //free(*tokens);
+  liberar_tokens(tokens);
 }
 
 void agregar_linea_de_instruccion_a_lista(LineaInstruccion *linea_instruccion, Lista *lista)
@@ -173,4 +164,14 @@ void dump(Lista *instrucciones)
 	  lineaInstruccion->parametros[2]
     );
   }
+}
+
+void* liberar_tokens(char** tokens)
+{
+  // Hay que eliminar cada posicion en la que podriamos haber escrito algo, y despues el tokens en si.
+  free(tokens[0]);
+  free(tokens[1]);
+  free(tokens[2]);
+  free(tokens[3]);
+  free(tokens);
 }
