@@ -1,6 +1,7 @@
 #include "kernelConfig.h"
 
 config_de_kernel configuracionKernel;
+t_dictionary* diccionario_recursos;
 
 config_de_kernel obtener_valores_de_configuracion_kernel(Config* kernelConfig){
     configuracionKernel.IP_MEMORIA = config_get_string_value(kernelConfig,"IP_MEMORIA");
@@ -16,6 +17,7 @@ config_de_kernel obtener_valores_de_configuracion_kernel(Config* kernelConfig){
     configuracionKernel.GRADO_MAX_MULTIPROGRAMACION = config_get_int_value(kernelConfig,"GRADO_MAX_MULTIPROGRAMACION");
     configuracionKernel.RECURSOS = config_get_array_value(kernelConfig,"RECURSOS");
     configuracionKernel.INSTANCIAS_RECURSOS = config_get_array_value(kernelConfig,"INSTANCIAS_RECURSOS");
+    crear_diccionario_recursos();
     return configuracionKernel;
 }
 void mostrar_valores_de_configuracion_kernel(config_de_kernel configuracion_kernel){
@@ -30,6 +32,29 @@ void mostrar_valores_de_configuracion_kernel(config_de_kernel configuracion_kern
     printf("ESTIMACION_INICIAL = %d\n", configuracionKernel.ESTIMACION_INICIAL);
     printf("HRRN_ALFA = %f\n", configuracionKernel.HRRN_ALFA);
     printf("GRADO_MAX_MULTIPROGRAMACION = %d\n", configuracionKernel.GRADO_MAX_MULTIPROGRAMACION);
-    printf("RECURSOS = %s\n", configuracionKernel.RECURSOS[0]);                                    // SOLO IMPRIMO UNO PARA VER SI SE TOMO BIEN
-    printf("INSTANCIAS_RECURSOS = %s\n", configuracionKernel.INSTANCIAS_RECURSOS[0]);              // SOLO IMPRIMO UNO PARA VER SI SE TOMO BIEN
+    //printf("RECURSOS = %s\n", configuracionKernel.RECURSOS[0]);                                    // SOLO IMPRIMO UNO PARA VER SI SE TOMO BIEN
+    //printf("INSTANCIAS_RECURSOS = %s\n", configuracionKernel.INSTANCIAS_RECURSOS[0]);              // SOLO IMPRIMO UNO PARA VER SI SE TOMO BIEN
+    for(int i = 0; i < string_array_size(configuracionKernel.RECURSOS); i++)
+    {
+        printf("RECURSO = %s, INSTANCIAS = %s \n", configuracionKernel.RECURSOS[i], configuracion_kernel.INSTANCIAS_RECURSOS[i]);
+    }
+}
+
+void crear_diccionario_recursos()
+{
+    diccionario_recursos = dictionary_create();
+    for(int i = 0; i < string_array_size(configuracionKernel.RECURSOS); i++)
+    {
+        dictionary_put(diccionario_recursos, configuracionKernel.RECURSOS[i], atoi(configuracionKernel.INSTANCIAS_RECURSOS[i]));
+    }
+}
+
+void leer_diccionario_recursos()
+{
+    for(int i = 0; i < dictionary_size(diccionario_recursos); i++)
+    {   
+        //char* key = configuracionKernel.RECURSOS[i];
+        int instancia_recurso = dictionary_get(diccionario_recursos, configuracionKernel.RECURSOS[i]);
+        printf("LAS INSTANCIAS DEL RECURSO %s SON: %d \n",configuracionKernel.RECURSOS[i] ,instancia_recurso);
+    }
 }

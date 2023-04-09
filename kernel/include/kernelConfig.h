@@ -23,6 +23,7 @@ typedef struct{
 }config_de_kernel;
 
 extern config_de_kernel configuracionKernel;
+extern t_dictionary* diccionario_recursos;
 
 
 /**
@@ -42,6 +43,10 @@ config_de_kernel obtener_valores_de_configuracion_kernel(t_config*);
 *        config_de_kernel configuracion_kernel - La configuracion creada previamente a partir del t_config*
 */
 void mostrar_valores_de_configuracion_kernel(config_de_kernel);
+
+void crear_diccionario_recursos();
+
+void leer_diccionario_recursos();
 
 
 #endif
