@@ -16,11 +16,15 @@ extern int pid_global;
 // Cola de planificacion new global.
 extern t_queue* cola_new;
 
-void inicializar_planificadores(config_de_kernel);
+void inicializar_estructuras_planificacion();
 
-void planificador_largo_plazo();
+void destruir_estructuras_planificacion();
 
-void planificador_corto_plazo();
+void iniciar_planificadores();
+
+void* planificador_largo_plazo();
+
+void* planificador_corto_plazo_fifo();
 
 void agregar_proceso_new(pcb*);
 
@@ -31,5 +35,14 @@ void agregar_proceso_exec(pcb*);
 void agregar_proceso_terminated(pcb*);
 
 void agregar_proceso_block(pcb*);
+
+pcb* obtener_proceso_new();
+
+pcb* obtener_proceso_ready();
+
+pcb* obtener_proceso_block();
+
+pcb* desalojar_proceso_en_exec();
+
 
 #endif
