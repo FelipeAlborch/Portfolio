@@ -2,6 +2,9 @@
 //#include "../include/memoriaUtils.h"
 
 t_log* mlogger;
+t_log* klogger;
+t_log* clogger;
+t_log* flogger;
 t_log* loggerMemoria;
 int conexion;
 int running_cpu;
@@ -32,14 +35,17 @@ void terminar_programa(t_log* milogger, t_config* memoria){
 	liberar_memoria();
 	liberar_listas();
 	liberar_conexion_memoria();
-	log_destroy(mlogger);
+	
   log_destroy(milogger);
   liberar_t_config();
 	config_destroy(memoria);
 	printf("----------FIN------------\n");
 };
 void liberar_memoria(){
-    /* TO DO */
+    log_destroy(mlogger);
+    log_destroy(clogger);
+    log_destroy(flogger);
+    log_destroy(klogger);
 };
 void liberar_listas(){
     /* TO DO */
@@ -58,89 +64,82 @@ void inicializar_configuracion(){
 };
 
 void inicializar_memoria(){
-    loggerMemoria = iniciar_logger_modulo(MEMORIA_LOGGER);
-    mlogger = log_create("logs/info.log","Memoria",true,LOG_LEVEL_TRACE);
+
     inicializar_configuracion();
+    inicializar_logs();
+    inicializar_segmentos();
     conectar();
 };
 void inicializar_segmentos(){
     /* TO DO */
 };	
 
+void inicializar_logs(){
+    loggerMemoria = log_create("logs/memoria.log","Memoria",true,LOG_LEVEL_TRACE);
+    mlogger = log_create("logs/info.log","Info Memoria",true,LOG_LEVEL_TRACE);
+    klogger = log_create("logs/kernel.log","Memoria -> Kernel",true,LOG_LEVEL_TRACE);
+    clogger = log_create("logs/cpu.log","Memoria -> CPU",true,LOG_LEVEL_TRACE);
+    flogger = log_create("logs/file_system.log","Memoria -> FileSystem",true,LOG_LEVEL_TRACE);
+}
 // Lo del memoria conexion: 
+void conectar_cpu(){
+    config_memo.cpu=esperar_cliente(server_m);
+    t_paquete* paquete =malloc(sizeof(t_paquete));
+    paquete = recibir_paquete(config_memo.cpu);
+    if(paquete->codigo_operacion != CPU){
+      log_error(clogger,"Vos no sos el CPU. Se cancela la conexión");
+      pthread_detach(hilo_cpu);
+			pthread_exit(&hilo_cpu);
+    }
+    log_info(clogger,"Se conectó el CPU: %d \n",config_memo.cpu);
+		free(paquete);
+    running_cpu=true;
+    ejecutar_cpu();
+}
+void conectar_kernel(){
+    config_memo.kernel=esperar_cliente(server_m);
+    t_paquete* paquete =malloc(sizeof(t_paquete));
+    paquete = recibir_paquete(config_memo.kernel);
+    if(paquete->codigo_operacion != KERNEL){
+      log_error(klogger,"Vos no sos el kernel. Se cancela la conexión %d",paquete->codigo_operacion);
+      eliminar_paquete(paquete);
+      pthread_detach(hilo_kernel);
+			pthread_exit(&hilo_kernel);
+    }
+    log_info(klogger,"Se conectó el kernel: %d \n",config_memo.kernel);
+		
+    free(paquete);
+    running_k=true;
+    ejecutar_kernel();
+}
+void conectar_fs(){
+  config_memo.fs=esperar_cliente(server_m);
+    t_paquete* paquete =malloc(sizeof(t_paquete));
+    paquete = recibir_paquete(config_memo.fs);
+    if(paquete->codigo_operacion != FILE_SYSTEM){
+      log_error(flogger,"Vos no sos el FS. Se cancela la conexión %d ",paquete->codigo_operacion);
+      eliminar_paquete(paquete);
+      pthread_detach(hilo_kernel);
+			pthread_exit(&hilo_kernel);
+    }
+    log_info(flogger,"Se conectó el FileSystem: %d \n",config_memo.fs);
+		
+    free(paquete);
+    running_k=true;
+    ejecutar_fs();
+}
+void conectar(){
 
-int SOCKET_KERNEL;
-int SOCKET_CPU;
-int SOCKET_FS;
-
-int iniciar_servicio_memoria(config_de_memoria configuracion_memoria)
-{
-  t_log* mlogger = iniciar_logger_modulo(MEMORIA_LOGGER);
-  log_info(mlogger,"iniciando servidor de memoria");
-
-  int socket_servicio_memoria = iniciar_servidor_en("127.0.0.1",configuracion_memoria.puerto);
-    
-  if(socket_servicio_memoria < 0)
+  server_m= iniciar_servidor_en(config_memo.ip,config_memo.puerto);
+  if(server_m < 0)
   {
     log_error(mlogger,"Error creando el servicio de memoria");
     return EXIT_FAILURE;
   }
-
-  //log_info(mlogger, "Servicio de memoria abierto. Esperando conexiones");
-	log_info(mlogger, "Servidor Memoria iniciado correctamente.");
-  log_info(mlogger, "Esperando a los clientes CPU, Kernel y File System...");
-  log_destroy(mlogger);
-
-  return socket_servicio_memoria;
+  log_info(mlogger, "El servidor Memoria se inició correctamente");
+  
 }
 
-void manejar_paquetes_clientes(int socketCliente)
-{
-  Logger *mlogger = iniciar_logger_modulo(MEMORIA_LOGGER);
-
-
-  switch (recibir_operacion(socketCliente))
-  {
-    case DESCONEXION:
-      log_warning(mlogger, "Se desconecto un cliente.");
-      return;
-
-    case MENSAJE:
-      
-      switch(interpretar_origen_conexion(socketCliente))
-      {
-        case KERNEL:
-          SOCKET_KERNEL = socketCliente;
-          log_info(mlogger, "Se conecto Kernel.\n");
-          //escuchar_modulo(socketCliente);
-          //escuchar_kernel(socketCliente);
-        break;
-        case CPU:
-          SOCKET_CPU = socketCliente;
-          log_info(mlogger, "Se conecto CPU.");
-          //escuchar_cpu(socketCliente);
-        break;
-        case FILE_SYSTEM:
-          SOCKET_FS = socketCliente;
-		  	  log_info(mlogger, "Se conecto FILE SYSTEM.");
-		  	  //escuchar_file_system(socketCliente);
-        break;
-        default:
-        log_info(mlogger, "Cliente desconocido.");
-        break;
-      }
-  }
-
-  log_destroy(mlogger);
-}
-
-modulo interpretar_origen_conexion(int socketAConexion)
-{
-  char* mensaje = obtener_mensaje_del_cliente(socketAConexion);
-  if(!strcmp(mensaje,"Kernel")) return KERNEL;
-  if(!strcmp(mensaje,"CPU")) return CPU;
-  if(!strcmp(mensaje,"FileSystem")) return FILE_SYSTEM;
-}
 
 // Lo del memoriaConfig:
 
@@ -169,44 +168,8 @@ void mostrar_valores_de_configuracion_memoria (){
     printf("Tamaño maximo = %d\n" , config_memo.tam_maximo);
 
 }
-void conectar_cpu(){
-    config_memo.cpu=esperar_cliente(server_m);
-    t_paquete* paquete =malloc(sizeof(t_paquete));
-    paquete = recibir_paquete(config_memo.cpu);
-    if(paquete->codigo_operacion != CPU){
-      log_error(mlogger,"Vos no sos el CPU. Se cancela la conexión");
-      pthread_detach(hilo_cpu);
-			pthread_exit(&hilo_cpu);
-    }
-    log_info(mlogger,"Se conectó el CPU: %d \n",config_memo.cpu);
-		free(paquete);
-    running_cpu=true;
-    ejecutar_cpu();
-}
-void conectar_kernel(){
-    config_memo.kernel=esperar_cliente(server_m);
-    t_paquete* paquete =malloc(sizeof(t_paquete));
-    paquete = recibir_paquete(config_memo.kernel);
-    if(paquete->codigo_operacion != KERNEL){
-      log_error(mlogger,"Vos no sos el kernel. Se cancela la conexión %d",paquete->codigo_operacion);
-      eliminar_paquete(paquete);
-      pthread_detach(hilo_kernel);
-			pthread_exit(&hilo_kernel);
-    }
-    log_info(mlogger,"Se conectó el kernel: %d \n",config_memo.kernel);
-		
-    free(paquete);
-    running_k=true;
-    ejecutar_kernel();
-}
-void conectar_fs(){
 
-}
-void conectar(){
-  server_m= iniciar_servidor_en(config_memo.ip,config_memo.puerto);
-  log_info(mlogger, "iniciando servidor Memoria");
-  
-}
+
   void ejecutar_kernel(){
     int conectar=config_memo.kernel;
     log_trace(mlogger, "Por ejecutar las tareas del kernel");
@@ -214,7 +177,7 @@ void conectar(){
     //t_paquete* paquete_cpu =malloc(size_of(t_paquete));
     while (running_k)
     {
-      printf("Por ejecutar las tareas del kernel\n");
+    
       /*paquete_cpu=recibir_paquete(conectar);
       switch (paquete_cpu->codigo_operacion)
       {
@@ -227,17 +190,16 @@ void conectar(){
       }
       eliminar_paquete(paquete_cpu);*/
       running_k=false;
-      printf("termine de ejecutar kernel\n");
+      log_trace_(klogger,"terminé de ejecutar kernel");
   }
   }
   void ejecutar_cpu(){
     int conectar=config_memo.cpu;
-   // log_trace(mlogger, "Por ejecutar las tareas del kernel");
+    log_trace(clogger, "Por ejecutar las tareas del CPU");
 
     //t_paquete* paquete_cpu =malloc(size_of(t_paquete));
     while (running_cpu)
     {
-      printf("Por ejecutar las tareas del cpu\n");
       /*paquete_cpu=recibir_paquete(conectar);
       switch (paquete_cpu->codigo_operacion)
       {
@@ -251,12 +213,35 @@ void conectar(){
       eliminar_paquete(paquete_cpu);*/
       running_cpu=false;
     }
-    
+    log_info(clogger,"Terminando de ejecutar las tareas del CPU");
     
   }
-  void ejecutarr_fs(){
+  void ejecutar_fs(){
+    int conectar=config_memo.fs;
+    log_trace(flogger, "Por ejecutar las tareas del FileSystem");
 
+    //t_paquete* paquete_cpu =malloc(size_of(t_paquete));
+    while (running_fs)
+    {
+      //printf("Por ejecutar las tareas del fileSystem\n");
+      /*paquete_cpu=recibir_paquete(conectar);
+      switch (paquete_cpu->codigo_operacion)
+      {
+          case :
+            
+            break;
+          
+          default:
+            break;
+      }
+      eliminar_paquete(paquete_cpu);*/
+      running_fs=false;
+    }
+    log_info(flogger,"Terminando de ejecutar las tareas del FileSystem");
+    
   }
+
   void loggear(int tipo, int level, void* algo, ...)
   {
+
   }

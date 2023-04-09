@@ -15,6 +15,7 @@ extern pthread_t hilo_cpu;
 extern pthread_t hilo_kernel;
 extern pthread_t hilo_fs;
 extern pthread_t hiloConexion;
+extern config_de_memoria config_memo;
 
 /*typedef struct
 {
@@ -42,25 +43,17 @@ void liberar_t_config();
 void inicializar_configuracion();
 void inicializar_memoria();
 void inicializar_segmentos();
-
+void inicializar_logs();
 
 // Lo del conexion:
 void conectar();
 void conectar_cpu();
 void conectar_kernel();
 void conectar_fs();
-int iniciar_servicio_memoria(config_de_memoria);
-
-void manejar_paquetes_clientes(int);
-
-modulo interpretar_origen_conexion(int);
 
 void ejecutar_kernel();
 void ejecutar_cpu();
 void ejecutar_fs();
-
-
-
 
 // Lo del config:
 
@@ -80,10 +73,7 @@ typedef struct{
 
 }config_de_memoria;
 
-extern config_de_memoria config_memo;
-
 void obtener_valores_de_configuracion_memoria(t_config*);
-
 void mostrar_valores_de_configuracion_memoria();
 
 
