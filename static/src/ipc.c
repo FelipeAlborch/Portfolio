@@ -7,50 +7,79 @@ int conn_create_localhost(Host host_type, char *puerto)
     return conn_create(host_type, LOCALHOST, puerto);
 }
 
-int conn_create(Host host_type, char *ip, char *puerto)
+int conn_create(Host host_type, char *ip, char *port)
 {
-    int error;
+    int error = 0;
+    int socket_fd = -1;
+    struct addrinfo hints = {0}, *servinfo = NULL, *p = NULL;
 
-    struct addrinfo hints, *servinfo;
-
-    memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    error = getaddrinfo(ip, puerto, &hints, &servinfo);
-    assert(error == 0);
-
-    int socket_fd = socket(
-        servinfo->ai_family,
-        servinfo->ai_socktype,
-        servinfo->ai_protocol
-    );
-    assert(socket_fd >= 0);
-
-    if (host_type == CLIENT)
-    {
-        error = connect(socket_fd, servinfo->ai_addr, servinfo->ai_addrlen);
-        assert(error == 0);
+    error = getaddrinfo(ip, port, &hints, &servinfo);
+    if (error != 0) {
+        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(error));
+        return -1;
     }
-    else if (host_type == SERVER)
-    {
-        error = bind(socket_fd, servinfo->ai_addr, servinfo->ai_addrlen);
-        assert(error == 0);
 
-        error = listen(socket_fd, SOMAXCONN);
-        assert(error == 0);
+    for (p = servinfo; p != NULL; p = p->ai_next)
+    {
+        socket_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+        if (socket_fd == -1) {
+            perror("socket error");
+            continue;
+        }
+
+        if (host_type == CLIENT)
+        {
+            error = connect(socket_fd, p->ai_addr, p->ai_addrlen);
+            if (error == -1) {
+                perror("connect error");
+                close(socket_fd);
+                socket_fd = -1;
+                continue;
+            }
+            break;
+        }
+        else if (host_type == SERVER)
+        {
+            error = bind(socket_fd, p->ai_addr, p->ai_addrlen);
+            if (error == -1) {
+                perror("bind error");
+                close(socket_fd);
+                socket_fd = -1;
+                continue;
+            }
+
+            error = listen(socket_fd, SOMAXCONN);
+            if (error == -1) {
+                perror("listen error");
+                close(socket_fd);
+                socket_fd = -1;
+                continue;
+            }
+            break;
+        }
+    }
+
+    if (socket_fd == -1) {
+        perror("Failed to create and bind socket");
+        freeaddrinfo(servinfo);
+        return -1;
     }
 
     freeaddrinfo(servinfo);
-
     return socket_fd;
 }
 
 int conn_accept(int socket_fd)
 {
     int new_socket_fd = accept(socket_fd, NULL, NULL);
-    assert(new_socket_fd >= 0);
+    if (new_socket_fd == -1) {
+        perror("Error accepting connection");
+        return -1;
+    }
     return new_socket_fd;
 }
 

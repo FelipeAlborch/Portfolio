@@ -90,13 +90,13 @@ memcheck: all
 helgrind: all
 	valgrind --tool=helgrind $(HELGRIND_FLAGS) ./$(BIN) $(ARGS)
 
-.PHONY: tests
-tests: CFLAGS = $(CDEBUG)
-tests: OBJS += $(patsubst tests/%.c,obj/%.o,$(shell find tests/ -iname "*.c"))
-tests: LIBS = check commons pthread m rt subunit
-tests: $(OBJS) | $(dir $(BIN))
-	gcc $(CFLAGS) -o bin/tests tests/tests.c $(DEPS) $(IDIRS:%=-I%) $(LIBDIRS:%=-L%) $(LIBS:%=-l%)
-	./bin/tests
+.PHONY: check
+check: CFLAGS = $(CDEBUG)
+check: OBJS += $(patsubst tests/%.c,obj/%.o,$(shell find tests/ -iname "*.c"))
+check: LIBS = check commons pthread m rt subunit
+check: $(OBJS) | $(dir $(BIN))
+	gcc $(CFLAGS) -o bin/check tests/check.c $(DEPS) $(IDIRS:%=-I%) $(LIBDIRS:%=-L%) $(LIBS:%=-l%)
+	./bin/check
 
 obj/%.o: tests/%.c $(SRCS_H) $(DEPS) | $(dir $(OBJS))
 	gcc $(CFLAGS) -c -o "$@" $< $(IDIRS:%=-I%)
