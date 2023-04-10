@@ -21,18 +21,18 @@ typedef struct pcb
     *   A completar
     */
 
-    char AX[4];
-    char BX[4];
-    char CX[4];
-    char DX[4];
-    char EAX[8];
-    char EBX[8];
-    char ECX[8];
-    char EDX[8];
-    char RAX[16];
-    char RBX[16];
-    char RCX[16];
-    char RDX[16];
+    char* AX;
+    char* BX;
+    char* CX;
+    char* DX;
+    char* EAX;
+    char* EBX;
+    char* ECX;
+    char* EDX;
+    char* RAX;
+    char* RBX;
+    char* RCX;
+    char* RDX;
     
     estado_pcb estado;
     t_list* lista_de_instrucciones;
@@ -65,6 +65,61 @@ typedef struct LineaInstruccion
   ARCHIVO,
 } parametros; */
 
+
+/**
+* @NAME: crear_pcb
+* @DESC: Crea un pcb para y se le asigna el contenido de la consola simulando un proceso.
+* @PARAMS:
+*        t_list* lista_de_instrucciones - La lista de instrucciones de la consoa.
+*        int p_id - La variable global del KERNEL que representa el process id.
+*        int estimado_rafaga - El estimado de rafaga que llega por config en el kernel
+* @RETURN:
+*        retorna el pcb creado.
+*/
+pcb* crear_pcb(t_list*, int, int);
+
+/**
+* @NAME: loguear_pcb
+* @DESC: Funcion encargada de loguear un pcb.
+* @PARAMS:
+*        pcb* un_pcb - El pcb que se desea loguear.
+*        t_log* logger - El logguer donde sera logueado el pcb.
+*/
+void loguear_pcb(pcb*, t_log*);
+
+/**
+* @NAME: identificar_estado
+* @DESC: A partir de un estado de un pcb, devuelve el string que representa dicho estado.
+* @PARAMS:
+*        estado_pcb un_estado - el estado del pcb.
+* @RETURN:
+*        retorna char* que representa al estado.
+*/
+char* identificar_estado(estado_pcb un_estado);
+
+/**
+* @NAME: liberar_pcb
+* @DESC: Funcion encargada de liberar la memoria que ocupa un pcb.
+* @PARAMS:
+*        pcb* un_pcb - El pcb que se desea liberar.
+*/
+void liberar_pcb(pcb*);
+
+/**
+* @NAME: loguear_lista_de_instrucciones
+* @DESC: Funcion encargada de loguear una lista de instrucciones.
+* @PARAMS:
+*        t_list* lista_de_instrucciones - La lista de instrucciones que se desea loguear.
+*        t_log* logger - El logguer donde sera logueada la lista.
+*/
+void loguear_lista_de_instrucciones(t_list*, t_log*);
+
+/**
+* @NAME: liberar_instruccion
+* @DESC: Funcion encargada de liberar la memoria que ocupa una LineaInstruccion.
+* @PARAMS:
+*        LineaInstruccion* una_instruccion - la instruccion que se desea liberar.
+*/
 void* liberar_instruccion(LineaInstruccion*);
 
 #endif

@@ -23,12 +23,20 @@ int main(int argc, char *argv[]) {
 
     int socketServicioConsolas = iniciar_servidor_para_consolas(configuracionKernel);
 
-    //pcb* unPcb = malloc(sizeof(pcb));
-    //memcpy(unPcb->AX,"HOLA",4);
-    //printf("en ax se guardo: %c", unPcb->AX[0]);
-    //memcpy(unPcb->EAX,"HOLACHAU",8);
-    //log_info(loggerKernel,"En EAX se guardo: %c", unPcb->EAX[7]);
-
+    /*
+    LineaInstruccion* linea = malloc(sizeof(LineaInstruccion));
+    linea->identificador = "SET";
+    linea->parametros[0] = "AX";
+    linea->parametros[1] = "AX";
+    linea->parametros[2] = "AX";
+    printf("Linea: %s %s %s %s", linea->identificador, linea->parametros[0], linea->parametros[1], linea->parametros[2]);
+    t_list* lista_instrucciones = list_create();
+    list_add(lista_instrucciones, linea);
+    pcb* un_pcb = crear_pcb(lista_instrucciones, pid_global, configuracionKernel.ESTIMACION_INICIAL/1000);
+    loguear_pcb(un_pcb, loggerKernel);
+    list_destroy_and_destroy_elements(lista_instrucciones, (void*)liberar_instruccion);    
+    liberar_pcb(un_pcb);
+    */
 
     pthread_t hiloConsolas; 
     pthread_create(&hiloConsolas, NULL, (void*)esperar_consolas, (void*)socketServicioConsolas);
