@@ -15,8 +15,10 @@ extern pthread_t hilo_cpu;
 extern pthread_t hilo_kernel;
 extern pthread_t hilo_fs;
 extern pthread_t hiloConexion;
-extern config_de_memoria config_memo;
 
+extern void* memoria;
+
+extern t_list* tabla_proceso; //listado de t_tabla_seg de todos los procesos
 /*typedef struct
 {
 	bool libre;     //libre --> 1 ocupado -->0
@@ -29,6 +31,19 @@ extern config_de_memoria config_memo;
     pthread_mutex_t* mutex_segmento;
 
 }t_segmento;*/
+
+typedef struct {
+    int id_seg;
+    int size;
+    int libre;
+}t_segmento;
+
+typedef struct 
+{   
+    int pid;
+    int direcion_fisica;
+    t_segmento* segmento;
+}t_tabla_seg;
 
 
 void sigHandler_sigint(int signo);
@@ -61,22 +76,32 @@ typedef struct{
     char* puerto;
     char* algoritmo;
     char* ip; 
-    int tam_memo;
-    int tam_seg_0;
     int cant_seg;
     int retardo;
     int compactacion;
-    int tam_maximo;
+    int tam_memo;
+    int tam_seg_0;
+    int tam_maximo_seg;
+    int bytes_libres;
     int cpu;    // para guardar la conexion
     int fs;     // para guardar la conexion
     int kernel; // para guardar la conexion
 
 }config_de_memoria;
-
+extern config_de_memoria config_memo;
 void obtener_valores_de_configuracion_memoria(t_config*);
 void mostrar_valores_de_configuracion_memoria();
 
 // ID --> para el id del segmento y para la direc fisica
 void loggear(int code, int pid, void* algo, int id, int size, float base);
 
+
+void crear_estructuras();
+void liberar_proceso(int pid); 
+void* leer_dato(int pid, int direccion, int size);
+void escribir_dato(int pid, int direccion, int size, void* valor);
+void crear_segmento(int pid, int size);
+void eliminar_segmento(int pid, int direccion);
+void compactar();
+void crear_segmento_(int pid, int size);
 #endif

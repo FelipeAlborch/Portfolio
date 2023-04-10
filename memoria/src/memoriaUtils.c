@@ -14,6 +14,7 @@ int server_m;
 int clientes[4];
 t_config* memoriaConfig;
 pthread_t hiloConexion;
+void* memoria;
 
 
 void startSigHandlers(void) {
@@ -54,9 +55,9 @@ void liberar_conexion_memoria(){
     liberar_conexion(server_m);
 };
 void liberar_t_config(){
-   // free(config_memo.algoritmo);
-    //free(config_memo.ip);
-  //  free(config_memo.puerto);
+  free(config_memo.algoritmo);
+  free(config_memo.ip);
+  free(config_memo.puerto);
 };
 void inicializar_configuracion(){
     obtener_valores_de_configuracion_memoria(memoriaConfig);
@@ -153,8 +154,9 @@ void obtener_valores_de_configuracion_memoria(t_config* memoriaConfig){
     config_memo.retardo = config_get_int_value(memoriaConfig,"RETARDO_MEMORIA");
     config_memo.compactacion = config_get_int_value(memoriaConfig,"RETARDO_COMPACTACION");
     config_memo.algoritmo = config_get_string_value(memoriaConfig,"ALGORITMO_ASIGNACION");
-    config_memo.tam_maximo = config_memo.tam_memo / config_memo.cant_seg;
+    config_memo.tam_maximo_seg = config_memo.tam_memo / config_memo.cant_seg;
     config_memo.ip = string_duplicate("127.0.0.1");
+    config_memo.bytes_libres=config_memo.tam_memo;
 }
 
 void mostrar_valores_de_configuracion_memoria (){
@@ -165,7 +167,7 @@ void mostrar_valores_de_configuracion_memoria (){
     printf("retardo = %d\n" , config_memo.retardo);
     printf("compactacion = %d\n", config_memo.compactacion);
     printf("algoritmo = %s\n" , config_memo.algoritmo);
-    printf("Tamaño maximo = %d\n" , config_memo.tam_maximo);
+    printf("Tamaño maximo = %d\n" , config_memo.tam_maximo_seg);
 
 }
 
@@ -190,7 +192,7 @@ void mostrar_valores_de_configuracion_memoria (){
       }
       eliminar_paquete(paquete_cpu);*/
       running_k=false;
-      log_trace_(klogger,"terminé de ejecutar kernel");
+      log_trace(klogger,"terminé de ejecutar kernel");
   }
   }
   void ejecutar_cpu(){
