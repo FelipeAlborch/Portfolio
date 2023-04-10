@@ -17,10 +17,6 @@ typedef struct pcb
 {
     int pid;
     int program_counter;
-    /*
-    *   A completar
-    */
-
     char* AX;
     char* BX;
     char* CX;

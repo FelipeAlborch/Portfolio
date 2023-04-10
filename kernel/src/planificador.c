@@ -3,6 +3,12 @@
 // SOCKET AL CPU
 int socket_cpu_planificador;
 
+// Socket a la memoria
+int socket_memoria_planificador;
+
+// Socket al FS
+int socket_fs_planificador;
+
 // LOGGER PARA EL PLANIFICADOR
 t_log* logger_planificador_obligatorio;
 t_log* logger_planificador_extra;

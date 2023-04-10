@@ -57,20 +57,20 @@ void escuchar_consola(int socketConsola)
 				
             break;
 			
-			/*
+			
             case LISTA_INSTRUCCIONES:
-            
-			ACA SE CREA EL PCB Y SE LO MANDA A NEW
-            t_list* lista_instrucciones = _recibir_paquete(socketConsola);
-			pid_global++;
-			pcb* pcb = crear_pcb(lista_instrucciones, pid_global, configuracionKernel.ESTIMACION_INICIAL/1000);
+            log_info(logger, "Me llego una lista de instrucciones");
+			//ACA SE CREA EL PCB Y SE LO MANDA A NEW
+            //t_list* lista_instrucciones = _recibir_paquete(socketConsola);
+			//pid_global++;
+			//pcb* pcb = crear_pcb(lista_instrucciones, pid_global, configuracionKernel.ESTIMACION_INICIAL/1000);
 			// t_list* tabla_segmentos = solicitar_tabla_de_segmentos(socketMemoria);
-			pcb->tabla_de_segmentos = list_duplicate(tabla_segmentos);
+			//pcb->tabla_de_segmentos = list_duplicate(tabla_segmentos);
             break;
 
             case DESCONEXION:
 			break;
-            */
+            
 
 		   
             default:

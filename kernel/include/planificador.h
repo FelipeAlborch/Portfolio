@@ -6,6 +6,11 @@
 #include <kernelConfig.h>
 
 extern int socket_cpu_planificador;
+// Socket a la memoria
+extern int socket_memoria_planificador;
+
+// Socket al FS
+extern int socket_fs_planificador;
 
 // DICCIONARIO DE CONSOLAS: UNA MANERA DE GUARDAR SOCKETS DE LAS CONSOLAS, PARA LOS PIDS CREADOS.
 extern t_dictionary* diccionario_de_consolas;

@@ -15,9 +15,10 @@ t_paquete* crear_paquete_operacion(int codigo_operacion)
 {
 	t_paquete* paquete = malloc(sizeof(t_paquete));
 	paquete->codigo_operacion = codigo_operacion;
+	_crear_buffer(paquete);
 	//paquete->buffer =malloc(sizeof(t_buffer));
-	paquete->buffer->stream = string_duplicate(" ");
-	paquete->buffer->size =sizeof(paquete->buffer->stream);
+	//paquete->buffer->stream = string_duplicate(" ");
+	//paquete->buffer->size =sizeof(paquete->buffer->stream);
 	return paquete;
 }
 

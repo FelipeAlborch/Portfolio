@@ -1,38 +1,24 @@
 #include <consolaUtils.h>
 
-void enviar_instrucciones_a_kernel(char *nombre_archivo)
+int socket_kernel;
+
+void enviar_instrucciones_a_kernel(FILE* archivo_pseudocodigo)
 {
   Logger *logger = iniciar_logger_modulo(CONSOLA_LOGGER);
-  Lista *instrucciones;
-  FILE *archivo;
+  Lista *instrucciones = list_create();;
 
-  if ((archivo = fopen(nombre_archivo, "r")) == NULL)
-  {
-    log_error(logger, "[Consola] Abriendo archivo %s [FAIL]", nombre_archivo);
-  }
+  rellenar_lista_de_instrucciones(instrucciones, archivo_pseudocodigo);
 
-  instrucciones = list_create();
-
-  rellenar_lista_de_instrucciones(instrucciones, archivo);
-
-  fclose(archivo);
-
-  // Esta parte hay que rehacerla
-  //t_paquete *paquete = crear_paquete(LINEAS_CODIGO);
-  /*serializar_segmentos_instrucciones(paquete, instrucciones, CONSOLA_CONFIG.SEGMENTOS);
-
-  log_info(logger, "[Consola] Enviando instrucciones al Servidor Kernel [...]");
-
-  enviar_paquete_a_servidor(paquete, socket_kernel_fd);
-  log_info(logger, "[Consola] Enviando instrucciones al Servidor Kernel [OK]");
-  */
+  t_paquete* paquete_kernel = crear_paquete_operacion(LISTA_INSTRUCCIONES);
+  empaquetar_instrucciones(paquete_kernel, instrucciones);
+  enviar_paquete(paquete_kernel,socket_kernel);
   
   dump(instrucciones);
+  
   // La funcion liberar_instruccion esta en el archivo PCB.c, la puse ahi porque ahi pusiste el struct LineaInstruccion. De todas maneras va a venir bien para liberar las instrucciones del pcb
   list_destroy_and_destroy_elements(instrucciones, (void*)liberar_instruccion);
-
   log_destroy(logger);
-  //eliminar_paquete(paquete);
+  eliminar_paquete(paquete_kernel);
 }
 
 void rellenar_lista_de_instrucciones(Lista *lista, FILE *archivo)
@@ -174,4 +160,21 @@ void* liberar_tokens(char** tokens)
   free(tokens[2]);
   free(tokens[3]);
   free(tokens);
+}
+
+void empaquetar_instrucciones(t_paquete* paquete_a_kernel, t_list* lista_de_instrucciones)
+{
+  LineaInstruccion* una_instruccion;
+  int i;
+  int cantidad_de_instrucciones = list_size(lista_de_instrucciones);
+
+  agregar_a_paquete(paquete_a_kernel, &cantidad_de_instrucciones, sizeof(int));
+  for(i = 0; i < cantidad_de_instrucciones; i++)
+  {
+    una_instruccion = list_get(lista_de_instrucciones, i);
+    agregar_a_paquete(paquete_a_kernel, una_instruccion->identificador, strlen(una_instruccion->identificador) + 1);
+    agregar_a_paquete(paquete_a_kernel, una_instruccion->parametros[0], strlen(una_instruccion->parametros[0]) + 1);
+    agregar_a_paquete(paquete_a_kernel, una_instruccion->parametros[1], strlen(una_instruccion->parametros[1]) + 1);
+    agregar_a_paquete(paquete_a_kernel, una_instruccion->parametros[2], strlen(una_instruccion->parametros[2]) + 1);
+  }
 }

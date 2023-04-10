@@ -20,8 +20,9 @@ void eliminar_salto_linea(char*);
 char *leer_linea(FILE*);
 LineaInstruccion *leer_linea_de_instruccion(FILE*);
 void rellenar_lista_de_instrucciones(Lista*, FILE*);
-void enviar_instrucciones_a_kernel(char*);
+void enviar_instrucciones_a_kernel(FILE*);
 int veces(char*, char);
 void* liberar_tokens(char**);
+void empaquetar_instrucciones(t_paquete*, t_list*);
 
 #endif

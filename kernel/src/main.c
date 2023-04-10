@@ -12,10 +12,12 @@ int main(int argc, char *argv[]) {
     mostrar_valores_de_configuracion_kernel(configuracionKernel);
     leer_diccionario_recursos();
     
-    int socketMemoria = conectar_con_memoria(configuracionKernel);
-    int socketCPU = conectar_con_cpu(configuracionKernel);
-    socket_cpu_planificador = socketCPU;
-    int socketFS = conectar_con_filesystem(configuracionKernel);
+    //int socketMemoria = conectar_con_memoria(configuracionKernel);
+    //socket_memoria_planificador = socketMemoria;
+    //int socketCPU = conectar_con_cpu(configuracionKernel);
+    //socket_cpu_planificador = socketCPU;
+    //int socketFS = conectar_con_filesystem(configuracionKernel);
+    //socket_fs_planificador = socketFS;
 
     inicializar_estructuras_planificacion();
     iniciar_planificadores();
