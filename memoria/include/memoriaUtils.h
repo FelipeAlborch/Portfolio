@@ -4,6 +4,12 @@
 // Este include ya tiene incluidos muchos archivos de las commons y cosas tipo stdlib, stdio etc, tambien pcb y cosas del estilo.
 #include <utils/conexion.h>
 
+#define FIRST_FIT 1
+#define BEST_FIT 2
+#define WORST_FIT 3
+#define TAM_CABECERA sizeof(t_segmento)
+
+
 extern t_log* mlogger;
 extern t_log* loggerMemoria;
 extern int clientes[4];
@@ -18,7 +24,7 @@ extern pthread_t hiloConexion;
 
 extern void* memoria;
 
-extern t_list* tabla_proceso; //listado de t_tabla_seg de todos los procesos
+extern t_list* tabla_segmentos; //listado de t_tabla_seg de todos los procesos
 /*typedef struct
 {
 	bool libre;     //libre --> 1 ocupado -->0
@@ -38,12 +44,18 @@ typedef struct {
     int libre;
 }t_segmento;
 
+typedef struct {
+    void* inicio;
+    int size;
+} t_hueco_libre;
+
+
 typedef struct 
 {   
     int pid;
     int direcion_fisica;
-    t_segmento* segmento;
-}t_tabla_seg;
+    t_list* tabla_segmentos;
+}t_tabla_segmentos;
 
 
 void sigHandler_sigint(int signo);
@@ -104,4 +116,9 @@ void crear_segmento(int pid, int size);
 void eliminar_segmento(int pid, int direccion);
 void compactar();
 void crear_segmento_(int pid, int size);
+
+t_tabla_segmentos* crear_tabla_segmentos(int pid, int cant_seg, int tam_seg);
+t_tabla_segmentos* buscar_en_tabla(int pid);
+t_segmento* buscar_segmento(int id_seg, t_list* segmentos);
+
 #endif
