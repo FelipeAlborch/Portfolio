@@ -19,28 +19,24 @@ main(int argc, char *argv[])
 
     pthread_t thread_id;
 
-    print_cwd();
-
     t_log *log = fs_log_create();
 
     fs_config *config = fs_config_create();
 
+    print_cwd();
+
     fs_config_print(config);
 
     mem_socket_fd = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
-    assert(mem_socket_fd >= 0);
 
     log_info(log, "mem socket: %d", mem_socket_fd);
 
     fs_socket_fd = conn_create(SERVER, config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
-    assert(fs_socket_fd >= 0);
 
     log_info(log, "fs socket: %d", fs_socket_fd);
 
     while ((client_socket_fd = conn_accept(fs_socket_fd)))
     {
-        assert(client_socket_fd >= 0);
-
         error = pthread_create(&thread_id, NULL, connection_handler, (void *) &client_socket_fd);
         assert(error == 0);
 

@@ -4,7 +4,17 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "make-filesystem",
+            "label": "make-build-check",
+            "command": "make build-check",
+            "type": "shell",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "make-all",
             "command": "make all",
             "type": "shell",
             "group": {

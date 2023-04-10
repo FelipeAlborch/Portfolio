@@ -8,6 +8,10 @@
 #include <unistd.h>
 #include <assert.h>
 #include <netdb.h>
+#include <bits/socket.h>
+#include <arpa/inet.h>
+#include <utils/paquete.h>
+#include <utils/buffer.h>
 
 typedef enum Host {
     SERVER,
@@ -33,11 +37,15 @@ int read_socket(int, void *, int);
 
 char* read_socket_string(int);
 
+t_paquete *read_socket_paquete(int);
+
 t_list *read_socket_tlv_list(int);
 
 int write_socket(int, void *, int);
 
 int write_socket_string(int, char *);
+
+int write_socket_paquete(int socket_fd, t_paquete *paquete);
 
 int write_socket_tlv_list(int, t_list *);
 

@@ -1,4 +1,5 @@
 #include <CUnit/CUnit.h>
+#include <tlv.h>
 
 void tlv_create_int_test()
 {

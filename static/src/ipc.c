@@ -12,9 +12,10 @@ int conn_create(Host host_type, char *ip, char *port)
     int error = 0, socket_fd = -1;
     struct addrinfo hints = {0}, *servinfo = NULL, *p = NULL;
 
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
+    hints.ai_family = AF_INET;// use IPv4
+    hints.ai_socktype = SOCK_STREAM;// use TCP
+    if (host_type == SERVER) hints.ai_flags = AI_PASSIVE;// for bind
+    else if (host_type == CLIENT) hints.ai_flags = AI_ADDRCONFIG;// for connect
 
     error = getaddrinfo(ip, port, &hints, &servinfo);
     if (error != 0) {
@@ -34,7 +35,7 @@ int conn_create(Host host_type, char *ip, char *port)
         {
             error = connect(socket_fd, p->ai_addr, p->ai_addrlen);
             if (error == -1) {
-                perror("connect error");
+                perror("socket connect error");
                 close(socket_fd);
                 socket_fd = -1;
                 continue;
@@ -45,7 +46,7 @@ int conn_create(Host host_type, char *ip, char *port)
         {
             error = bind(socket_fd, p->ai_addr, p->ai_addrlen);
             if (error == -1) {
-                perror("bind error");
+                perror("socket bind error");
                 close(socket_fd);
                 socket_fd = -1;
                 continue;
@@ -53,7 +54,7 @@ int conn_create(Host host_type, char *ip, char *port)
 
             error = listen(socket_fd, SOMAXCONN);
             if (error == -1) {
-                perror("listen error");
+                perror("socket listen error");
                 close(socket_fd);
                 socket_fd = -1;
                 continue;
@@ -63,7 +64,7 @@ int conn_create(Host host_type, char *ip, char *port)
     }
 
     if (socket_fd == -1) {
-        perror("Failed to create and bind socket");
+        perror("socket create error");
         freeaddrinfo(servinfo);
         return -1;
     }
@@ -76,7 +77,7 @@ int conn_accept(int socket_fd)
 {
     int new_socket_fd = accept(socket_fd, NULL, NULL);
     if (new_socket_fd == -1) {
-        perror("Error accepting connection");
+        perror("socket accept error");
         return -1;
     }
     return new_socket_fd;
@@ -84,7 +85,11 @@ int conn_accept(int socket_fd)
 
 int conn_close(int socket_fd)
 {
-    return close(socket_fd);
+    if (close(socket_fd) == -1) {
+        perror("socket close error");
+        return -1;
+    }
+    return 0;
 }
 
 int peek_socket(int socket_fd, void *buffer, int buffer_size)
@@ -117,6 +122,22 @@ char* read_socket_string(int socket_fd)
     return string;
 }
 
+t_paquete *read_socket_paquete(int socket_fd)
+{
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    int n = recv(socket_fd, &paquete->codigo_operacion, sizeof(paquete->codigo_operacion), MSG_WAITALL);
+    assert(n >= 0);
+
+    paquete->buffer = malloc(sizeof(t_buffer));
+    n = recv(socket_fd, &paquete->buffer->size, sizeof(paquete->buffer->size), MSG_WAITALL);
+    assert(n >= 0);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    n = recv(socket_fd, paquete->buffer->stream, paquete->buffer->size, MSG_WAITALL);
+    assert(n >= 0);
+
+    return paquete;
+}
+
 t_list *read_socket_tlv_list(int socket_fd)
 {
     t_list *tlv_list = list_create();
@@ -125,7 +146,7 @@ t_list *read_socket_tlv_list(int socket_fd)
 
     for (int i = 0; i < tlv_list->elements_count; i++)
     {
-        t_tlv *tlv = malloc(sizeof(t_tlv));
+        t_tlv *tlv = tlv_create();
         n = recv(socket_fd, &tlv->type, sizeof(tlv->type), MSG_WAITALL);
         assert(n >= 0);
         n = recv(socket_fd, &tlv->length, sizeof(tlv->length), MSG_WAITALL);
@@ -153,6 +174,19 @@ int write_socket_string(int socket_fd, char *string)
     void *buffer = malloc(buffer_size);
     memcpy(buffer, &buffer_size, sizeof(int));
     memcpy(buffer + sizeof(int), string, strlen(string));
+    int n = send(socket_fd, buffer, buffer_size, 0);
+    assert(n >= 0);
+
+    return n;
+}
+
+int write_socket_paquete(int socket_fd, t_paquete *paquete)
+{
+    int buffer_size = sizeof(paquete->codigo_operacion) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *buffer = malloc(buffer_size);
+    memcpy(buffer, &paquete->codigo_operacion, sizeof(paquete->codigo_operacion));
+    memcpy(buffer + sizeof(paquete->codigo_operacion), &paquete->buffer->size, sizeof(paquete->buffer->size));
+    memcpy(buffer + sizeof(paquete->codigo_operacion) + sizeof(paquete->buffer->size), paquete->buffer->stream, paquete->buffer->size);
     int n = send(socket_fd, buffer, buffer_size, 0);
     assert(n >= 0);
 

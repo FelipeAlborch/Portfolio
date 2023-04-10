@@ -9,4 +9,5 @@ void* liberar_instruccion(LineaInstruccion* una_instruccion)
     free(una_instruccion->parametros[2]);
     free(una_instruccion->parametros[3]);
     free(una_instruccion);
+    return NULL;
 }

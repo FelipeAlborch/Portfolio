@@ -12,7 +12,6 @@ typedef enum t_type {
     STRING,
     MAP,
     BLOCK,
-    PCB,
 } t_type;
 
 typedef struct t_tlv {
