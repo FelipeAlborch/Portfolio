@@ -18,11 +18,10 @@ void *clients_handler(void *arg)
     int new_socket;
     while((new_socket = conn_accept(*server_socket)) != -1)
     {
-        int status;
-
-        char buf[SOMAXCONN] = {0};
-
         if (new_socket == -1) perror("conn_accept");
+
+        int status;
+        char buf[SOMAXCONN] = {0};
 
         status = recv(new_socket, buf, sizeof(buf), 0);
         if (status == -1) perror("recv");
