@@ -18,16 +18,16 @@ void *clients_handler(void *arg)
     int new_socket;
     while((new_socket = conn_accept(*server_socket)) != -1)
     {
-        char buf[1024];
-        int data_len = strlen(ECHO_TEXT) + 1;
         int status;
+
+        char buf[1024] = {0};
 
         if (new_socket == -1) perror("conn_accept");
 
-        status = recv(new_socket, buf, data_len, 0);
+        status = recv(new_socket, buf, sizeof(buf), 0);
         if (status == -1) perror("recv");
 
-        status = send(new_socket, buf, data_len, 0);
+        status = send(new_socket, buf, sizeof(buf), 0);
         if (status == -1) perror("send");
 
         close(new_socket);
