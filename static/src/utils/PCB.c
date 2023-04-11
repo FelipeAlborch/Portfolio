@@ -89,7 +89,6 @@ void liberar_pcb(pcb* un_pcb)
     list_destroy_and_destroy_elements(un_pcb->lista_de_instrucciones, (void*)liberar_instruccion);
     //list_destroy_and_destroy_elements(un_pcb->tabla_de_segmentos, (void*)liberar_segmento);
     free(un_pcb);
-    return NULL;
 }
 
 void loguear_lista_de_instrucciones(t_list* lista_de_instrucciones, t_log* logger)

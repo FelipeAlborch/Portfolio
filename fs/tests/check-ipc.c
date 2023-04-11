@@ -11,7 +11,7 @@
 int g_server_socket;
 
 //conn_accept
-void *client_conn_accept(void *arg)
+void *clients_handler(void *arg)
 {
     int *server_socket = (int *)arg;
 
@@ -21,7 +21,7 @@ void *client_conn_accept(void *arg)
         char buf[1024];
         int data_len = strlen(ECHO_TEXT) + 1;
         int status;
-        
+
         if (new_socket == -1) perror("conn_accept");
 
         status = recv(new_socket, buf, data_len, 0);
@@ -53,7 +53,7 @@ void ipc_unchecked_setup(void)
 
     // attend to client in a thread
     pthread_t thread;
-    pthread_create(&thread, NULL, client_conn_accept, (void *) &g_server_socket);
+    pthread_create(&thread, NULL, clients_handler, (void *) &g_server_socket);
 
     pthread_detach(thread);
     // void *thread_result;
