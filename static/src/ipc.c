@@ -9,7 +9,7 @@ int conn_create_localhost(Host host_type, char *port)
 
 int conn_create(Host host_type, char *ip, char *port)
 {
-    int error = 0, socket_fd = -1;
+    int status = 0, socket_fd = -1;
     struct addrinfo hints = {0}, *servinfo = NULL, *p = NULL;
 
     hints.ai_family = AF_INET;// use IPv4
@@ -17,9 +17,9 @@ int conn_create(Host host_type, char *ip, char *port)
     if (host_type == SERVER) hints.ai_flags = AI_PASSIVE;// for bind
     else if (host_type == CLIENT) hints.ai_flags = AI_ADDRCONFIG;// for connect
 
-    error = getaddrinfo(ip, port, &hints, &servinfo);
-    if (error != 0) {
-        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(error));
+    status = getaddrinfo(ip, port, &hints, &servinfo);
+    if (status != 0) {
+        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
         return -1;
     }
 
@@ -33,8 +33,8 @@ int conn_create(Host host_type, char *ip, char *port)
 
         if (host_type == CLIENT)
         {
-            error = connect(socket_fd, p->ai_addr, p->ai_addrlen);
-            if (error == -1) {
+            status = connect(socket_fd, p->ai_addr, p->ai_addrlen);
+            if (status == -1) {
                 perror("socket connect error");
                 close(socket_fd);
                 socket_fd = -1;
@@ -44,16 +44,16 @@ int conn_create(Host host_type, char *ip, char *port)
         }
         else if (host_type == SERVER)
         {
-            error = bind(socket_fd, p->ai_addr, p->ai_addrlen);
-            if (error == -1) {
+            status = bind(socket_fd, p->ai_addr, p->ai_addrlen);
+            if (status == -1) {
                 perror("socket bind error");
                 close(socket_fd);
                 socket_fd = -1;
                 continue;
             }
 
-            error = listen(socket_fd, SOMAXCONN);
-            if (error == -1) {
+            status = listen(socket_fd, SOMAXCONN);
+            if (status == -1) {
                 perror("socket listen error");
                 close(socket_fd);
                 socket_fd = -1;
