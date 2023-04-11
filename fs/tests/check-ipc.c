@@ -20,7 +20,7 @@ void *clients_handler(void *arg)
     {
         int status;
 
-        char buf[1024] = {0};
+        char buf[SOMAXCONN] = {0};
 
         if (new_socket == -1) perror("conn_accept");
 
