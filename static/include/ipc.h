@@ -1,6 +1,7 @@
 #ifndef IPC_H_
 #define IPC_H_
 #include <commons/collections/list.h>
+#include <commons/collections/queue.h>
 #include <tlv.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,6 +9,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <netdb.h>
+#include <poll.h>
 #include <bits/socket.h>
 #include <arpa/inet.h>
 #include <utils/paquete.h>
@@ -31,6 +33,12 @@ int conn_accept(int);
 
 int conn_close(int);
 
+int conn_is_open(int);
+
+void conn_close_sockets(t_queue *sockets);
+
+void conn_wait_until_close(int);
+
 int peek_socket(int, void *, int);
 
 int read_socket(int, void *, int);
@@ -50,5 +58,7 @@ int write_socket_paquete(int socket_fd, t_paquete *paquete);
 int write_socket_tlv_list(int, t_list *);
 
 void *buffer_create(int);
+
+int *allocate_int(int value);
 
 #endif

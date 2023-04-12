@@ -89,7 +89,6 @@ memcheck: all
 .PHONY: helgrind
 helgrind: all
 	valgrind --tool=helgrind $(HELGRIND_FLAGS) ./$(BIN) $(ARGS)
-
 	
 obj/%.o: tests/%.c $(SRCS_H) $(DEPS) | $(dir $(OBJS))
 	gcc $(CFLAGS) -c -o "$@" $< $(IDIRS:%=-I%)

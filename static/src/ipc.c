@@ -92,6 +92,32 @@ int conn_close(int socket_fd)
     return 0;
 }
 
+int conn_is_open(int socket_fd) {
+    int error = 0;
+    socklen_t len = sizeof(error);
+    int ret = getsockopt(socket_fd, SOL_SOCKET, SO_ERROR, &error, &len);
+    if (ret != 0) return 0;
+    return error == 0;
+}
+
+void conn_close_sockets(t_queue *sockets)
+{
+    int socket_fd;
+    while (!queue_is_empty(sockets))
+    {
+        socket_fd = *(int *)queue_pop(sockets);
+        if (conn_is_open(socket_fd))
+        conn_close(socket_fd);
+    }
+}
+
+void conn_wait_until_close(int socket_fd)
+{
+    short int events = POLLIN|POLLOUT|POLLHUP|POLLERR;
+    struct pollfd pfd = { socket_fd, events, 0 };
+    while (poll(&pfd, 1, -1) > 0) { sleep(1); }
+}
+
 int peek_socket(int socket_fd, void *buffer, int buffer_size)
 {
     int n = recv(socket_fd, buffer, buffer_size, MSG_PEEK);
@@ -221,4 +247,10 @@ void *buffer_create(int size)
     memset(buffer, 0, size);
     
     return buffer;
+}
+
+int *allocate_int(int value) {
+    int *ptr = (int*) malloc(sizeof(int));
+    *ptr = value;
+    return ptr;
 }

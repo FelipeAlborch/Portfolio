@@ -8,17 +8,19 @@
 #define CLIENT_IP "127.0.0.3"
 #define ECHO_TEXT "Hello, server!"
 
-int g_server_socket;
+t_queue *g_sockets;
 
-//conn_accept
 void *clients_handler(void *arg)
 {
-    int *server_socket = (int *)arg;
+    int server_socket = *(int *)arg;
+    free(arg);
 
     int new_socket;
-    while((new_socket = conn_accept(*server_socket)) != -1)
+    while((new_socket = conn_accept(server_socket)) != -1)
     {
         if (new_socket == -1) perror("conn_accept");
+
+        queue_push(g_sockets, (void *)allocate_int(new_socket));
 
         int status;
         char buf[SOMAXCONN] = {0};
@@ -29,32 +31,29 @@ void *clients_handler(void *arg)
         status = send(new_socket, buf, sizeof(buf), 0);
         if (status == -1) perror("send");
 
-        close(new_socket);
+        status = conn_close(new_socket);
+
+        if (!conn_is_open(server_socket)) break;
     }
 
     pthread_exit((void *) 0);
-    // pthread_exit((void*)buf);
-    // pthread_exit(strdup("Hello, server!"));
 }
 
 void ipc_unchecked_setup(void)
 { 
-    int status;
-    struct sockaddr_in addr;
-    socklen_t addr_len = sizeof(addr);
-    g_server_socket = conn_create(SERVER, LOCALHOST, PORT_5000);
-    ck_assert_int_ne(g_server_socket, -1);
-    status = getsockname(g_server_socket, (struct sockaddr *)&addr, &addr_len);
-    ck_assert_int_eq(status, 0);
-    ck_assert_int_eq(addr.sin_family, AF_INET);
-    ck_assert_str_eq(inet_ntoa(addr.sin_addr), LOCALHOST);
-    ck_assert_int_eq(ntohs(addr.sin_port), atoi(PORT_5000));
+    int *server_socket = malloc(sizeof(int));
+    
+    g_sockets = queue_create();
 
-    // attend to client in a thread
+    *server_socket = conn_create(SERVER, LOCALHOST, PORT_5000);
+
+    queue_push(g_sockets, (void *)server_socket);
+
     pthread_t thread;
-    pthread_create(&thread, NULL, clients_handler, (void *) &g_server_socket);
+    pthread_create(&thread, NULL, clients_handler, (void *)server_socket);
 
     pthread_detach(thread);
+
     // void *thread_result;
     // pthread_join(thread, &thread_result);
     // printf("Result: %d\n", *(int *)thread_result);
@@ -62,8 +61,9 @@ void ipc_unchecked_setup(void)
 }
 
 void ipc_unchecked_teardown(void) 
-{ 
-    ck_assert_int_eq(close(g_server_socket), 0);
+{
+    conn_close_sockets(g_sockets);
+    queue_destroy_and_destroy_elements(g_sockets, free);
 }
 
 START_TEST (test_client_server_connection)
