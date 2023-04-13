@@ -15,7 +15,9 @@ int main(int argc, char *argv[]) {
   pthread_join(hilo_cpu,NULL);
   pthread_create(&hilo_kernel, NULL, (void *)conectar_kernel, NULL);
   pthread_join(hilo_kernel,NULL);
-  
+
+  free(memoriaConfig->path);  
   terminar_programa(loggerMemoria, memoriaConfig);  
   return 0;
 }
+

@@ -85,7 +85,7 @@ void inicializar_logs(){
 // Lo del memoria conexion: 
 void conectar_cpu(){
     config_memo.cpu=esperar_cliente(server_m);
-    t_paquete* paquete =malloc(sizeof(t_paquete));
+    t_paquete* paquete; // =malloc(sizeof(t_paquete));
     paquete = recibir_paquete(config_memo.cpu);
     if(paquete->codigo_operacion != CPU){
       log_error(clogger,"Vos no sos el CPU. Se cancela la conexión");
@@ -93,13 +93,13 @@ void conectar_cpu(){
 			pthread_exit(&hilo_cpu);
     }
     log_info(clogger,"Se conectó el CPU: %d \n",config_memo.cpu);
-		free(paquete);
+		paquete_destroy(paquete);
     running_cpu=true;
     ejecutar_cpu();
 }
 void conectar_kernel(){
     config_memo.kernel=esperar_cliente(server_m);
-    t_paquete* paquete =malloc(TAM_PAQ);
+    t_paquete* paquete; // =malloc(TAM_PAQ);
     paquete = recibir_paquete(config_memo.kernel);
     if(paquete->codigo_operacion != KERNEL){
       log_error(klogger,"Vos no sos el kernel. Se cancela la conexión %d",paquete->codigo_operacion);
@@ -109,13 +109,13 @@ void conectar_kernel(){
     }
     log_info(klogger,"Se conectó el kernel: %d \n",config_memo.kernel);
 		
-    free(paquete);
+    eliminar_paquete(paquete);
     running_k=true;
     ejecutar_kernel();
 }
 void conectar_fs(){
   config_memo.fs=esperar_cliente(server_m);
-    t_paquete* paquete =malloc(TAM_PAQ);
+    t_paquete* paquete;// =malloc(TAM_PAQ);
     paquete = recibir_paquete(config_memo.fs);
     if(paquete->codigo_operacion != FILE_SYSTEM){
       log_error(flogger,"Vos no sos el FS. Se cancela la conexión %d ",paquete->codigo_operacion);
@@ -125,7 +125,7 @@ void conectar_fs(){
     }
     log_info(flogger,"Se conectó el FileSystem: %d \n",config_memo.fs);
 		
-    free(paquete);
+    paquete_destroy(paquete);
     running_k=true;
     ejecutar_fs();
 }
@@ -176,7 +176,7 @@ void mostrar_valores_de_configuracion_memoria (){
     int conectar=config_memo.kernel;
     log_trace(mlogger, "Por ejecutar las tareas del kernel");
 
-    t_paquete* paquete =malloc(TAM_PAQ);
+    t_paquete* paquete; // =malloc(size_of(t_paquete));
     while (running_k)
     {
     
@@ -196,9 +196,11 @@ void mostrar_valores_de_configuracion_memoria (){
       }
       eliminar_paquete(paquete);
       running_k=false;
-      log_trace(klogger,"terminé de ejecutar kernel");
+      log_trace(klogger,"ejecute kernel");
   }
-  }
+  eliminar_paquete(paquete);
+  log_info(klogger,"Terminando de ejecutar las tareas del kernel");
+}
   void ejecutar_cpu(){
     int conectar=config_memo.cpu;
     log_trace(clogger, "Por ejecutar las tareas del CPU");
