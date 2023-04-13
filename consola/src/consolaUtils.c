@@ -114,7 +114,7 @@ void asignar_tokens_a_linea_instruccion(LineaInstruccion *linea_instruccion, cha
 
   linea_instruccion->parametros[2] = strdup(tokens[3]);
 
-  liberar_tokens(tokens);
+  //liberar_tokens(tokens);
 }
 
 void agregar_linea_de_instruccion_a_lista(LineaInstruccion *linea_instruccion, Lista *lista)

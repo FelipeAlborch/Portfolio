@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
     
 
 
+
     fclose(archivo_pseudocodigo);
     log_destroy(logger_consola);
     config_destroy(consola_config);
