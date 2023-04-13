@@ -96,7 +96,7 @@ void loguear_lista_de_instrucciones(t_list* lista_de_instrucciones, t_log* logge
     for(int i = 0; i < list_size(lista_de_instrucciones); i++)
     {
         LineaInstruccion* una_instruccion = list_get(lista_de_instrucciones, i);
-        log_info(logger, "Instruccion N°<%d>: %s %s %s ", i+1, una_instruccion->identificador, una_instruccion->parametros[0], una_instruccion->parametros[1]);
+        log_info(logger, "Instruccion N°<%d>: %s %s %s %s ", i+1, una_instruccion->identificador, una_instruccion->parametros[0], una_instruccion->parametros[1], una_instruccion->parametros[2]);
     }
 }
 

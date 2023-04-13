@@ -46,6 +46,7 @@ void* esperar_consolas(int socketServidorConsolas)
 void escuchar_consola(int socketConsola)
 {
 	t_log* logger;
+	t_list* lista_de_consola;
     while(true)
     {
         logger = iniciar_logger_modulo(KERNEL_LOGGER);
@@ -60,10 +61,15 @@ void escuchar_consola(int socketConsola)
 			
             case LISTA_INSTRUCCIONES:
             log_info(logger, "Me llego una lista de instrucciones");
-			//ACA SE CREA EL PCB Y SE LO MANDA A NEW
-            //t_list* lista_instrucciones = _recibir_paquete(socketConsola);
-			//pid_global++;
-			//pcb* pcb = crear_pcb(lista_instrucciones, pid_global, configuracionKernel.ESTIMACION_INICIAL/1000);
+			
+			t_list* lista_instrucciones = list_create();
+			lista_de_consola = _recibir_paquete(socketConsola);
+			deserializar_lista_de_consola(lista_instrucciones, lista_de_consola, 0, 0);
+			
+			pid_global++;
+			pcb* un_pcb = crear_pcb(lista_instrucciones, pid_global, configuracionKernel.ESTIMACION_INICIAL/1000);
+			loguear_pcb(un_pcb,logger);
+			// TO-DO:
 			// t_list* tabla_segmentos = solicitar_tabla_de_segmentos(socketMemoria);
 			//pcb->tabla_de_segmentos = list_duplicate(tabla_segmentos);
             break;
@@ -82,6 +88,26 @@ void escuchar_consola(int socketConsola)
 
     }
 }
+
+void deserializar_lista_de_consola(t_list* lista_de_instrucciones, t_list* lista_de_contenido_recibido, int indice_tamaño, int indice_lista)
+{
+    int cantidad_de_instrucciones = *(int *)list_get(lista_de_contenido_recibido, indice_tamaño);
+    int i;
+    int base;
+    for(i = 0; i < cantidad_de_instrucciones; i++)
+    {
+        LineaInstruccion* una_instruccion = malloc(sizeof(LineaInstruccion));
+        base = 4 * i;
+
+        una_instruccion->identificador = string_duplicate(list_get(lista_de_contenido_recibido, base + indice_lista + 1));
+        una_instruccion->parametros[0] = string_duplicate(list_get(lista_de_contenido_recibido, base + indice_lista + 2));
+        una_instruccion->parametros[1]= string_duplicate(list_get(lista_de_contenido_recibido, base + indice_lista + 3));
+		una_instruccion->parametros[2] = string_duplicate(list_get(lista_de_contenido_recibido, base + indice_lista + 4));
+
+        list_add(lista_de_instrucciones, una_instruccion);
+    }
+}
+
 
 int conectar_con_cpu(config_de_kernel configuracionKernel){  
 
