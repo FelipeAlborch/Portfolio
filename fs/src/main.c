@@ -63,7 +63,7 @@ void *kernel_handler(void *arg)
     {
         char buf[100] = {0};
 
-        read_socket(kr_socket, buf, 100);
+        read_socket(kr_socket, buf, sizeof(buf));
 
         log_info(log, "Unknown data from kernel:%s\n", mem_hexstring(buf, sizeof(buf)));
 
