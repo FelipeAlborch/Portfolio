@@ -99,7 +99,7 @@ void conectar_cpu(){
 }
 void conectar_kernel(){
     config_memo.kernel=esperar_cliente(server_m);
-    t_paquete* paquete =malloc(sizeof(t_paquete));
+    t_paquete* paquete =malloc(TAM_PAQ);
     paquete = recibir_paquete(config_memo.kernel);
     if(paquete->codigo_operacion != KERNEL){
       log_error(klogger,"Vos no sos el kernel. Se cancela la conexión %d",paquete->codigo_operacion);
@@ -115,7 +115,7 @@ void conectar_kernel(){
 }
 void conectar_fs(){
   config_memo.fs=esperar_cliente(server_m);
-    t_paquete* paquete =malloc(sizeof(t_paquete));
+    t_paquete* paquete =malloc(TAM_PAQ);
     paquete = recibir_paquete(config_memo.fs);
     if(paquete->codigo_operacion != FILE_SYSTEM){
       log_error(flogger,"Vos no sos el FS. Se cancela la conexión %d ",paquete->codigo_operacion);
@@ -176,21 +176,25 @@ void mostrar_valores_de_configuracion_memoria (){
     int conectar=config_memo.kernel;
     log_trace(mlogger, "Por ejecutar las tareas del kernel");
 
-    //t_paquete* paquete_cpu =malloc(size_of(t_paquete));
+    t_paquete* paquete =malloc(TAM_PAQ);
     while (running_k)
     {
     
-      /*paquete_cpu=recibir_paquete(conectar);
-      switch (paquete_cpu->codigo_operacion)
+      paquete=recibir_paquete(conectar);
+      switch (paquete->codigo_operacion)
       {
-          case :
+          case INICIO_PROCESO:
+            crear_proceso(paquete);
+            respuestas(config_memo.kernel,INICIO_PROCESO,paquete);
+            break;
+          case FIN_PROCESO:
             
             break;
           
           default:
             break;
       }
-      eliminar_paquete(paquete_cpu);*/
+      eliminar_paquete(paquete);
       running_k=false;
       log_trace(klogger,"terminé de ejecutar kernel");
   }
@@ -282,3 +286,15 @@ void mostrar_valores_de_configuracion_memoria (){
         break;
     }
   }
+void* crear_proceso(t_paquete* paquete){
+  int pid=paquete->buffer->stream;
+  
+  return NULL;
+}
+void respuestas(int cliente, int code,t_paquete* paquete){
+  
+  paquete->codigo_operacion=code;
+  enviar_paquete(paquete,cliente);
+  eliminar_paquete(paquete);
+}
+

@@ -8,7 +8,7 @@
 #define BEST_FIT 2
 #define WORST_FIT 3
 #define TAM_CABECERA sizeof(t_segmento)
-
+#define TAM_PAQ sizeof(t_paquete)
 
 extern t_log* mlogger;
 extern t_log* loggerMemoria;
@@ -116,6 +116,7 @@ void crear_segmento(int pid, int size);
 void eliminar_segmento(int pid, int direccion);
 void compactar();
 void crear_segmento_(int pid, int size);
+void* crear_proceso(t_paquete* paquete);
 
 t_tabla_segmentos* crear_tabla_segmentos(int pid, int cant_seg, int tam_seg);
 t_tabla_segmentos* buscar_en_tabla(int pid);

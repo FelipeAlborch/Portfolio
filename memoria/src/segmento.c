@@ -22,8 +22,12 @@ void* leer_dato(int pid, int direccion, int size){
 	void* info;
 	return info;
 }
-void escribir_dato(int pid, int direccion, int size, void* valor){}
-void crear_segmento(int pid, int size){}
+void escribir_dato(int pid, int direccion, int size, void* valor){
+
+}
+void crear_segmento(int pid, int size){
+    
+}
 void eliminar_segmento(int pid, int direccion){}
 void compactar(){}
 void crear_segmento_(int pid, int size){}
@@ -53,6 +57,7 @@ t_tabla_segmentos* crear_tabla_segmentos(int pid, int cant_seg, int tam_seg){
 t_tabla_segmentos* buscar_en_tabla(int pid){
 
 }
+
 t_segmento* buscar_segmento(int id_seg, t_list* segmentos){
 	for (int i = 0; i < list_size(segmentos); i++) {
         t_segmento* segmento = list_get(segmentos, i);

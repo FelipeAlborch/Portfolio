@@ -48,17 +48,21 @@ typedef enum
 
 typedef enum
 {
-	CREATE_SEGMENT = 100,
-	DELETE_SEGMENT,
-	INICIO_COMPACTAR,
+	CREATE_SEGMENT = 100, //se envia el pid y el tamanio del segmento
+	DELETE_SEGMENT,	//	se envia el pid y el id del segmento
+	INICIO_COMPACTAR,	
 	FIN_COMPACTAR,
-	M_READ,
-	M_WRITE,
+	M_READ,		//se envia el pid, el id del segmento y el offset
+	M_WRITE,	//se envia el pid, el id del segmento, el offset y el valor a escribir
 	INICIO_PROCESO,
 	FIN_PROCESO,
 	OK,
-	ERROR
-
+	ERROR,
+	OUT_OF_MEMORY,
+	TABLAS_PROCESOS,
+	MOV_OUT,	//se escribe el valor del registro en memoria
+	MOV_IN		//se lee el valor del registro en memoria
+	
 }msj_memoria;
 
 typedef struct{
