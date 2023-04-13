@@ -9,11 +9,7 @@ typedef enum
 	MENSAJE,
 	PAQUETE,
 	LISTA_INSTRUCCIONES,
-	INTERRUPCION,
-	PCB,
-	PCB_BLOCKED,
-	PANTALLA,
-	TECLADO
+	PCB
 }op_code;
 
 typedef struct

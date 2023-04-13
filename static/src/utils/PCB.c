@@ -91,6 +91,140 @@ void liberar_pcb(pcb* un_pcb)
     free(un_pcb);
 }
 
+void enviar_pcb(pcb* un_pcb, int socket_a_enviar)
+{
+    t_paquete* paquete_a_enviar = crear_paquete_operacion(PCB);
+
+    serializar_pcb(paquete_a_enviar, un_pcb);
+
+    enviar_paquete(paquete_a_enviar, socket_a_enviar);
+
+    eliminar_paquete(paquete_a_enviar);
+}
+
+void serializar_pcb(t_paquete* paquete, pcb* un_pcb)
+{
+    int cantidad_de_instrucciones = list_size(un_pcb->lista_de_instrucciones);
+    int cantidad_en_tabla_segmentos = list_size(un_pcb->tabla_de_segmentos);
+    
+    agregar_a_paquete(paquete, &cantidad_de_instrucciones, sizeof(int));
+    agregar_a_paquete(paquete, &cantidad_en_tabla_segmentos, sizeof(int));
+
+    int i = 0;
+    
+    for(i; i < cantidad_de_instrucciones; i++)
+    {
+        LineaInstruccion* una_instruccion = list_get(un_pcb->lista_de_instrucciones, i);
+        agregar_a_paquete(paquete, una_instruccion->identificador, strlen(una_instruccion->identificador)+1);
+        agregar_a_paquete(paquete, una_instruccion->parametros[0], strlen(una_instruccion->parametros[0])+1);
+        agregar_a_paquete(paquete, una_instruccion->parametros[1], strlen(una_instruccion->parametros[1])+1);
+        agregar_a_paquete(paquete, una_instruccion->parametros[2], strlen(una_instruccion->parametros[2])+1);
+    }
+    i = 0;
+    /*
+    for(i; i < cantidad_en_tabla_segmentos; i++)
+    {
+        segmento* un_segmento = list_get(un_pcb->tabla_de_segmentos,i);
+        agregar_a_paquete(paquete, &un_segmento->tamanio_segmento, sizeof(int));
+        agregar_a_paquete(paquete, un_segmento->id_tabla_pagina, strlen(un_segmento->id_tabla_pagina)+1);
+    }*/
+    
+    agregar_a_paquete(paquete, &(un_pcb->pid), sizeof(int));
+    agregar_a_paquete(paquete, &(un_pcb->program_counter), sizeof(int));
+    
+    agregar_a_paquete(paquete, un_pcb->AX, strlen(un_pcb->AX));
+    agregar_a_paquete(paquete, un_pcb->BX, strlen(un_pcb->BX));
+    agregar_a_paquete(paquete, un_pcb->CX, strlen(un_pcb->CX));
+    agregar_a_paquete(paquete, un_pcb->DX, strlen(un_pcb->DX));
+
+    agregar_a_paquete(paquete, un_pcb->EAX, strlen(un_pcb->EAX));
+    agregar_a_paquete(paquete, un_pcb->EBX, strlen(un_pcb->EBX));
+    agregar_a_paquete(paquete, un_pcb->ECX, strlen(un_pcb->ECX));
+    agregar_a_paquete(paquete, un_pcb->EDX, strlen(un_pcb->EDX));
+
+    agregar_a_paquete(paquete, un_pcb->RAX, strlen(un_pcb->RAX));
+    agregar_a_paquete(paquete, un_pcb->RBX, strlen(un_pcb->RBX));
+    agregar_a_paquete(paquete, un_pcb->RCX, strlen(un_pcb->RCX));
+    agregar_a_paquete(paquete, un_pcb->RDX, strlen(un_pcb->RDX));
+   
+    agregar_a_paquete(paquete, &(un_pcb->estado), sizeof(estado_pcb));
+    agregar_a_paquete(paquete, &(un_pcb->estimado_prox_rafaga), sizeof(int));
+    
+}
+
+pcb* recibir_pcb(t_list* valores_pcb_enviado)
+{
+    int cantidad_de_instrucciones = *(int *)list_get(valores_pcb_enviado, 0);
+    int cantidad_en_tabla_segmentos = *(int *)list_get(valores_pcb_enviado, 1);
+
+    pcb* pcb_recibido = /*(pcb*) */malloc(sizeof(pcb));
+    t_list* lista_de_instrucciones = list_create();
+    t_list* tabla_de_segmentos = list_create();
+    int i;
+    int base;   // Representa el desplazamiento a traves de la lista para ubicar los valores empaquetados en el orden predefinido
+
+    for(i = 0; i < cantidad_de_instrucciones; i++)
+    {
+        base = 4 * i;
+        LineaInstruccion* una_instruccion = malloc(sizeof(LineaInstruccion));
+        
+        una_instruccion->identificador = string_duplicate(list_get(valores_pcb_enviado, base + 2));
+        una_instruccion->parametros[0] = string_duplicate(list_get(valores_pcb_enviado, base + 3));
+        una_instruccion->parametros[1] = string_duplicate(list_get(valores_pcb_enviado, base + 4));
+        una_instruccion->parametros[2] = string_duplicate(list_get(valores_pcb_enviado, base + 5));
+
+        list_add(lista_de_instrucciones, una_instruccion);
+    }
+    
+    base = (cantidad_de_instrucciones * 4) + 2;
+    /*
+    for(i = 0; i < cantidad_en_tabla_segmentos; i++)
+    {
+        segmento* un_segmento = malloc(sizeof(segmento));
+
+        un_segmento->tamanio_segmento = *(int*)list_get(valores_pcb_enviado, base);
+        base++;
+        un_segmento->id_tabla_pagina = string_duplicate(list_get(valores_pcb_enviado, base));
+        base++;
+
+        list_add(tabla_de_segmentos, un_segmento);
+    }
+    */
+    int valores_restantes = base;
+
+    pcb_recibido->pid = *(int*)list_get(valores_pcb_enviado, valores_restantes);
+    pcb_recibido->program_counter = *(int*)list_get(valores_pcb_enviado, valores_restantes + 1);
+
+    pcb_recibido->AX = string_duplicate(list_get(valores_pcb_enviado, valores_restantes + 2));
+    pcb_recibido->BX = string_duplicate(list_get(valores_pcb_enviado, valores_restantes + 3));
+    pcb_recibido->CX = string_duplicate(list_get(valores_pcb_enviado, valores_restantes + 4));
+    pcb_recibido->DX = string_duplicate(list_get(valores_pcb_enviado, valores_restantes + 5));
+
+    pcb_recibido->EAX = string_duplicate(list_get(valores_pcb_enviado, valores_restantes + 6));
+    pcb_recibido->EBX = string_duplicate(list_get(valores_pcb_enviado, valores_restantes + 7));
+    pcb_recibido->ECX = string_duplicate(list_get(valores_pcb_enviado, valores_restantes + 8));
+    pcb_recibido->EDX = string_duplicate(list_get(valores_pcb_enviado, valores_restantes + 9));
+
+    pcb_recibido->RAX = string_duplicate(list_get(valores_pcb_enviado, valores_restantes + 10));
+    pcb_recibido->RBX = string_duplicate(list_get(valores_pcb_enviado, valores_restantes + 11));
+    pcb_recibido->RCX = string_duplicate(list_get(valores_pcb_enviado, valores_restantes + 12));
+    pcb_recibido->RDX = string_duplicate(list_get(valores_pcb_enviado, valores_restantes + 13));
+
+    pcb_recibido->estado = *(estado_pcb*)list_get(valores_pcb_enviado, valores_restantes + 14);
+    pcb_recibido->estimado_prox_rafaga = *(int*)list_get(valores_pcb_enviado, valores_restantes + 15);
+    
+    pcb_recibido->lista_de_instrucciones = list_duplicate(lista_de_instrucciones);
+    
+    //pcb_recibido->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
+
+    list_destroy(lista_de_instrucciones);
+    //list_destroy(tabla_de_segmentos);
+    
+    //list_destroy(valores_pcb_enviado);
+    
+    return pcb_recibido;
+}
+
 void loguear_lista_de_instrucciones(t_list* lista_de_instrucciones, t_log* logger)
 {
     for(int i = 0; i < list_size(lista_de_instrucciones); i++)

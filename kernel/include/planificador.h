@@ -36,6 +36,8 @@ void* planificador_largo_plazo();
 
 void* planificador_corto_plazo_fifo();
 
+void ejecutar(pcb*);
+
 /*****************************************************************************
  *              FUNCIONES PARA MOVER PROCESOS POR LAS COALS
 ******************************************************************************/

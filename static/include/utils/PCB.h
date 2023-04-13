@@ -13,6 +13,27 @@ typedef enum
     TERMINATED
 } estado_pcb;
 
+typedef enum Instruccion
+{
+  DESCONOCIDA = -1,
+  SET,
+  MOV_IN,
+  MOV_OUT,
+  IO,
+  F_OPEN,
+  F_CLOSE,
+  F_SEEK,
+  F_READ,
+  F_WRITE,
+  F_TRUNCATE,
+  WAIT,
+  SIGNAL,
+  //CREATE_SEGMENT,
+  //DELETE_SEGMENT,
+  YIELD,
+  EXIT
+} Instruccion;
+
 typedef struct pcb
 {
     int pid;
@@ -101,6 +122,12 @@ char* identificar_estado(estado_pcb un_estado);
 */
 void liberar_pcb(pcb*);
 
+void enviar_pcb(pcb*, int);
+
+void serializar_pcb(t_paquete*, pcb*);
+
+pcb* recibir_pcb(t_list*);
+
 /**
 * @NAME: loguear_lista_de_instrucciones
 * @DESC: Funcion encargada de loguear una lista de instrucciones.
@@ -117,5 +144,7 @@ void loguear_lista_de_instrucciones(t_list*, t_log*);
 *        LineaInstruccion* una_instruccion - la instruccion que se desea liberar.
 */
 void* liberar_instruccion(LineaInstruccion*);
+
+
 
 #endif

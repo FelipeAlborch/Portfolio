@@ -14,15 +14,15 @@ int main(int argc, char *argv[]) {
 
   if (socketCpuDispatch < 0)
   {
-      log_error(logger_cpu, "Error intentando iniciar Servidor CPU.");
-      log_destroy(logger_cpu);
-      return 1;
+    log_error(logger_cpu, "Error intentando iniciar Servidor CPU.");
+    log_destroy(logger_cpu);
+    return 1;
   }
 
   log_info(logger_cpu, "Servidor de CPU iniciado correctamente!");
 
-  int socketMemoria = conectar_con_memoria(configuracionCPU);
-  socketMemoriaUtil = socketMemoria;
+  //int socketMemoria = conectar_con_memoria(configuracionCPU);
+  //socketMemoriaUtil = socketMemoria;
  
   Hilo hiloKernelDispatch;
   pthread_create(&hiloKernelDispatch, NULL, (void *)esperar_kernel_dispatch, (void *)socketCpuDispatch);

@@ -145,10 +145,50 @@ void* planificador_corto_plazo_fifo()
         pcb* proceso_a_ejecutar = obtener_proceso_ready();
 
         agregar_proceso_exec(proceso_a_ejecutar);
-        // TO-DO: ejecutar(proceso_a_ejecutar); Aca se deberia mandar el pcb al cpu.
+        ejecutar(proceso_a_ejecutar); //Aca se deberia mandar el pcb al cpu.
     }
 }
 
+
+void ejecutar(pcb* proceso_a_ejecutar)
+{
+    enviar_pcb(proceso_a_ejecutar, socketCPU);
+
+    log_info(logger_planificador_extra, "Se envia el proceso: < %d > al CPU.", proceso_a_ejecutar->pid);
+
+    pcb* proceso_recibido;
+    t_list* lista_recepcion_valores;
+    int operacion_de_cpu = recibir_operacion(socketCPU);
+
+    switch(operacion_de_cpu)
+    {
+        case YIELD:
+            lista_recepcion_valores = recibir_paquete(socketCPU);
+            proceso_recibido = recibir_pcb(lista_recepcion_valores);
+            log_info(logger_planificador_extra, "Proceso: < %d > recibido por CPU.", proceso_recibido->pid);
+            loguear_pcb(proceso_recibido, logger_planificador_extra);
+            //pcb* proceso_en_ejecucion = desalojar_proceso_en_ejecucion();
+            //liberar_pcb(proceso_en_ejecucion);
+            agregar_proceso_ready(proceso_recibido);
+            
+
+            list_destroy(lista_recepcion_valores);
+            //manejar_proceso_recibido(proceso_recibido);
+        break;
+
+        //case IO:
+        //    
+        //break;
+        
+        case DESCONEXION:
+            log_info(logger_planificador_obligatorio, "CPU Desconectado");
+        break;
+        
+        default:
+            log_warning(logger_planificador_obligatorio, "Operación desconocida.");
+        break;
+    }
+}
 
 void agregar_proceso_new(pcb* un_pcb)
 {

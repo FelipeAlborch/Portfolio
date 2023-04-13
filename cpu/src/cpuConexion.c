@@ -69,25 +69,26 @@ bool manejar_paquete_kernel_dispatch(int socketKernel)
             log_warning(logger, "Conexión con Kernel en puerto Dispatch terminada.");
             close(socketKernel);
             log_destroy(logger);
-            return true;
+        return true;
         
         case MENSAJE:
             log_info(logger, "Mensaje recibido de Kernel.");
             char *mensaje = obtener_mensaje_del_cliente(socketKernel);
             log_info(logger, "Mensaje: %s", mensaje);
             free(mensaje);
-            return;
+        return;
 			//break;
 
-        /*case PCB:
+        case PCB:
             log_info(logger, "PCB recibido de Kernel.");
-            Pcb *pcb = deserializar_pcb(socketKernel);
-            //dump(pcb->instrucciones);
-
-            ejecutar_lista_instrucciones_del_pcb(pcb, socketKernel, socketMemoriaUtil);
-            liberar_pcb(pcb);
-            break;
-		*/
+            t_list* lista_del_pcb = _recibir_paquete(socketKernel);
+            pcb* pcb = recibir_pcb(lista_del_pcb);
+            loguear_pcb(pcb, logger);
+            
+            //ejecutar_lista_instrucciones_del_pcb(pcb, socketKernel, socketMemoriaUtil);
+            //liberar_pcb(pcb);
+        break;
+		
         default:
             break;
     } 

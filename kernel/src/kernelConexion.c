@@ -45,23 +45,24 @@ void* esperar_consolas(int socketServidorConsolas)
 
 void escuchar_consola(int socketConsola)
 {
-	//t_log* logger;
+	
 	t_list* lista_de_consola;
-	t_log* logger_escucha = iniciar_logger_modulo(KERNEL_LOGGER);
-    while(true)
+	t_log* logger = iniciar_logger_modulo(KERNEL_LOGGER);
+    
+	while(true)
     {
         //logger = iniciar_logger_modulo(KERNEL_LOGGER);
 
         switch(recibir_operacion(socketConsola))
         {
             case MENSAJE:
-                recibir_mensaje(socketConsola, logger_escucha);
+                recibir_mensaje(socketConsola, logger);
 				
             break;
 			
 			
             case LISTA_INSTRUCCIONES:
-            log_info(logger_escucha, "Me llego una lista de instrucciones");
+            log_info(logger, "Me llego una lista de instrucciones");
 			
 			t_list* lista_instrucciones = list_create();
 			lista_de_consola = _recibir_paquete(socketConsola);
@@ -69,9 +70,10 @@ void escuchar_consola(int socketConsola)
 			
 			pid_global++;
 			pcb* nuevo_pcb = crear_pcb(lista_instrucciones, pid_global, configuracionKernel.ESTIMACION_INICIAL/1000);
+			log_info(logger, "Se crea el proceso < %d > en NEW", pid_global);
 			agregar_socket_a_diccionario(nuevo_pcb->pid, socketConsola);
 			leer_diccionario_consolas();
-			loguear_pcb(nuevo_pcb,logger_escucha);
+			loguear_pcb(nuevo_pcb,logger);
 			// TO-DO:
 			// t_list* tabla_segmentos = solicitar_tabla_de_segmentos(socketMemoria);
 			//pcb->tabla_de_segmentos = list_duplicate(tabla_segmentos);
@@ -85,11 +87,11 @@ void escuchar_consola(int socketConsola)
 
 		   
             default:
-                log_warning(logger_escucha, "Operacion Desconocida");
+                log_warning(logger, "Operacion Desconocida");
                 return;
             break;
         }
-        log_destroy(logger_escucha);
+        log_destroy(logger);
 
     }
 }
