@@ -3,19 +3,14 @@
 #include <ipc.h>
 #include <utils.h>
 #include <config.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <pthread.h>
-#include <assert.h>
 
-void *connection_handler(void *socket_fd);
+void *kernel_handler(void *socket_fd);
 
 int 
 main(int argc, char *argv[])
 {
-    int fs_socket_fd, mem_socket_fd, client_socket_fd, error;
+    int fs_socket, mem_socket, status;
 
     pthread_t thread_id;
 
@@ -27,27 +22,27 @@ main(int argc, char *argv[])
 
     fs_config_print(config);
 
-    mem_socket_fd = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
+    mem_socket = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
 
-    log_info(log, "mem socket: %d", mem_socket_fd);
+    t_paquete *paquete = paquete_create(FILE_SYSTEM);
 
-    fs_socket_fd = conn_create(SERVER, config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
+    write_socket_paquete(mem_socket, (void *)paquete);
 
-    log_info(log, "fs socket: %d", fs_socket_fd);
+    paquete_destroy(paquete);
 
-    while ((client_socket_fd = conn_accept(fs_socket_fd)))
-    {
-        error = pthread_create(&thread_id, NULL, connection_handler, (void *) &client_socket_fd);
-        assert(error == 0);
+    log_info(log, "Conectado a memoria en %s:%s", config->IP_MEMORIA, config->PUERTO_MEMORIA);
 
-        // pthread_join(client_socket_fd, NULL);
+    fs_socket = conn_create(SERVER, config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
 
-        // close(client_socket_fd);
-    }
+    log_info(log, "Escuchando kernel en %s:%s", config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
 
-    close(mem_socket_fd);
+    status = pthread_create(&thread_id, NULL, kernel_handler, (void *)alloc_int(fs_socket));
+    if (status != 0) perror("pthread_create");
 
-    close(fs_socket_fd);
+    pthread_join(thread_id, (void **)&status);
+    if (status != 0) perror("pthread_join");
+
+    conn_close(fs_socket);
 
     fs_config_destroy(config);
 
@@ -56,19 +51,28 @@ main(int argc, char *argv[])
     return 0;
 }
 
-void *connection_handler(void *p_socket_fd)
+void *kernel_handler(void *arg)
 {
-    int socket_fd = *(int *)p_socket_fd;
+    int fs_socket = *(int *)arg;
+    free(arg);
 
-    char *message = read_socket_string(socket_fd);
+    t_log *log = fs_log_create();
 
-    printf("%s\n", message);
+    int kr_socket;
+    while((kr_socket = conn_accept(fs_socket)) != -1)
+    {
+        char buf[100] = {0};
 
-    free(message);
+        read_socket(kr_socket, buf, 100);
 
-    write_socket_string(socket_fd, "mensaje recibido");
-    
-    conn_close(socket_fd);
+        log_info(log, "Unknown data from kernel:%s\n", mem_hexstring(buf, sizeof(buf)));
 
-    pthread_exit(NULL);
+        conn_close(kr_socket);
+
+        if (!conn_is_open(fs_socket)) break;
+    }
+
+    log_destroy(log);
+
+    pthread_exit((void *) 0);
 }

@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     //socket_memoria_planificador = socketMemoria;
     //int socketCPU = conectar_con_cpu(configuracionKernel);
     //socket_cpu_planificador = socketCPU;
-    //int socketFS = conectar_con_filesystem(configuracionKernel);
+    int socketFS = conectar_con_filesystem(configuracionKernel);
     //socket_fs_planificador = socketFS;
 
     inicializar_estructuras_planificacion();

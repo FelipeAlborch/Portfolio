@@ -18,9 +18,7 @@ void *clients_handler(void *arg)
     int new_socket;
     while((new_socket = conn_accept(server_socket)) != -1)
     {
-        if (new_socket == -1) perror("conn_accept");
-
-        queue_push(g_sockets, (void *)allocate_int(new_socket));
+        queue_push(g_sockets, (void *)alloc_int(new_socket));
 
         int status;
         char buf[SOMAXCONN] = {0};

@@ -35,7 +35,7 @@ int conn_close(int);
 
 int conn_is_open(int);
 
-void conn_close_sockets(t_queue *sockets);
+void conn_close_sockets(t_queue *);
 
 void conn_wait_until_close(int);
 
@@ -53,12 +53,20 @@ int write_socket(int, void *, int);
 
 int write_socket_string(int, char *);
 
-int write_socket_paquete(int socket_fd, t_paquete *paquete);
+int write_socket_paquete(int, t_paquete *);
 
 int write_socket_tlv_list(int, t_list *);
 
-void *buffer_create(int);
+t_paquete *paquete_create(int);
 
-int *allocate_int(int value);
+void paquete_destroy(t_paquete *);
+
+t_buffer *buffer_create(int);
+
+void buffer_destroy(t_buffer *);
+
+void *buf_create(int);
+
+int *alloc_int(int);
 
 #endif

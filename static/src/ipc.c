@@ -241,7 +241,37 @@ int write_socket_tlv_list(int socket_fd, t_list *tlv_list)
     return n;
 }
 
-void *buffer_create(int size)
+t_paquete *paquete_create(int codigo_operacion)
+{
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = codigo_operacion;
+    paquete->buffer = buffer_create(1);
+
+    return paquete;
+}
+
+void paquete_destroy(t_paquete *paquete)
+{
+    buffer_destroy(paquete->buffer);
+    free(paquete);
+}
+
+t_buffer *buffer_create(int size)
+{
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+    buffer->size = size;
+    buffer->stream = malloc(size);
+
+    return buffer;
+}
+
+void buffer_destroy(t_buffer *buffer)
+{
+    free(buffer->stream);
+    free(buffer);
+}
+
+void *buf_create(int size)
 {
     void *buffer = malloc(size);
     memset(buffer, 0, size);
@@ -249,7 +279,7 @@ void *buffer_create(int size)
     return buffer;
 }
 
-int *allocate_int(int value) {
+int *alloc_int(int value) {
     int *ptr = (int*) malloc(sizeof(int));
     *ptr = value;
     return ptr;
