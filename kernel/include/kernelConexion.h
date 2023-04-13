@@ -53,4 +53,6 @@ void escuchar_consola(int socketConsola);
 
 void deserializar_lista_de_consola(t_list*, t_list*, int, int);
 
+
+
 #endif

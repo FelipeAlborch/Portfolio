@@ -3,21 +3,16 @@
 
 int main(int argc, char *argv[]) {
 
-    Logger* loggerKernel = iniciar_logger_modulo(KERNEL_LOGGER);
-
-    log_info(loggerKernel, "Esto es el kernel :D");
+    //Logger* loggerKernel = iniciar_logger_modulo(KERNEL_LOGGER);
 
     Config* kernelConfig = config_create(argv[1]);
     configuracionKernel = obtener_valores_de_configuracion_kernel(kernelConfig);
     mostrar_valores_de_configuracion_kernel(configuracionKernel);
     leer_diccionario_recursos();
     
-    //int socketMemoria = conectar_con_memoria(configuracionKernel);
-    //socket_memoria_planificador = socketMemoria;
-    //int socketCPU = conectar_con_cpu(configuracionKernel);
-    //socket_cpu_planificador = socketCPU;
-    int socketFS = conectar_con_filesystem(configuracionKernel);
-    //socket_fs_planificador = socketFS;
+    socketMemoria = conectar_con_memoria(configuracionKernel);
+    socketCPU = conectar_con_cpu(configuracionKernel);
+    socketFS = conectar_con_filesystem(configuracionKernel);
 
     inicializar_estructuras_planificacion();
     iniciar_planificadores();
@@ -44,10 +39,7 @@ int main(int argc, char *argv[]) {
     pthread_create(&hiloConsolas, NULL, (void*)esperar_consolas, (void*)socketServicioConsolas);
     pthread_join(hiloConsolas, NULL);
 
-
-    // void *memcpy(void *dest, const void *src, size_t n);
-
-    log_destroy(loggerKernel);
+    //log_destroy(loggerKernel);
     config_destroy(kernelConfig);
     destruir_estructuras_planificacion();
 

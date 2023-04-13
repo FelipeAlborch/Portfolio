@@ -1,20 +1,14 @@
 #include <planificador.h>
 
-// SOCKET AL CPU
-int socket_cpu_planificador;
-
-// Socket a la memoria
-int socket_memoria_planificador;
-
-// Socket al FS
-int socket_fs_planificador;
+// Estos sockets ya no los necesitamos porque puse unos globales en un archivo previo que se incluye aca, y se incializan en el main.
+//int socket_cpu_planificador;
+//int socket_memoria_planificador;
+//int socket_fs_planificador;
 
 // LOGGER PARA EL PLANIFICADOR
 t_log* logger_planificador_obligatorio;
 t_log* logger_planificador_extra;
 
-// DICCIONARIO DE CONSOLAS: UNA MANERA DE GUARDAR SOCKETS DE LAS CONSOLAS, PARA LOS PIDS CREADOS.
-t_dictionary* diccionario_de_consolas;
 
 // variable global para el process id
 int pid_global = 0;
@@ -175,6 +169,8 @@ void agregar_proceso_ready(pcb* un_pcb)
 
     queue_push(cola_ready, un_pcb);
     log_info(logger_planificador_obligatorio, "El proceso < %d > se movio a READY", un_pcb->pid);
+    log_info(logger_planificador_obligatorio, "Cola READY < %s >:", configuracionKernel.ALGORITMO_PLANIFICACION);
+    loguear_procesos_en_cola(cola_ready);
 
     pthread_mutex_unlock(&mutex_ready);
     sem_post(&activar_corto_plazo);
@@ -255,4 +251,29 @@ pcb* desalojar_proceso_en_exec()
     sem_post(&sem_hay_en_running);
 
     return proceso_desalojado;
+}
+
+
+
+void loguear_cola_de_procesos(t_queue* cola_de_procesos)
+{
+    for(int i = 0; i < queue_size(cola_de_procesos); i++)
+    {
+        pcb* un_proceso = (pcb*)queue_peek_at(cola_de_procesos,i);
+        loguear_pcb(un_proceso, logger_planificador_extra);
+    }
+}
+
+void* queue_peek_at(t_queue* cola, int i)
+{
+    return list_get(cola->elements, i);
+}
+
+void loguear_procesos_en_cola(t_queue* cola_de_procesos)
+{
+    for(int i = 0; i < queue_size(cola_de_procesos); i++)
+    {
+        pcb* un_proceso = (pcb*)queue_peek_at(cola_de_procesos,i);
+        log_info(logger_planificador_obligatorio, "Proceso: < %d >", un_proceso->pid);
+    }
 }

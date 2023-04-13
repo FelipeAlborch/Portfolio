@@ -45,33 +45,38 @@ void* esperar_consolas(int socketServidorConsolas)
 
 void escuchar_consola(int socketConsola)
 {
-	t_log* logger;
+	//t_log* logger;
 	t_list* lista_de_consola;
+	t_log* logger_escucha = iniciar_logger_modulo(KERNEL_LOGGER);
     while(true)
     {
-        logger = iniciar_logger_modulo(KERNEL_LOGGER);
+        //logger = iniciar_logger_modulo(KERNEL_LOGGER);
 
         switch(recibir_operacion(socketConsola))
         {
             case MENSAJE:
-                recibir_mensaje(socketConsola, logger);
+                recibir_mensaje(socketConsola, logger_escucha);
 				
             break;
 			
 			
             case LISTA_INSTRUCCIONES:
-            log_info(logger, "Me llego una lista de instrucciones");
+            log_info(logger_escucha, "Me llego una lista de instrucciones");
 			
 			t_list* lista_instrucciones = list_create();
 			lista_de_consola = _recibir_paquete(socketConsola);
 			deserializar_lista_de_consola(lista_instrucciones, lista_de_consola, 0, 0);
 			
 			pid_global++;
-			pcb* un_pcb = crear_pcb(lista_instrucciones, pid_global, configuracionKernel.ESTIMACION_INICIAL/1000);
-			loguear_pcb(un_pcb,logger);
+			pcb* nuevo_pcb = crear_pcb(lista_instrucciones, pid_global, configuracionKernel.ESTIMACION_INICIAL/1000);
+			agregar_socket_a_diccionario(nuevo_pcb->pid, socketConsola);
+			leer_diccionario_consolas();
+			loguear_pcb(nuevo_pcb,logger_escucha);
 			// TO-DO:
 			// t_list* tabla_segmentos = solicitar_tabla_de_segmentos(socketMemoria);
 			//pcb->tabla_de_segmentos = list_duplicate(tabla_segmentos);
+			agregar_proceso_new(nuevo_pcb);
+			return;
             break;
 
             case DESCONEXION:
@@ -80,11 +85,11 @@ void escuchar_consola(int socketConsola)
 
 		   
             default:
-                log_warning(logger, "Operacion Desconocida");
+                log_warning(logger_escucha, "Operacion Desconocida");
                 return;
             break;
         }
-        log_destroy(logger);
+        log_destroy(logger_escucha);
 
     }
 }
@@ -107,6 +112,7 @@ void deserializar_lista_de_consola(t_list* lista_de_instrucciones, t_list* lista
         list_add(lista_de_instrucciones, una_instruccion);
     }
 }
+
 
 
 int conectar_con_cpu(config_de_kernel configuracionKernel){  
@@ -159,7 +165,7 @@ int conectar_con_memoria(config_de_kernel configuracion_kernel){
 int conectar_con_filesystem(config_de_kernel configuracionKernel)
 {
 	Logger* logger = iniciar_logger_modulo(KERNEL_LOGGER);
-	log_info(logger, "Conectando con memoria");
+	log_info(logger, "Conectando con FileSystem");
 
 	int socketFS = crear_conexion(configuracionKernel.IP_FILESYSTEM, configuracionKernel.PUERTO_FILESYSTEM);
 

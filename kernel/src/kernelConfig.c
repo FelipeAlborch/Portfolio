@@ -45,7 +45,7 @@ void crear_diccionario_recursos()
     diccionario_recursos = dictionary_create();
     for(int i = 0; i < string_array_size(configuracionKernel.RECURSOS); i++)
     {
-        dictionary_put(diccionario_recursos, configuracionKernel.RECURSOS[i], atoi(configuracionKernel.INSTANCIAS_RECURSOS[i]));
+        dictionary_put(diccionario_recursos, configuracionKernel.RECURSOS[i], (void*) atoi(configuracionKernel.INSTANCIAS_RECURSOS[i]));
     }
 }
 
@@ -54,7 +54,7 @@ void leer_diccionario_recursos()
     for(int i = 0; i < dictionary_size(diccionario_recursos); i++)
     {   
         //char* key = configuracionKernel.RECURSOS[i];
-        int instancia_recurso = dictionary_get(diccionario_recursos, configuracionKernel.RECURSOS[i]);
+        int instancia_recurso = dictionary_get(diccionario_recursos, (void*) configuracionKernel.RECURSOS[i]);
         printf("LAS INSTANCIAS DEL RECURSO %s SON: %d \n",configuracionKernel.RECURSOS[i] ,instancia_recurso);
     }
 }
