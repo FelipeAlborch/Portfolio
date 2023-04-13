@@ -2,11 +2,11 @@
 
 #define CONFIG_FILE "fs.config"
 
-fs_config *fs_config_create() {
-    return fs_config_create_from_file(CONFIG_FILE);
+fs_config *config_create_fs() {
+    return config_create_fs_from_file(CONFIG_FILE);
 }
 
-fs_config *fs_config_create_from_file(char *path) {
+fs_config *config_create_fs_from_file(char *path) {
 
     t_config *t_config = config_create(path);
 
@@ -27,7 +27,7 @@ fs_config *fs_config_create_from_file(char *path) {
     return fs_config;
 }
 
-void fs_config_print(fs_config *config) {
+void config_print_fs(fs_config *config) {
     printf("IP_MEMORIA = %s\n", config->IP_MEMORIA);
     printf("PUERTO_MEMORIA = %s\n", config->PUERTO_MEMORIA);
     printf("PUERTO_ESCUCHA = %s\n", config->PUERTO_ESCUCHA);
@@ -38,7 +38,7 @@ void fs_config_print(fs_config *config) {
     printf("RETARDO_ACCESO_BLOQUE = %d\n", config->RETARDO_ACCESO_BLOQUE);
 }
 
-void fs_config_destroy(fs_config *config) {
+void config_destroy_fs(fs_config *config) {
     free(config->IP_MEMORIA);
     free(config->PUERTO_MEMORIA);
     free(config->PUERTO_ESCUCHA);

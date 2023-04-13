@@ -14,13 +14,13 @@ main(int argc, char *argv[])
 
     pthread_t thread_id;
 
-    t_log *log = fs_log_create();
+    t_log *log = log_create_fs();
 
-    fs_config *config = fs_config_create();
+    fs_config *config = config_create_fs();
 
     print_cwd();
 
-    fs_config_print(config);
+    config_print_fs(config);
 
     mem_socket = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
 
@@ -44,7 +44,7 @@ main(int argc, char *argv[])
 
     conn_close(fs_socket);
 
-    fs_config_destroy(config);
+    config_destroy_fs(config);
 
     log_destroy(log);
         
@@ -56,7 +56,7 @@ void *kernel_handler(void *arg)
     int fs_socket = *(int *)arg;
     free(arg);
 
-    t_log *log = fs_log_create();
+    t_log *log = log_create_fs();
 
     int kr_socket;
     while((kr_socket = conn_accept(fs_socket)) != -1)

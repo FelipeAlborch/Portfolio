@@ -2,7 +2,7 @@
 #define FSLOG_H_
 #include <commons/log.h>
 
-t_log *fs_log_create();
+t_log *log_create_fs();
 
 
 #endif
