@@ -54,7 +54,10 @@ typedef struct pcb
     estado_pcb estado;
     t_list* lista_de_instrucciones;
     t_list* tabla_de_segmentos;
+    t_list* tabla_archivos_abiertos;
 
+    t_temporal* llegada_ready;
+    t_temporal* tiempo_ejecucion;
     int estimado_prox_rafaga;
 } pcb;
 
