@@ -15,9 +15,12 @@ int pid_global = 0;
 
 // Colas de planificacion
 t_queue* cola_new;
-t_queue* cola_ready;
+t_queue* cola_ready_fifo;
 t_queue* cola_exec;
 t_queue* cola_terminated;
+
+// Lista para procesos en ready por HRRN. tiene que ser una lista asi la puedo filtrar por Response Ration
+t_list* lista_ready_hrrn;
 
 // Cola blockeo va a haber varias, TO-DO: posiblemente un hilo que haga el IO por proceso.
 
@@ -63,9 +66,11 @@ void inicializar_estructuras_planificacion() {
 
     // Inicializo las colas de planificacion.
     cola_new = queue_create();
-    cola_ready = queue_create();
+    cola_ready_fifo = queue_create();
     cola_exec = queue_create();
     cola_terminated = queue_create();
+
+    lista_ready_hrrn = list_create();
 
     // Inicializo el diccionario de consolas.
     diccionario_de_consolas = dictionary_create();
@@ -92,9 +97,11 @@ void destruir_estructuras_planificacion()
     // Destruyo colas.
     // Habria que primero destruir los elementos de las colas.
     queue_destroy(cola_new);
-    queue_destroy(cola_ready);
+    queue_destroy(cola_ready_fifo);
     queue_destroy(cola_exec);
     queue_destroy(cola_terminated);
+
+    list_destroy_and_destroy_elements(lista_ready_hrrn, (void*)liberar_pcb);
 
     // Destruyo diccionarios;
     dictionary_destroy(diccionario_de_consolas);
@@ -113,9 +120,8 @@ void iniciar_planificadores()
     }
     else if(strcmp(configuracionKernel.ALGORITMO_PLANIFICACION, "HRRN") == 0)
     {
-        // TO-DO
-        //pthread_create(&hilo_corto_plazo, NULL, planificador_de_corto_plazo_hrrn, NULL);
-        //pthread_detach(hilo_corto_plazo);
+        pthread_create(&hilo_corto_plazo, NULL, planificador_corto_plazo_hrrn, NULL);
+        pthread_detach(hilo_corto_plazo);
     }
 }
 
@@ -145,7 +151,31 @@ void* planificador_corto_plazo_fifo()
         pcb* proceso_a_ejecutar = obtener_proceso_ready();
 
         agregar_proceso_exec(proceso_a_ejecutar);
-        ejecutar(proceso_a_ejecutar); //Aca se deberia mandar el pcb al cpu.
+        ejecutar(proceso_a_ejecutar);
+    }
+}
+
+void* planificador_corto_plazo_hrrn()
+{
+    log_info(logger_planificador_extra, "Inicio de planificador de corto plazo en <FIFO>");
+    while(1)
+    {
+        sem_wait(&activar_corto_plazo);
+        sem_wait(&sem_hay_en_running);
+
+        // Antes de mandar el proximo a ejecutar, acomodamos la lista por response ratio
+        list_sort(lista_ready_hrrn, comparar_response_ratio);
+        // Saco el primer proceso de la lista filtrada
+        pcb* proceso_a_ejecutar = list_remove(lista_ready_hrrn,0);
+
+        agregar_proceso_exec(proceso_a_ejecutar);
+        
+        // Frenamos el tiempo de espera en ready
+        temporal_stop(proceso_a_ejecutar->llegada_ready);
+        // Empezamos a contar el tiempo de ejecucion para el futuro calculo del estimado de proxima rafaga
+        proceso_a_ejecutar->tiempo_ejecucion = temporal_create();
+        
+        ejecutar(proceso_a_ejecutar);
     }
 }
 
@@ -203,17 +233,31 @@ void agregar_proceso_new(pcb* un_pcb)
 
 void agregar_proceso_ready(pcb* un_pcb)
 {
-    pthread_mutex_lock(&mutex_ready);
-
     un_pcb->estado = READY;
+    if(es_fifo)
+    {
+        pthread_mutex_lock(&mutex_ready);
 
-    queue_push(cola_ready, un_pcb);
-    log_info(logger_planificador_obligatorio, "El proceso < %d > se movio a READY", un_pcb->pid);
-    log_info(logger_planificador_obligatorio, "Cola READY < %s >:", configuracionKernel.ALGORITMO_PLANIFICACION);
-    loguear_procesos_en_cola(cola_ready);
+        queue_push(cola_ready_fifo, un_pcb);
+        log_info(logger_planificador_obligatorio, "El proceso < %d > se movio a READY", un_pcb->pid);
+        log_info(logger_planificador_obligatorio, "Cola READY < %s >:", configuracionKernel.ALGORITMO_PLANIFICACION);
+        loguear_procesos_en_cola(cola_ready_fifo);
 
-    pthread_mutex_unlock(&mutex_ready);
-    sem_post(&activar_corto_plazo);
+        pthread_mutex_unlock(&mutex_ready);
+        sem_post(&activar_corto_plazo);
+    }else
+    {
+        pthread_mutex_lock(&mutex_ready);
+
+        list_add(lista_ready_hrrn, un_pcb);
+        un_pcb->llegada_ready = temporal_create();
+        log_info(logger_planificador_obligatorio, "El proceso < %d > se movio a READY", un_pcb->pid);
+        log_info(logger_planificador_obligatorio, "Cola READY < %s >:", configuracionKernel.ALGORITMO_PLANIFICACION);
+        loguear_procesos_en_lista(lista_ready_hrrn);
+
+        pthread_mutex_unlock(&mutex_ready);
+        sem_post(&activar_corto_plazo);
+    }
 }
 
 void agregar_proceso_exec(pcb* un_pcb)
@@ -266,7 +310,7 @@ pcb* obtener_proceso_ready()
 
     pthread_mutex_lock(&mutex_ready);
 
-    proceso_ready = queue_pop(cola_ready);
+    proceso_ready = queue_pop(cola_ready_fifo);
     log_info(logger_planificador_obligatorio, "El proceso: < %d > salio de READY", proceso_ready->pid);
 
     pthread_mutex_unlock(&mutex_ready);
@@ -314,6 +358,15 @@ void loguear_procesos_en_cola(t_queue* cola_de_procesos)
     for(int i = 0; i < queue_size(cola_de_procesos); i++)
     {
         pcb* un_proceso = (pcb*)queue_peek_at(cola_de_procesos,i);
+        log_info(logger_planificador_obligatorio, "Proceso: < %d >", un_proceso->pid);
+    }
+}
+
+void loguear_procesos_en_lista(t_list* lista_de_procesos)
+{
+    for(int i = 0; i < list_size(lista_de_procesos); i++)
+    {
+        pcb* un_proceso = list_get(lista_de_procesos,i);
         log_info(logger_planificador_obligatorio, "Proceso: < %d >", un_proceso->pid);
     }
 }

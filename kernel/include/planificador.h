@@ -36,6 +36,8 @@ void* planificador_largo_plazo();
 
 void* planificador_corto_plazo_fifo();
 
+void* planificador_corto_plazo_hrrn();
+
 void ejecutar(pcb*);
 
 /*****************************************************************************
@@ -67,6 +69,8 @@ void loguear_cola_de_procesos(t_queue*);
 void* queue_peek_at(t_queue*, int);
 
 void loguear_procesos_en_cola(t_queue*);
+
+void loguear_procesos_en_lista(t_list*);
 
 
 #endif

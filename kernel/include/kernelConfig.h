@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <commons/config.h>
-#include <utils/generales.h>
+#include <utils/conexion.h>
 
 typedef struct{
     char* IP_MEMORIA;
