@@ -171,7 +171,7 @@ void* planificador_corto_plazo_hrrn()
         agregar_proceso_exec(proceso_a_ejecutar);
         
         // Frenamos el tiempo de espera en ready
-        temporal_stop(proceso_a_ejecutar->llegada_ready);
+        temporal_destroy(proceso_a_ejecutar->llegada_ready);
         // Empezamos a contar el tiempo de ejecucion para el futuro calculo del estimado de proxima rafaga
         proceso_a_ejecutar->tiempo_ejecucion = temporal_create();
         
@@ -182,11 +182,10 @@ void* planificador_corto_plazo_hrrn()
 
 void ejecutar(pcb* proceso_a_ejecutar)
 {
-    enviar_pcb(proceso_a_ejecutar, socketCPU);
-
+    enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
     log_info(logger_planificador_extra, "Se envia el proceso: < %d > al CPU.", proceso_a_ejecutar->pid);
 
-    pcb* proceso_recibido;
+    pcb* contexto_recibido;
     t_list* lista_recepcion_valores;
     int operacion_de_cpu = recibir_operacion(socketCPU);
 
@@ -194,12 +193,20 @@ void ejecutar(pcb* proceso_a_ejecutar)
     {
         case YIELD:
             lista_recepcion_valores = recibir_paquete(socketCPU);
-            proceso_recibido = recibir_pcb(lista_recepcion_valores);
-            log_info(logger_planificador_extra, "Proceso: < %d > recibido por CPU.", proceso_recibido->pid);
-            loguear_pcb(proceso_recibido, logger_planificador_extra);
-            //pcb* proceso_en_ejecucion = desalojar_proceso_en_ejecucion();
-            //liberar_pcb(proceso_en_ejecucion);
-            agregar_proceso_ready(proceso_recibido);
+            contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
+            pcb* proceso_en_ejecucion = desalojar_proceso_en_exec();
+            
+            if(!es_fifo)
+            {
+                proceso_en_ejecucion->estimado_prox_rafaga = estimar_proxima_rafaga(proceso_en_ejecucion);
+                temporal_destroy(proceso_en_ejecucion->tiempo_ejecucion);
+            }
+            
+            actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
+            log_info(logger_planificador_extra, "Contexto del proceso: < %d > recibido por CPU.", proceso_en_ejecucion->pid);
+            loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
+
+            agregar_proceso_ready(proceso_en_ejecucion);
             
 
             list_destroy(lista_recepcion_valores);

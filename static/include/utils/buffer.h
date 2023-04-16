@@ -9,7 +9,8 @@ typedef enum
 	MENSAJE,
 	PAQUETE,
 	LISTA_INSTRUCCIONES,
-	PCB
+	PCB,
+	CONTEXTO_EJECUCION
 }op_code;
 
 typedef struct

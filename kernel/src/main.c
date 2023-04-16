@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
     list_destroy_and_destroy_elements(lista_instrucciones, (void*)liberar_instruccion);    
     liberar_pcb(un_pcb);
     */
+    // PRUEBAS DEL RESPONSE RATIO
     /*
     pcb* p1;
     pcb* p2; 
@@ -88,7 +89,7 @@ int main(int argc, char *argv[]) {
     pcb* proceso_con_mayor_rr = list_get(lista_procesos,0);
     printf("El proceso con mayor rr es: %d\n", proceso_con_mayor_rr->pid);
     */
-    
+
 
     pthread_t hiloConsolas; 
     pthread_create(&hiloConsolas, NULL, (void*)esperar_consolas, (void*)socketServicioConsolas);
