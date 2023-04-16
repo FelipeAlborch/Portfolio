@@ -79,10 +79,11 @@ bool manejar_paquete_kernel_dispatch(int socketKernel)
         return;
 			//break;
 
-        case PCB:
-            log_info(logger, "PCB recibido de Kernel.");
-            t_list* lista_del_pcb = _recibir_paquete(socketKernel);
-            pcb* pcb = recibir_pcb(lista_del_pcb);
+        case CONTEXTO_EJECUCION:
+            log_info(logger, "contexto de ejecucion recibido de Kernel.");
+            t_list* lista_contexto_ejecucion = _recibir_paquete(socketKernel);
+            // Acordate que muchas de las variables de este "pcb" van a quedar sin inicializar.
+            pcb* pcb = recibir_contexto_ejecucion(lista_contexto_ejecucion);
             loguear_pcb(pcb, logger);
             
             //ejecutar_lista_instrucciones_del_pcb(pcb, socketKernel, socketMemoriaUtil);
