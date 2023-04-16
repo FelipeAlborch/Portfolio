@@ -42,3 +42,12 @@ bool comparar_response_ratio(pcb* un_pcb, pcb* otro_pcb)
 {
     return (calcular_response_ratio(un_pcb) > calcular_response_ratio(otro_pcb));
 }
+
+double estimar_proxima_rafaga(pcb* un_pcb)
+{
+    double tiempo_ejecucion_real = temporal_gettime(un_pcb->tiempo_ejecucion);
+    double alfa = configuracionKernel.HRRN_ALFA;
+    double estimado_anterior = un_pcb->estimado_prox_rafaga;
+    double nuevo_estimado = (alfa * tiempo_ejecucion_real) + ((1 - alfa) * estimado_anterior);
+    return nuevo_estimado;
+}
