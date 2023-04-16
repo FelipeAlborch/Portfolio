@@ -62,4 +62,6 @@ bool comparar_response_ratio(pcb*, pcb*);
 */
 double estimar_proxima_rafaga(pcb*);
 
+void liberar_contexto_ejecucion(pcb*);
+
 #endif

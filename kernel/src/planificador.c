@@ -157,7 +157,7 @@ void* planificador_corto_plazo_fifo()
 
 void* planificador_corto_plazo_hrrn()
 {
-    log_info(logger_planificador_extra, "Inicio de planificador de corto plazo en <FIFO>");
+    log_info(logger_planificador_extra, "Inicio de planificador de corto plazo en <HRRN>");
     while(1)
     {
         sem_wait(&activar_corto_plazo);
@@ -175,7 +175,7 @@ void* planificador_corto_plazo_hrrn()
         // Empezamos a contar el tiempo de ejecucion para el futuro calculo del estimado de proxima rafaga
         proceso_a_ejecutar->tiempo_ejecucion = temporal_create();
         
-        ejecutar(proceso_a_ejecutar);
+        //ejecutar(proceso_a_ejecutar);
     }
 }
 
@@ -205,6 +205,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
             log_info(logger_planificador_extra, "Contexto del proceso: < %d > recibido por CPU.", proceso_en_ejecucion->pid);
             loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
+
+            //liberar_contexto_ejecucion(contexto_recibido)
 
             agregar_proceso_ready(proceso_en_ejecucion);
             
