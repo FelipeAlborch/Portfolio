@@ -58,7 +58,8 @@ typedef struct pcb
 
     t_temporal* llegada_ready;
     t_temporal* tiempo_ejecucion;
-    int estimado_prox_rafaga;
+    double estimado_prox_rafaga;
+    int tiempo_io;
 } pcb;
 
 typedef struct LineaInstruccion
@@ -125,11 +126,59 @@ char* identificar_estado(estado_pcb un_estado);
 */
 void liberar_pcb(pcb*);
 
-void enviar_pcb(pcb*, int);
+//void enviar_pcb(pcb*, int);
+//
+//void serializar_pcb(t_paquete*, pcb*);
+//
+//pcb* recibir_pcb(t_list*);
 
-void serializar_pcb(t_paquete*, pcb*);
+/**
+* @NAME: enviar_contexto_ejecucion
+* @DESC: Dado un pcb, guarda su contexto de ejecucion en un paquete, y lo envia por el socket, bajo un determinado codigo.
+* @PARAMS:
+*        pcb* un_pcb - El pcb/contexto_de_ejecucion que se desea enviar.
+*        int socket_a_enviar - El socket por el que se quiere pasar el contexto.
+*        int codigo - El codigo de operacion por el cual se envia dicho contexto.
+*               Codigos: 
+*                       CPU -> KERNEL YIELD, IO, EXIT.
+*                       KERNEL -> CPU CONTEXTO_EJECUCION
+*/
+void enviar_contexto_ejecucion(pcb*, int, int);
 
-pcb* recibir_pcb(t_list*);
+/**
+* @NAME: serializar_contexto_ejecucion
+* @DESC: Dado un paquete y un pcb, guarda los valores del contexto de ejecucion del pcb, en el paquete.
+* @PARAMS:
+*        t_paquete* paquete_a_enviar - El paquete donde seran guardados los valores.
+*        pcb* un_pcb - El pcb que se desea serializar su contexto de ejecucion.
+*/
+void serializar_contexto_ejecucion(t_paquete*, pcb*);
+
+/**
+* @NAME: recibir_contexto_ejecucion
+* @DESC: Dada una lista con los valores recibidos a traves de un socket, crea un pcb* y guarda los valores del contexto de ejecucion en dicho pcb*.
+* @PARAMS:
+*        t_list* valores_contexto_enviado - La lista con los valores recibidos.
+* @RETURN:
+*        retorna el pcb* con los valores recibidos.
+* 
+* @ACLARACION: esta funcion deja muchos valores del pcb inicializados en basura. La intencion es crear un pcb, con solo los valores necesarios para
+*              que el cpu pueda ejecutar correctamente, y para que el kernel pueda actualizar los pcbs con los contextos recibidos.
+*/
+pcb* recibir_contexto_ejecucion(t_list*);
+
+/**
+* @NAME: actualizar_contexto_ejecucion
+* @DESC: Dados un pcb* completo, y un pcb* con solo el contexto de ejecucion cargados, guarda los valores del segundo, en el primero
+*        Es decir: Actualiza los valores del contexto del primer pcb, con los del segundo
+* @PARAMS:
+*        pcb* un_pcb - El pcb a actualizar.
+*        pcb* otro_pcb - El contexto de ejecucion de donde se tomaran los valores para actualizar el primer pcb.
+* @ACLARACION:
+*        Luego de usar el segundo pcb, hay que liberar la memoria.
+* 
+*/
+void actualizar_contexto_ejecucion(pcb*, pcb*);
 
 /**
 * @NAME: loguear_lista_de_instrucciones
