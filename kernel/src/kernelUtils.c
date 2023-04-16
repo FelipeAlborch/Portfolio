@@ -29,3 +29,16 @@ void leer_diccionario_consolas()
         printf("EL SOCKET ES: %d", socket_consola);
     }
 }
+
+double calcular_response_ratio(pcb* un_pcb)
+{
+    double espera_total = (double)temporal_gettime(un_pcb->llegada_ready)/1000;
+    double response_ratio = 1 + (espera_total/un_pcb->estimado_prox_rafaga);
+
+    return response_ratio;
+}
+
+bool comparar_response_ratio(pcb* un_pcb, pcb* otro_pcb)
+{
+    return (calcular_response_ratio(un_pcb) > calcular_response_ratio(otro_pcb));
+}
