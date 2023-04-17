@@ -69,26 +69,25 @@ bool manejar_paquete_kernel_dispatch(int socketKernel)
             log_warning(logger, "Conexión con Kernel en puerto Dispatch terminada.");
             close(socketKernel);
             log_destroy(logger);
-        return true;
+            return true;
         
         case MENSAJE:
             log_info(logger, "Mensaje recibido de Kernel.");
             char *mensaje = obtener_mensaje_del_cliente(socketKernel);
             log_info(logger, "Mensaje: %s", mensaje);
             free(mensaje);
-        return;
-			//break;
+			      break;
 
         case CONTEXTO_EJECUCION:
-            log_info(logger, "contexto de ejecucion recibido de Kernel.");
-            t_list* lista_contexto_ejecucion = _recibir_paquete(socketKernel);
-            // Acordate que muchas de las variables de este "pcb" van a quedar sin inicializar.
-            pcb* pcb = recibir_contexto_ejecucion(lista_contexto_ejecucion);
-            loguear_pcb(pcb, logger);
+            t_list* lista_recepcion_valores = recibir_paquete(socketKernel);
+            pcb *contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
+
+            log_info(logger, "PCB recibido de Kernel.");
+            dump(contexto_recibido->lista_de_instrucciones);
             
-            //ejecutar_lista_instrucciones_del_pcb(pcb, socketKernel, socketMemoriaUtil);
-            //liberar_pcb(pcb);
-        break;
+            ejecutar_lista_instrucciones_del_pcb(contexto_recibido, socketKernel, socketMemoriaUtil);
+            liberar_pcb(contexto_recibido);
+            break;
 		
         default:
             break;

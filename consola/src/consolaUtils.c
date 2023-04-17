@@ -136,22 +136,6 @@ void agregar_linea_de_instruccion_a_lista(LineaInstruccion *linea_instruccion, L
   }*/
 }
 
-void dump(Lista *instrucciones)
-{
-  for (int i = 0; i < list_size(instrucciones); i++)
-  {
-    LineaInstruccion *lineaInstruccion = list_get(instrucciones, i);
-
-    printf(
-      "Instruccion: %s %s %s %s\n", 
-      lineaInstruccion->identificador, 
-      lineaInstruccion->parametros[0], 
-      lineaInstruccion->parametros[1],
-	  lineaInstruccion->parametros[2]
-    );
-  }
-}
-
 void* liberar_tokens(char** tokens)
 {
   // Hay que eliminar cada posicion en la que podriamos haber escrito algo, y despues el tokens en si.
