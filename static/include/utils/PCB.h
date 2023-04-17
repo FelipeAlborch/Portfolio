@@ -68,25 +68,6 @@ typedef struct LineaInstruccion
   char *parametros[3];
 } LineaInstruccion;
 
-/*typedef enum parametros
-{
-  AX,
-  BX,
-  CX,
-  DX,
-  EAX,
-  EBX,
-  ECX,
-  EDX,
-  RAX,
-  RBX,
-  RCX,
-  RDX,
-  DISCO,
-  ARCHIVO,
-} parametros; */
-
-
 /**
 * @NAME: crear_pcb
 * @DESC: Crea un pcb para y se le asigna el contenido de la consola simulando un proceso.
@@ -143,5 +124,10 @@ void loguear_lista_de_instrucciones(t_list*, t_log*);
 */
 void* liberar_instruccion(LineaInstruccion*);
 void dump(Lista*);
+pcb* recibir_contexto_ejecucion(t_list*);
+void enviar_contexto_ejecucion(pcb*, int, int);
+void serializar_contexto_ejecucion(t_paquete*, pcb*);
+void actualizar_contexto_ejecucion(pcb*, pcb*);
+
 
 #endif

@@ -37,9 +37,9 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
     switch (instruccion)
     {
       case SET:
-        //ejecutar_set(pcb, lineaInstruccion);
-        sleep(configuracionCPU.RETARDO_INSTRUCCION);
-        //log_info(logger, "Estado de los registros: AX = %d, BX = %d, CX = %d, DX = %d", pcb->AX, pcb->BX, pcb->CX, pcb->DX);
+        ejecutar_set(pcb, lineaInstruccion);
+        estado_de_los_registros(pcb);
+        //sleep(configuracionCPU.RETARDO_INSTRUCCION);
         break;
 
       case EXIT: 
@@ -131,4 +131,55 @@ Instruccion obtener_tipo_instruccion(char *instruccion)
     printf("Lei una instruccion desconocida\n");
     return DESCONOCIDA;
   }
+}
+
+void ejecutar_set(pcb *pcb, LineaInstruccion *instruccion)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+
+  if(!strcmp(instruccion->parametros[0], "AX"))
+    strcpy(pcb->AX, instruccion->parametros[1]);
+  else if(!strcmp(instruccion->parametros[0], "BX"))
+    strcpy(pcb->BX, instruccion->parametros[1]);  
+  else if(!strcmp(instruccion->parametros[0], "CX"))
+    strcpy(pcb->CX, instruccion->parametros[1]);
+  else if(!strcmp(instruccion->parametros[0], "DX"))
+    strcpy(pcb->DX, instruccion->parametros[1]);
+  if(!strcmp(instruccion->parametros[0], "EAX"))
+    strcpy(pcb->EAX, instruccion->parametros[1]);
+  else if(!strcmp(instruccion->parametros[0], "EBX"))
+    strcpy(pcb->EBX, instruccion->parametros[1]);  
+  else if(!strcmp(instruccion->parametros[0], "ECX"))
+    strcpy(pcb->ECX, instruccion->parametros[1]);
+  else if(!strcmp(instruccion->parametros[0], "EDX"))
+    strcpy(pcb->EDX, instruccion->parametros[1]);
+  if(!strcmp(instruccion->parametros[0], "RAX"))
+    strcpy(pcb->RAX, instruccion->parametros[1]);
+  else if(!strcmp(instruccion->parametros[0], "RBX"))
+    strcpy(pcb->RBX, instruccion->parametros[1]);  
+  else if(!strcmp(instruccion->parametros[0], "RCX"))
+    strcpy(pcb->RCX, instruccion->parametros[1]);
+  else if(!strcmp(instruccion->parametros[0], "RDX"))
+    strcpy(pcb->RDX, instruccion->parametros[1]);
+
+  log_info(logger, "Se copio al registro %s el valor %s", instruccion->parametros[0], instruccion->parametros[1]);
+  log_destroy(logger);
+}
+
+void estado_de_los_registros(pcb *unPcb)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+
+  log_info(logger, "ESTADO DE LOS REGISTROS");
+
+  log_info(logger, "AX: %s | BX: %s | CX: %s | DX: %s",
+  unPcb->AX, unPcb->BX, unPcb->CX, unPcb->DX);
+
+  log_info(logger, "EAX: %s | EBX: %s | ECX: %s | EDX: %s",
+  unPcb->EAX, unPcb->EBX, unPcb->ECX, unPcb->EDX);
+
+  log_info(logger, "RAX: %s | RBX: %s | RCX: %s | RDX: %s",
+  unPcb->RAX, unPcb->RBX, unPcb->RCX, unPcb->RDX);
+
+  log_destroy(logger);
 }
