@@ -42,6 +42,10 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         //sleep(configuracionCPU.RETARDO_INSTRUCCION);
         break;
 
+      case YIELD:
+        ejecutar_yield(pcb, socketKernel);
+        break;
+
       case EXIT: 
         //ejecutar_exit(pcb, socketKernel);
         log_info(logger, "Se envio el pcb %d a Kernel", pcb->pid);
@@ -51,6 +55,12 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
     }
 
+    if (instruccion == YIELD || instruccion == EXIT)
+    {
+      log_destroy(logger);
+      return;
+    }
+    
     /*if (instruccion == IO || instruccion == EXIT || haySegmentationFault || hayPageFault)
     {
       haySegmentationFault = false;
@@ -163,6 +173,17 @@ void ejecutar_set(pcb *pcb, LineaInstruccion *instruccion)
     strcpy(pcb->RDX, instruccion->parametros[1]);
 
   log_info(logger, "Se copio al registro %s el valor %s", instruccion->parametros[0], instruccion->parametros[1]);
+  log_destroy(logger);
+}
+
+void ejecutar_yield(pcb *pcb, int socketKernel)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+
+  log_info(logger, "Enviando el contexto de ejecucion a Kernel...");
+  enviar_contexto_ejecucion(pcb, socketKernel, YIELD);
+  log_info(logger, "Contexto de ejecucion enviado!");
+
   log_destroy(logger);
 }
 

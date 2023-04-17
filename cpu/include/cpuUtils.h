@@ -7,5 +7,6 @@ void ejecutar_lista_instrucciones_del_pcb(pcb*, int, int);
 Instruccion obtener_tipo_instruccion(char*);
 void ejecutar_set(pcb*, LineaInstruccion*);
 void estado_de_los_registros(pcb*);
+void ejecutar_yield(pcb*, int);
 
 #endif
