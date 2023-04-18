@@ -210,17 +210,4 @@ void* liberar_instruccion(LineaInstruccion*);
  */
 char* valor_del_registro_como_string(void* registro, size_t tamano);
 
-/**
- * @NAME: valor_del_registro_como_string_hexa
- * @DESC: formatea el valor del registro para imprimirse como string (en hexadecimal)
- * @PARAMS:
- *      void* registro - el registro a formatear
- *      size_t tamanio - el tamanio del registro
- * @RETURN:
- *     retorna un string con el valor del registro formateado
- *     (nota: liberar la memoria luego de usarlo)
- */
-char* valor_del_registro_como_string_hexa(void* registro, size_t tamanio);
-
-
 #endif
