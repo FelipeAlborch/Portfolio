@@ -29,6 +29,10 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         //sleep(configuracionCPU.RETARDO_INSTRUCCION);
         break;
 
+      case IO:
+        ejecutar_io(pcb, instruccion, socketKernel);
+        break;
+
       case YIELD:
         ejecutar_yield(pcb, socketKernel);
         break;
@@ -162,6 +166,21 @@ void ejecutar_set(pcb *pcb, LineaInstruccion *instruccion)
   log_destroy(logger);
 }
 
+void ejecutar_io(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+
+  pcb->estado = BLOCKED;
+  pcb->tiempo_io = instruccion->parametros[0];
+
+  log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
+  enviar_contexto_ejecucion(pcb, socketKernel, IO); //Consultar con Facu
+  log_info(logger, "Contexto de ejecucion enviado!");
+  log_info(logger, "Motivo del envio: IO");
+
+  log_destroy(logger);
+}
+
 void ejecutar_yield(pcb *pcb, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
@@ -169,6 +188,7 @@ void ejecutar_yield(pcb *pcb, int socketKernel)
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, YIELD);
   log_info(logger, "Contexto de ejecucion enviado!");
+  log_info(logger, "Motivo del envio: YIELD");
 
   log_destroy(logger);
 }
@@ -182,6 +202,7 @@ void ejecutar_exit(pcb *pcb, int socketKernel)
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, EXIT); // Consultar con Facu
   log_info(logger, "Contexto de ejecucion enviado!");
+  log_info(logger, "Motivo del envio: EXIT");
 
   log_destroy(logger);
 }
