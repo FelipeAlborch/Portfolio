@@ -9,5 +9,6 @@ void ejecutar_set(pcb*, LineaInstruccion*);
 void estado_de_los_registros(pcb*);
 void ejecutar_yield(pcb*, int);
 void logear_instruccion(int, LineaInstruccion*);
+void ejecutar_exit(pcb*, int);
 
 #endif

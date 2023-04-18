@@ -34,8 +34,7 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
 
       case EXIT: 
-        //ejecutar_exit(pcb, socketKernel);
-        log_info(logger, "Se envio el pcb %d a Kernel", pcb->pid);
+        ejecutar_exit(pcb, socketKernel);
         break;
 
       default:
@@ -167,8 +166,21 @@ void ejecutar_yield(pcb *pcb, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
 
-  log_info(logger, "Enviando el contexto de ejecucion a Kernel...");
+  log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, YIELD);
+  log_info(logger, "Contexto de ejecucion enviado!");
+
+  log_destroy(logger);
+}
+
+void ejecutar_exit(pcb *pcb, int socketKernel)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+  
+  pcb->estado = TERMINATED;
+
+  log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
+  enviar_contexto_ejecucion(pcb, socketKernel, EXIT); // Consultar con Facu
   log_info(logger, "Contexto de ejecucion enviado!");
 
   log_destroy(logger);
