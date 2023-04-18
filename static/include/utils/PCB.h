@@ -38,18 +38,18 @@ typedef struct pcb
 {
     int pid;
     int program_counter;
-    char* AX;
-    char* BX;
-    char* CX;
-    char* DX;
-    char* EAX;
-    char* EBX;
-    char* ECX;
-    char* EDX;
-    char* RAX;
-    char* RBX;
-    char* RCX;
-    char* RDX;
+    char AX[4];
+    char BX[4];
+    char CX[4];
+    char DX[4];
+    char EAX[8];
+    char EBX[8];
+    char ECX[8];
+    char EDX[8];
+    char RAX[16];
+    char RBX[16];
+    char RCX[16];
+    char RDX[16];
     
     estado_pcb estado;
     t_list* lista_de_instrucciones;
@@ -197,6 +197,30 @@ void loguear_lista_de_instrucciones(t_list*, t_log*);
 */
 void* liberar_instruccion(LineaInstruccion*);
 
+
+/**
+ * @NAME: valor_del_registro_como_string
+ * @DESC: formatea el valor del registro para imprimirse como string
+ * @PARAMS:
+ *      void* registro - el registro a formatear
+ *      size_t tamanio - el tamanio del registro
+ * @RETURN:
+ *     retorna un string con el valor del registro formateado
+ *     (nota: liberar la memoria luego de usarlo)
+ */
+char* valor_del_registro_como_string(void* registro, size_t tamano);
+
+/**
+ * @NAME: valor_del_registro_como_string_hexa
+ * @DESC: formatea el valor del registro para imprimirse como string (en hexadecimal)
+ * @PARAMS:
+ *      void* registro - el registro a formatear
+ *      size_t tamanio - el tamanio del registro
+ * @RETURN:
+ *     retorna un string con el valor del registro formateado
+ *     (nota: liberar la memoria luego de usarlo)
+ */
+char* valor_del_registro_como_string_hexa(void* registro, size_t tamanio);
 
 
 #endif

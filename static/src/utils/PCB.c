@@ -8,19 +8,21 @@ pcb* crear_pcb(t_list* lista_de_instrucciones, int p_id, int estimado_rafaga)
     proceso->pid = p_id;
     proceso->estado = NEW;
     proceso->program_counter = 0;
-    proceso->AX = "0000";             
-    proceso->BX = "0000";
-    proceso->CX = "0000";
-    proceso->DX = "0000";
-    proceso->EAX = "00000000";
-    proceso->EBX = "00000000";
-    proceso->ECX = "00000000";
-    proceso->EDX = "00000000";
-    proceso->RAX = "0000000000000000";
-    proceso->RBX = "0000000000000000";
-    proceso->RCX = "0000000000000000";
-    proceso->RDX = "0000000000000000";
-    
+
+    // i
+    memcpy(proceso->AX, 0 , 4);
+    memcpy(proceso->BX, 0, 4);
+    memcpy(proceso->CX, 0, 4);
+    memcpy(proceso->DX, 0, 4);
+    memcpy(proceso->EAX, 0, 8);
+    memcpy(proceso->EBX, 0, 8);
+    memcpy(proceso->ECX, 0, 8);
+    memcpy(proceso->EDX, 0, 8);
+    memcpy(proceso->RAX, 0, 16);
+    memcpy(proceso->RBX, 0, 16);
+    memcpy(proceso->RCX, 0, 16);
+    memcpy(proceso->RDX, 0, 16);
+
     proceso->estimado_prox_rafaga = estimado_rafaga;
     proceso->tiempo_io = 0;
     proceso->lista_de_instrucciones = list_duplicate(lista_de_instrucciones);
@@ -32,6 +34,24 @@ pcb* crear_pcb(t_list* lista_de_instrucciones, int p_id, int estimado_rafaga)
     return proceso;
 }
 
+char* valor_del_registro_como_string(void* registro, size_t tamanio) {
+    char* valor_str = (char*)malloc(tamanio + 1);
+    memcpy(valor_str, registro, tamanio);
+    valor_str[tamanio] = '\0';
+    return valor_str;
+}
+
+char* valor_del_registro_como_string_hexa(void* registro, size_t tamano) {
+    char* valor_str_hex = (char*)malloc((tamano * 2) + 1);
+    char* ptr = valor_str_hex;
+    for (size_t i = 0; i < tamano; i++) {
+        sprintf(ptr, "%02X", ((unsigned char*)registro)[i]);
+        ptr += 2;
+    }
+    *ptr = '\0';
+    return valor_str_hex;
+}
+
 void loguear_pcb(pcb* un_pcb, t_log* logger)
 {
     log_info(logger, "Lectura de proceso: ");
@@ -39,24 +59,42 @@ void loguear_pcb(pcb* un_pcb, t_log* logger)
     log_info(logger, "Estado: <%s>",identificar_estado(un_pcb->estado));
     log_info(logger, "Program Counter: <%d> ", un_pcb->program_counter);
     log_info(logger, "Registros: ");
-    log_info(logger, "AX = %s ", un_pcb->AX);
-    log_info(logger, "BX = %s ", un_pcb->BX);
-    log_info(logger, "CX = %s ", un_pcb->CX);
-    log_info(logger, "DX = %s ", un_pcb->DX);
-    log_info(logger, "EAX = %s ", un_pcb->EAX);
-    log_info(logger, "EBX = %s ", un_pcb->EBX);
-    log_info(logger, "ECX = %s ", un_pcb->ECX);
-    log_info(logger, "EDX = %s ", un_pcb->EDX);
-    log_info(logger, "RAX = %s ", un_pcb->RAX);
-    log_info(logger, "RBX = %s ", un_pcb->RBX);
-    log_info(logger, "RCX = %s ", un_pcb->RCX);
-    log_info(logger, "RDX = %s ", un_pcb->RDX);
+
+    char* ax_value = string_new();
+    char* ax_value_hex = string_new();
+    char* bx_value = string_new();
+    char* bx_value_hex = string_new();
+
+    ax_value = valor_del_registro_como_string(un_pcb->AX, 4);
+    ax_value_hex = valor_del_registro_como_string_hexa(un_pcb->AX, 4);
+    bx_value = valor_del_registro_como_string(un_pcb->BX, 4);
+    bx_value_hex = valor_del_registro_como_string_hexa(un_pcb->BX, 4);
+
+    log_info(logger, "AX = %s ", ax_value);
+    log_info(logger, "0xAX = %x ", ax_value_hex);
+    log_info(logger, "BX = %s ", bx_value);
+    log_info(logger, "0xBX = %x ", bx_value_hex);
+    // log_info(logger, "CX = %s ", un_pcb->CX);
+    // log_info(logger, "DX = %s ", un_pcb->DX);
+    // log_info(logger, "EAX = %s ", un_pcb->EAX);
+    // log_info(logger, "EBX = %s ", un_pcb->EBX);
+    // log_info(logger, "ECX = %s ", un_pcb->ECX);
+    // log_info(logger, "EDX = %s ", un_pcb->EDX);
+    // log_info(logger, "RAX = %s ", un_pcb->RAX);
+    // log_info(logger, "RBX = %s ", un_pcb->RBX);
+    // log_info(logger, "RCX = %s ", un_pcb->RCX);
+    // log_info(logger, "RDX = %s ", un_pcb->RDX);
     log_info(logger, "Estimacion proxima rafaga: %f", un_pcb->estimado_prox_rafaga);
     log_info(logger, "Tiempo IO: %d ", un_pcb->tiempo_io);
-    
+
     loguear_lista_de_instrucciones(un_pcb->lista_de_instrucciones, logger);
     //loguear_tabla_de_segmentos(un_pcb->tabla_de_segmentos, logger);
     //loguear_tabla_archivos_abiertos(un_pcb->tabla_archivos_abiertos, logger);
+
+    free(ax_value);
+    free(ax_value_hex);
+    free(bx_value);
+    free(bx_value_hex);
 }
 
 char* identificar_estado(estado_pcb un_estado)
@@ -95,10 +133,10 @@ void liberar_pcb(pcb* un_pcb)
     list_destroy_and_destroy_elements(un_pcb->lista_de_instrucciones, (void*)liberar_instruccion);
     //list_destroy_and_destroy_elements(un_pcb->tabla_de_segmentos, (void*)liberar_segmento);
     //list_destroy_and_destroy_elements(un_pcb->tabla_archivos_abiertos, (void*)liberar_archivo);
-    
+
     //temporal_destroy(un_pcb->llegada_ready);      Estos temporals despues se destruyen
     //temporal_destroy(un_pcb->tiempo_ejecucion);
-    
+
     free(un_pcb);
 }
 /*
@@ -117,12 +155,12 @@ void serializar_pcb(t_paquete* paquete, pcb* un_pcb)
 {
     int cantidad_de_instrucciones = list_size(un_pcb->lista_de_instrucciones);
     int cantidad_en_tabla_segmentos = list_size(un_pcb->tabla_de_segmentos);
-    
+
     agregar_a_paquete(paquete, &cantidad_de_instrucciones, sizeof(int));
     agregar_a_paquete(paquete, &cantidad_en_tabla_segmentos, sizeof(int));
 
     int i = 0;
-    
+
     for(i; i < cantidad_de_instrucciones; i++)
     {
         LineaInstruccion* una_instruccion = list_get(un_pcb->lista_de_instrucciones, i);
@@ -132,17 +170,17 @@ void serializar_pcb(t_paquete* paquete, pcb* un_pcb)
         agregar_a_paquete(paquete, una_instruccion->parametros[2], strlen(una_instruccion->parametros[2])+1);
     }
     i = 0;
-    
+
     //for(i; i < cantidad_en_tabla_segmentos; i++)
     //{
     //    segmento* un_segmento = list_get(un_pcb->tabla_de_segmentos,i);
     //    agregar_a_paquete(paquete, &un_segmento->tamanio_segmento, sizeof(int));
     //    agregar_a_paquete(paquete, un_segmento->id_tabla_pagina, strlen(un_segmento->id_tabla_pagina)+1);
     //}
-    
+
     agregar_a_paquete(paquete, &(un_pcb->pid), sizeof(int));
     agregar_a_paquete(paquete, &(un_pcb->program_counter), sizeof(int));
-    
+
     agregar_a_paquete(paquete, un_pcb->AX, strlen(un_pcb->AX));
     agregar_a_paquete(paquete, un_pcb->BX, strlen(un_pcb->BX));
     agregar_a_paquete(paquete, un_pcb->CX, strlen(un_pcb->CX));
@@ -157,10 +195,10 @@ void serializar_pcb(t_paquete* paquete, pcb* un_pcb)
     agregar_a_paquete(paquete, un_pcb->RBX, strlen(un_pcb->RBX));
     agregar_a_paquete(paquete, un_pcb->RCX, strlen(un_pcb->RCX));
     agregar_a_paquete(paquete, un_pcb->RDX, strlen(un_pcb->RDX));
-   
+
     agregar_a_paquete(paquete, &(un_pcb->estado), sizeof(estado_pcb));
     agregar_a_paquete(paquete, &(un_pcb->estimado_prox_rafaga), sizeof(int));
-    
+
 }
 
 pcb* recibir_pcb(t_list* valores_pcb_enviado)
@@ -178,7 +216,7 @@ pcb* recibir_pcb(t_list* valores_pcb_enviado)
     {
         base = 4 * i;
         LineaInstruccion* una_instruccion = malloc(sizeof(LineaInstruccion));
-        
+
         una_instruccion->identificador = string_duplicate(list_get(valores_pcb_enviado, base + 2));
         una_instruccion->parametros[0] = string_duplicate(list_get(valores_pcb_enviado, base + 3));
         una_instruccion->parametros[1] = string_duplicate(list_get(valores_pcb_enviado, base + 4));
@@ -186,9 +224,9 @@ pcb* recibir_pcb(t_list* valores_pcb_enviado)
 
         list_add(lista_de_instrucciones, una_instruccion);
     }
-    
+
     base = (cantidad_de_instrucciones * 4) + 2;
-    
+
     //for(i = 0; i < cantidad_en_tabla_segmentos; i++)
     //{
     //    segmento* un_segmento = malloc(sizeof(segmento));
@@ -200,7 +238,7 @@ pcb* recibir_pcb(t_list* valores_pcb_enviado)
 
     //    list_add(tabla_de_segmentos, un_segmento);
     //}
-    
+
     int valores_restantes = base;
 
     pcb_recibido->pid = *(int*)list_get(valores_pcb_enviado, valores_restantes);
@@ -223,16 +261,16 @@ pcb* recibir_pcb(t_list* valores_pcb_enviado)
 
     pcb_recibido->estado = *(estado_pcb*)list_get(valores_pcb_enviado, valores_restantes + 14);
     pcb_recibido->estimado_prox_rafaga = *(int*)list_get(valores_pcb_enviado, valores_restantes + 15);
-    
+
     pcb_recibido->lista_de_instrucciones = list_duplicate(lista_de_instrucciones);
-    
+
     //pcb_recibido->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
 
     list_destroy(lista_de_instrucciones);
     //list_destroy(tabla_de_segmentos);
-    
+
     //list_destroy(valores_pcb_enviado);
-    
+
     return pcb_recibido;
 }*/
 
@@ -240,7 +278,7 @@ pcb* recibir_pcb(t_list* valores_pcb_enviado)
 // Es decir, si yo pongo: CONTEXTO_EJECUCION, es kernel -> cpu para que pueda ejecutar
 // El resto de codigos seran las instrucciones que lea el cpu y que deba devolver el contexto de ejecucion.
 // Por ejemplo: IO, EXIT, YIELD. En todas estas, se devuelve el contexto de ejecucion al kernel, pero por diferentes motivos.
-void enviar_contexto_ejecucion(pcb* un_pcb, int socket_a_enviar, int codigo) 
+void enviar_contexto_ejecucion(pcb* un_pcb, int socket_a_enviar, int codigo)
 {
     t_paquete* paquete_a_enviar = crear_paquete_operacion(codigo);
 
@@ -268,7 +306,7 @@ void serializar_contexto_ejecucion(t_paquete* paquete, pcb* un_pcb)
 
     agregar_a_paquete(paquete, &(un_pcb->pid), sizeof(int));
     agregar_a_paquete(paquete, &(un_pcb->program_counter), sizeof(int));
-    
+
     agregar_a_paquete(paquete, un_pcb->AX, strlen(un_pcb->AX));
     agregar_a_paquete(paquete, un_pcb->BX, strlen(un_pcb->BX));
     agregar_a_paquete(paquete, un_pcb->CX, strlen(un_pcb->CX));
@@ -300,7 +338,7 @@ pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
     {
         base = 4 * i;
         LineaInstruccion* una_instruccion = malloc(sizeof(LineaInstruccion));
-        
+
         una_instruccion->identificador = string_duplicate(list_get(valores_contexto_enviado, base + 1));
         una_instruccion->parametros[0] = string_duplicate(list_get(valores_contexto_enviado, base + 2));
         una_instruccion->parametros[1] = string_duplicate(list_get(valores_contexto_enviado, base + 3));
@@ -308,34 +346,34 @@ pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
 
         list_add(lista_de_instrucciones, una_instruccion);
     }
-    
+
     base = (cantidad_de_instrucciones * 4) + 1;
     int valores_restantes = base;
 
     contexto_recibido->pid = *(int*)list_get(valores_contexto_enviado, valores_restantes);
     contexto_recibido->program_counter = *(int*)list_get(valores_contexto_enviado, valores_restantes + 1);
 
-    contexto_recibido->AX = string_duplicate(list_get(valores_contexto_enviado, valores_restantes + 2));
-    contexto_recibido->BX = string_duplicate(list_get(valores_contexto_enviado, valores_restantes + 3));
-    contexto_recibido->CX = string_duplicate(list_get(valores_contexto_enviado, valores_restantes + 4));
-    contexto_recibido->DX = string_duplicate(list_get(valores_contexto_enviado, valores_restantes + 5));
+    memcpy(contexto_recibido->AX, list_get(valores_contexto_enviado, valores_restantes + 2), 4);
+    memcpy(contexto_recibido->BX, list_get(valores_contexto_enviado, valores_restantes + 3), 4);
+    memcpy(contexto_recibido->CX, list_get(valores_contexto_enviado, valores_restantes + 4), 4);
+    memcpy(contexto_recibido->DX, list_get(valores_contexto_enviado, valores_restantes + 5), 4);
 
-    contexto_recibido->EAX = string_duplicate(list_get(valores_contexto_enviado, valores_restantes + 6));
-    contexto_recibido->EBX = string_duplicate(list_get(valores_contexto_enviado, valores_restantes + 7));
-    contexto_recibido->ECX = string_duplicate(list_get(valores_contexto_enviado, valores_restantes + 8));
-    contexto_recibido->EDX = string_duplicate(list_get(valores_contexto_enviado, valores_restantes + 9));
+    memcpy(contexto_recibido->EAX, list_get(valores_contexto_enviado, valores_restantes + 6), 8);
+    memcpy(contexto_recibido->EBX, list_get(valores_contexto_enviado, valores_restantes + 7), 8);
+    memcpy(contexto_recibido->ECX, list_get(valores_contexto_enviado, valores_restantes + 8), 8);
+    memcpy(contexto_recibido->EDX, list_get(valores_contexto_enviado, valores_restantes + 9), 8);
 
-    contexto_recibido->RAX = string_duplicate(list_get(valores_contexto_enviado, valores_restantes + 10));
-    contexto_recibido->RBX = string_duplicate(list_get(valores_contexto_enviado, valores_restantes + 11));
-    contexto_recibido->RCX = string_duplicate(list_get(valores_contexto_enviado, valores_restantes + 12));
-    contexto_recibido->RDX = string_duplicate(list_get(valores_contexto_enviado, valores_restantes + 13));
+    memcpy(contexto_recibido->RAX, list_get(valores_contexto_enviado, valores_restantes + 10), 16);
+    memcpy(contexto_recibido->RBX, list_get(valores_contexto_enviado, valores_restantes + 11), 16);
+    memcpy(contexto_recibido->RCX, list_get(valores_contexto_enviado, valores_restantes + 12), 16);
+    memcpy(contexto_recibido->RDX, list_get(valores_contexto_enviado, valores_restantes + 13), 16);
 
     contexto_recibido->tiempo_io = *(int*)list_get(valores_contexto_enviado, valores_restantes + 14);
-    
+
     contexto_recibido->lista_de_instrucciones = list_duplicate(lista_de_instrucciones);
-    
+
     list_destroy(lista_de_instrucciones);
-    
+
     return contexto_recibido;
 }
 
@@ -343,20 +381,20 @@ void actualizar_contexto_ejecucion(pcb* un_pcb, pcb* otro_pcb)
 {
     un_pcb->program_counter = otro_pcb->program_counter;
 
-    un_pcb->AX = string_duplicate(otro_pcb->AX);
-    un_pcb->BX = string_duplicate(otro_pcb->BX);
-    un_pcb->CX = string_duplicate(otro_pcb->CX);
-    un_pcb->DX = string_duplicate(otro_pcb->DX);
+    memcpy(un_pcb->AX, otro_pcb->AX, 4);
+    memcpy(un_pcb->BX, otro_pcb->BX, 4);
+    memcpy(un_pcb->CX, otro_pcb->CX, 4);
+    memcpy(un_pcb->DX, otro_pcb->DX, 4);
 
-    un_pcb->EAX = string_duplicate(otro_pcb->EAX);
-    un_pcb->EBX = string_duplicate(otro_pcb->EBX);
-    un_pcb->ECX = string_duplicate(otro_pcb->ECX);
-    un_pcb->EDX = string_duplicate(otro_pcb->EDX);
+    memcpy(un_pcb->EAX, otro_pcb->EAX, 8);
+    memcpy(un_pcb->EBX, otro_pcb->EBX, 8);
+    memcpy(un_pcb->ECX, otro_pcb->ECX, 8);
+    memcpy(un_pcb->EDX, otro_pcb->EDX, 8);
 
-    un_pcb->RAX = string_duplicate(otro_pcb->RAX);
-    un_pcb->RBX = string_duplicate(otro_pcb->RBX);
-    un_pcb->RCX = string_duplicate(otro_pcb->RCX);
-    un_pcb->RDX = string_duplicate(otro_pcb->RDX);
+    memcpy(un_pcb->RAX, otro_pcb->RAX, 16);
+    memcpy(un_pcb->RBX, otro_pcb->RBX, 16);
+    memcpy(un_pcb->RCX, otro_pcb->RCX, 16);
+    memcpy(un_pcb->RDX, otro_pcb->RDX, 16);
 
     un_pcb->tiempo_io = otro_pcb->tiempo_io;
 }
