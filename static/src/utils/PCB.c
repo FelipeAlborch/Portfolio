@@ -11,17 +11,17 @@ pcb* crear_pcb(t_list* lista_de_instrucciones, int p_id, int estimado_rafaga)
 
     // inicializar registros
     memset(proceso->AX, 0 , 4);
-    memset(proceso->BX, 1, 4);
-    memset(proceso->CX, 2, 4);
-    memset(proceso->DX, 3, 4);
-    memset(proceso->EAX, 4, 8);
-    memset(proceso->EBX, 5, 8);
-    memset(proceso->ECX, 6, 8);
-    memset(proceso->EDX, 7, 8);
-    memset(proceso->RAX, 8, 16);
-    memset(proceso->RBX, 9, 16);
-    memset(proceso->RCX, 10, 16);
-    memset(proceso->RDX, 11, 16);
+    memset(proceso->BX, 0, 4);
+    memset(proceso->CX, 0, 4);
+    memset(proceso->DX, 0, 4);
+    memset(proceso->EAX, 0, 8);
+    memset(proceso->EBX, 0, 8);
+    memset(proceso->ECX, 0, 8);
+    memset(proceso->EDX, 0, 8);
+    memset(proceso->RAX, 0, 16);
+    memset(proceso->RBX, 0, 16);
+    memset(proceso->RCX, 0, 16);
+    memset(proceso->RDX, 0, 16);
 
     proceso->estimado_prox_rafaga = estimado_rafaga;
     proceso->tiempo_io = 0;
@@ -60,62 +60,8 @@ void loguear_pcb(pcb* un_pcb, t_log* logger)
     log_info(logger, "EDX = %016llx ", *un_pcb->EDX);
     log_info(logger, "RAX = %016llx ", *un_pcb->RAX);
     log_info(logger, "RBX = %016llx ", *un_pcb->RBX);
-    log_info(logger, "RCX = %016llx ", *un_pcb->RCX); // debe imprimir 0x000000000000000a
-    log_info(logger, "RDX = %016llx ", *un_pcb->RDX); // debe imprimir 0x000000000000000b
-
-    // log de valores como string
-    memcpy(un_pcb->AX, "ABCD", 4);
-    memcpy(un_pcb->BX, "EFGH", 4);
-    memcpy(un_pcb->CX, "IJKL", 4);
-    memcpy(un_pcb->DX, "MNOP", 4);
-    memcpy(un_pcb->EAX, "12345678", 8);
-    memcpy(un_pcb->EBX, "abcdefgh", 8);
-    memcpy(un_pcb->ECX, "ijklmnop", 8);
-    memcpy(un_pcb->EDX, "qrstuvwx", 8);
-    memcpy(un_pcb->RAX, "1234567890123456", 16);
-    memcpy(un_pcb->RBX, "abcdefghijklmnop", 16);
-    memcpy(un_pcb->RCX, "qrstuvwxyz123456", 16);
-    memcpy(un_pcb->RDX, "7890123456789012", 16);
-    
-    char* ax_str = valor_del_registro_como_string(un_pcb->AX, 4);
-    char* bx_str = valor_del_registro_como_string(un_pcb->BX, 4);
-    char* cx_str = valor_del_registro_como_string(un_pcb->CX, 4);
-    char* dx_str = valor_del_registro_como_string(un_pcb->DX, 4);
-    char* eax_str = valor_del_registro_como_string(un_pcb->EAX, 8);
-    char* ebx_str = valor_del_registro_como_string(un_pcb->EBX, 8);
-    char* ecx_str = valor_del_registro_como_string(un_pcb->ECX, 8);
-    char* edx_str = valor_del_registro_como_string(un_pcb->EDX, 8);
-    char* rax_str = valor_del_registro_como_string(un_pcb->RAX, 16);
-    char* rbx_str = valor_del_registro_como_string(un_pcb->RBX, 16);
-    char* rcx_str = valor_del_registro_como_string(un_pcb->RCX, 16);
-    char* rdx_str = valor_del_registro_como_string(un_pcb->RDX, 16);
-
-
-    log_info(logger, "AX = %s ", ax_str);
-    log_info(logger, "BX = %s ", bx_str);
-    log_info(logger, "CX = %s ", cx_str);
-    log_info(logger, "DX = %s ", dx_str);
-    log_info(logger, "EAX = %s ", eax_str);
-    log_info(logger, "EBX = %s ", ebx_str);
-    log_info(logger, "ECX = %s ", ecx_str);
-    log_info(logger, "EDX = %s ", edx_str);
-    log_info(logger, "RAX = %s ", rax_str);
-    log_info(logger, "RBX = %s ", rbx_str);
-    log_info(logger, "RCX = %s ", rcx_str);
-    log_info(logger, "RDX = %s ", rdx_str);
-
-    free(ax_str);
-    free(bx_str);
-    free(cx_str);
-    free(dx_str);
-    free(eax_str);
-    free(ebx_str);
-    free(ecx_str);
-    free(edx_str);
-    free(rax_str);
-    free(rbx_str);
-    free(rcx_str);
-    free(rdx_str);
+    log_info(logger, "RCX = %016llx ", *un_pcb->RCX);
+    log_info(logger, "RDX = %016llx ", *un_pcb->RDX);
 
     log_info(logger, "Estimacion proxima rafaga: %f", un_pcb->estimado_prox_rafaga);
     log_info(logger, "Tiempo IO: %d ", un_pcb->tiempo_io);
@@ -123,7 +69,6 @@ void loguear_pcb(pcb* un_pcb, t_log* logger)
     loguear_lista_de_instrucciones(un_pcb->lista_de_instrucciones, logger);
     //loguear_tabla_de_segmentos(un_pcb->tabla_de_segmentos, logger);
     //loguear_tabla_archivos_abiertos(un_pcb->tabla_archivos_abiertos, logger);
-
 }
 
 char* identificar_estado(estado_pcb un_estado)
