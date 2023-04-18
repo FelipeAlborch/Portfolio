@@ -30,7 +30,7 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
 
       case IO:
-        ejecutar_io(pcb, instruccion, socketKernel);
+        ejecutar_io(pcb, lineaInstruccion, socketKernel);
         break;
 
       case YIELD:

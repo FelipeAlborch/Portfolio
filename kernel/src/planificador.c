@@ -192,7 +192,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
     switch(operacion_de_cpu)
     {
         case YIELD:
-            lista_recepcion_valores = recibir_paquete(socketCPU);
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
             contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
             pcb* proceso_en_ejecucion = desalojar_proceso_en_exec();
             
@@ -206,7 +206,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             log_info(logger_planificador_extra, "Contexto del proceso: < %d > recibido por CPU.", proceso_en_ejecucion->pid);
             loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
 
-            //liberar_contexto_ejecucion(contexto_recibido)
+            liberar_contexto_ejecucion(contexto_recibido);
 
             agregar_proceso_ready(proceso_en_ejecucion);
             
