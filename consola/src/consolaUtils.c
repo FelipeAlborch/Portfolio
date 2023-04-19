@@ -16,7 +16,13 @@ void enviar_instrucciones_a_kernel(FILE* archivo_pseudocodigo)
   dump(instrucciones);
   
   // La funcion liberar_instruccion esta en el archivo PCB.c, la puse ahi porque ahi pusiste el struct LineaInstruccion. De todas maneras va a venir bien para liberar las instrucciones del pcb
-  list_destroy_and_destroy_elements(instrucciones, (void*)liberar_instruccion);
+  //list_destroy_and_destroy_elements(instrucciones, (void*)liberar_instruccion);
+  for(int i = 0; i < list_size(instrucciones); i++)
+  {
+    LineaInstruccion* instru = list_get(instrucciones, i);
+    liberar_instruccion(instru);
+  }
+  //list_destroy(instrucciones);
   log_destroy(logger);
   eliminar_paquete(paquete_kernel);
 }
@@ -97,22 +103,22 @@ int veces(char *string, char caracter)
 
 void rellenar_parametros_de_instruccion(char **tokens, int cantidad_tokens)
 {
-  if (cantidad_tokens < 2) tokens[1] = strdup("-1");
+  if (cantidad_tokens < 2) tokens[1] = string_duplicate("-1");
 
-  if (cantidad_tokens < 3) tokens[2] = strdup("-1");
+  if (cantidad_tokens < 3) tokens[2] = string_duplicate("-1");
 
-  if (cantidad_tokens < 4) tokens[3] = strdup("-1");
+  if (cantidad_tokens < 4) tokens[3] = string_duplicate("-1");
 }
 
 void asignar_tokens_a_linea_instruccion(LineaInstruccion *linea_instruccion, char **tokens)
 {
-  linea_instruccion->identificador = strdup(tokens[0]);
+  linea_instruccion->identificador = string_duplicate(tokens[0]);
   
-  linea_instruccion->parametros[0] = strdup(tokens[1]);
+  linea_instruccion->parametros[0] = string_duplicate(tokens[1]);
 
-  linea_instruccion->parametros[1] = strdup(tokens[2]);
+  linea_instruccion->parametros[1] = string_duplicate(tokens[2]);
 
-  linea_instruccion->parametros[2] = strdup(tokens[3]);
+  linea_instruccion->parametros[2] = string_duplicate(tokens[3]);
 
   //liberar_tokens(tokens);
 }

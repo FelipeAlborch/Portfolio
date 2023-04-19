@@ -257,7 +257,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             agregar_proceso_terminated(proceso_en_ejecucion);
             terminar_proceso(proceso_en_ejecucion);
             //TODO
-            //avisar_finalizacion_memoria();
+            //avisar_memoria(FIN_PROCESO);
 
             list_destroy(lista_recepcion_valores);
             liberar_contexto_ejecucion(contexto_recibido);
@@ -290,7 +290,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
 void* esperar_io(pcb* un_pcb)
 {
-    log_info(logger_planificador_obligatorio, "PID: < %d > Ejecuta IO < %d >.", proceso_en_ejecucion->pid, proceso_en_ejecucion->tiempo_io);
+    log_info(logger_planificador_obligatorio, "PID: < %d > Ejecuta IO < %d >.", un_pcb->pid, un_pcb->tiempo_io);
     sleep(un_pcb->tiempo_io);
     log_info(logger_planificador_extra, "Tiempo de io del proceso < %d > esperado correctamente", un_pcb->pid);
     agregar_proceso_ready(un_pcb);

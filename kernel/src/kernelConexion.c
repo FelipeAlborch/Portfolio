@@ -74,6 +74,7 @@ void escuchar_consola(int socketConsola)
 			agregar_socket_a_diccionario(nuevo_pcb->pid, socketConsola);
 			leer_diccionario_consolas();
 			loguear_pcb(nuevo_pcb,logger);
+			
 			// TO-DO:
 			//pthread_t hilo_memoria_new;
 			//pthread_create(&hilo_memoria_new, NULL, (void*) esperar_tabla_segmentos, (void*) nuevo_pcb);
@@ -105,11 +106,11 @@ void* esperar_tabla_segmentos(pcb* un_pcb)
 	switch(recibir_operacion(socketMemoria))
 	{
 		case INICIO_PROCESO:
-			segmentos_recibidos = _recibir_paquete(socketMemoria);
-			t_list* tabla_de_segmentos = deserializar_segmentos(segmentos_recibidos);
-			un_pcb->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
-			agregar_proceso_new(un_pcb);
-			list_destroy(segmentos_recibidos);
+			//segmentos_recibidos = _recibir_paquete(socketMemoria);
+			//t_list* tabla_de_segmentos = deserializar_segmentos(segmentos_recibidos);
+			//un_pcb->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
+			//agregar_proceso_new(un_pcb);
+			//list_destroy(segmentos_recibidos);
 		break;
 
 		default:

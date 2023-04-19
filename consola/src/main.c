@@ -58,11 +58,21 @@ int main(int argc, char *argv[]) {
     //free(linea);
     
 
+    switch(recibir_operacion(socketKernel))
+    {
+        case EXIT:
+            log_info(logger_consola, "Voy a terminar! :D");
+            fclose(archivo_pseudocodigo);
+            log_destroy(logger_consola);
+            config_destroy(consola_config);
+            close(socketKernel);
 
+            exit(1);
+        break;
 
-    fclose(archivo_pseudocodigo);
-    log_destroy(logger_consola);
-    config_destroy(consola_config);
-
+        default:
+            log_warning(logger_consola, "Operacion desconocida, no fue exit");
+        break;
+    }
     return 0;
 }
