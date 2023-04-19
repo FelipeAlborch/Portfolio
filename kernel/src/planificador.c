@@ -302,6 +302,7 @@ void terminar_proceso(pcb* un_pcb)
     int socket_a_consola = dictionary_get(diccionario_de_consolas, lugar_en_diccionario);
     t_paquete* paquete_a_consola = crear_paquete_operacion(EXIT);
     enviar_paquete(paquete_a_consola, socket_a_consola);   
+    agregar_proceso_terminated(un_pcb);
 }
 
 
