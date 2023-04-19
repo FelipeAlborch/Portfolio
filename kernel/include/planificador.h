@@ -44,7 +44,9 @@ void* esperar_io(pcb*);
 
 void terminar_proceso(pcb*);
 
-void avisar_finalizacion_memoria();
+void wait_recurso(pcb*, char*);
+
+void signal_recurso(pcb*, char*);
 
 /*****************************************************************************
  *              FUNCIONES PARA MOVER PROCESOS POR LAS COALS

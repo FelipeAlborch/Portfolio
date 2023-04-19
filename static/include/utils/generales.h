@@ -61,6 +61,14 @@ typedef enum
 
 }msj_memoria;
 
+typedef enum
+{
+	SIGNAL_SUCCESS,
+	SIGNAL_FAILURE,
+	WAIT_SUCCESS,
+	WAIT_FAILURE
+}recurso_comunicacion;
+
 typedef struct{
 	int pid;
 	t_list* lista_segmentos;

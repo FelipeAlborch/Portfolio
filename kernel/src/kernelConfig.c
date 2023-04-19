@@ -88,5 +88,6 @@ void liberar_recurso(recurso* un_recurso)
 {
     free(un_recurso->nombre);
     queue_destroy_and_destroy_elements(un_recurso->cola_bloqueados, (void*)liberar_pcb);
-    pthread_mutex_destroy(&un_recurso->mutex_cola);
+    pthread_mutex_destroy(&(un_recurso->mutex_cola));
+    free(un_recurso);
 }

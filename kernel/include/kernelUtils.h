@@ -64,8 +64,8 @@ double estimar_proxima_rafaga(pcb*);
 
 void liberar_contexto_ejecucion(pcb*);
 
-void wait_recurso(pcb*, char*);
+void avisar_cpu(int);
 
-void signal_recurso(pcb*, char*);
+void avisar_memoria(int);
 
 #endif

@@ -70,12 +70,16 @@ void liberar_contexto_ejecucion(pcb* un_contexto)
     free(un_contexto);
 }
 
-void wait_recurso(pcb* un_pcb, char* un_recurso)
+void avisar_cpu(int aviso)
 {
-    printf("Wait todavia no implementado");
+    t_paquete* paquete_a_cpu = crear_paquete_operacion(aviso);
+    enviar_paquete(paquete_a_cpu, socketCPU);
+    eliminar_paquete(paquete_a_cpu);
 }
 
-void signal_recurso(pcb* un_pcb, char* un_recurso)
+void avisar_memoria(int aviso)
 {
-    printf("Signal todavia no implementado");
+    t_paquete* paquete_a_memoria = crear_paquete_operacion(aviso);
+    enviar_paquete(paquete_a_memoria, socketMemoria);
+    eliminar_paquete(paquete_a_memoria);
 }

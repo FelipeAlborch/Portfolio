@@ -49,6 +49,9 @@ bool es_fifo = 0;
 void inicializar_estructuras_planificacion() {
     logger_planificador_extra = iniciar_logger_modulo(KERNEL_LOGGER_EXTRA);
     logger_planificador_obligatorio = iniciar_logger_modulo(KERNEL_LOGGER);
+
+    logger_kernel_util_obligatorio = iniciar_logger_modulo(KERNEL_LOGGER);
+    logger_kernel_util_extra = iniciar_logger_modulo(KERNEL_LOGGER_EXTRA);
     
     log_info(logger_planificador_extra, "Iniciando planificadores... ");
 
@@ -81,6 +84,9 @@ void destruir_estructuras_planificacion()
     // Destruyo loggers
     log_destroy(logger_planificador_extra);
     log_destroy(logger_planificador_obligatorio);
+
+    log_destroy(logger_kernel_util_extra);
+    log_destroy(logger_kernel_util_obligatorio);
 
     // Destruyo semaforos tipo sem_t
     sem_close(&activar_largo_plazo);
@@ -298,11 +304,59 @@ void terminar_proceso(pcb* un_pcb)
     enviar_paquete(paquete_a_consola, socket_a_consola);   
 }
 
-// TODO
-void avisar_finalizacion_memoria()
+
+void wait_recurso(pcb* un_pcb, char* un_recurso)
 {
-    t_paquete* paquete_finalizacion = crear_paquete_operacion(FIN_PROCESO);
-    enviar_paquete(paquete_finalizacion, socketMemoria);
+    recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
+    if(recurso == NULL)
+    {
+        terminar_proceso(un_pcb);
+        avisar_cpu(WAIT_FAILURE);
+        //avisar_memoria(FIN_PROCESO);
+        return;
+    } 
+
+    recurso->instancias--;
+    if(recurso->instancias < 0)
+    {
+        pthread_mutex_lock(&(recurso->mutex_cola));
+
+        log_info(logger_kernel_util_obligatorio, "PID: < %d > - Bloqueado por: < %s >", un_pcb->pid, recurso->nombre);
+        queue_push(recurso->cola_bloqueados, un_pcb);
+
+        pthread_mutex_unlock(&(recurso->mutex_cola));
+    }
+
+    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Wait: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
+    avisar_cpu(WAIT_SUCCESS);
+}
+
+void signal_recurso(pcb* un_pcb, char* un_recurso)
+{
+    recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
+    if(recurso == NULL)
+    {
+        terminar_proceso(un_pcb);
+        avisar_cpu(SIGNAL_FAILURE);
+        //avisar_memoria(FIN_PROCESO);
+        return;
+    } 
+
+    recurso->instancias++;
+    if(!queue_is_empty(recurso->cola_bloqueados))
+    {
+        pthread_mutex_lock(&(recurso->mutex_cola));
+
+        pcb* proceso_bloqueado = queue_pop(recurso->cola_bloqueados);
+        log_info(logger_kernel_util_obligatorio, "PID: < %d > - Desbloqueado por: < %s >", proceso_bloqueado->pid, recurso->nombre);
+
+        pthread_mutex_unlock(&(recurso->mutex_cola));
+
+        agregar_proceso_ready(proceso_bloqueado);
+    }
+
+    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Signal: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
+    avisar_cpu(SIGNAL_SUCCESS);
 }
 
 void agregar_proceso_new(pcb* un_pcb)
