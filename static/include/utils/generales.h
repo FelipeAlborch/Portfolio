@@ -22,7 +22,6 @@ typedef t_list Lista;
 typedef t_log Logger;
 typedef pthread_t Hilo;
 typedef sem_t Semaforo;
-
 typedef enum
 {
 	KERNEL_LOGGER,

@@ -181,7 +181,7 @@ void* planificador_corto_plazo_hrrn()
         // Empezamos a contar el tiempo de ejecucion para el futuro calculo del estimado de proxima rafaga
         proceso_a_ejecutar->tiempo_ejecucion = temporal_create();
         
-        //ejecutar(proceso_a_ejecutar);
+        ejecutar(proceso_a_ejecutar);
     }
 }
 

@@ -391,3 +391,19 @@ void* liberar_instruccion(LineaInstruccion* una_instruccion)
     free(una_instruccion);
     return NULL;
 }
+
+void dump(Lista *instrucciones)
+{
+  for (int i = 0; i < list_size(instrucciones); i++)
+  {
+    LineaInstruccion *lineaInstruccion = list_get(instrucciones, i);
+
+    printf(
+      "Instruccion: %s %s %s %s\n", 
+      lineaInstruccion->identificador, 
+      lineaInstruccion->parametros[0], 
+      lineaInstruccion->parametros[1],
+	  lineaInstruccion->parametros[2]
+    );
+  }
+}
