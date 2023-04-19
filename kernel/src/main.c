@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     configuracionKernel = obtener_valores_de_configuracion_kernel(kernelConfig);
     mostrar_valores_de_configuracion_kernel(configuracionKernel);
     leer_diccionario_recursos();
-    
+
     socketMemoria = conectar_con_memoria(configuracionKernel);
     socketCPU = conectar_con_cpu(configuracionKernel);
     socketFS = conectar_con_filesystem(configuracionKernel);
