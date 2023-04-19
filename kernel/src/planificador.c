@@ -214,13 +214,13 @@ void ejecutar(pcb* proceso_a_ejecutar)
             log_info(logger_planificador_extra, "Contexto del proceso: < %d > recibido por CPU.", proceso_en_ejecucion->pid);
             loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
 
-            //liberar_contexto_ejecucion(contexto_recibido);
+            liberar_contexto_ejecucion(contexto_recibido);
 
             agregar_proceso_ready(proceso_en_ejecucion);
             
 
-            //list_destroy(lista_recepcion_valores);
-            //manejar_proceso_recibido(proceso_recibido);
+            list_destroy(lista_recepcion_valores);
+            
         break;
 
         case IO:
@@ -243,8 +243,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             pthread_create(&hilo_io, NULL, esperar_io, (void*) proceso_en_ejecucion);
             pthread_detach(hilo_io);
 
-            //list_destroy(lista_recepcion_valores);
-            //liberar_contexto_ejecucion(contexto_recibido);
+            list_destroy(lista_recepcion_valores);
+            liberar_contexto_ejecucion(contexto_recibido);
         break;
         
         case EXIT:
@@ -261,8 +261,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             //TODO
             //avisar_memoria(FIN_PROCESO);
 
-            //list_destroy(lista_recepcion_valores);
-            //liberar_contexto_ejecucion(contexto_recibido);
+            list_destroy(lista_recepcion_valores);
+            liberar_contexto_ejecucion(contexto_recibido);
         break;
 
         case WAIT:

@@ -52,7 +52,7 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
     if (instruccion == YIELD || instruccion == EXIT || instruccion == IO)
     {
       log_destroy(logger);
-      //liberar_contexto_ejecucion(pcb);
+      liberar_contexto_ejecucion(pcb);
       return;
     }
     
