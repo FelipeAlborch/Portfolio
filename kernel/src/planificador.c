@@ -188,13 +188,15 @@ void ejecutar(pcb* proceso_a_ejecutar)
     pcb* contexto_recibido;
     t_list* lista_recepcion_valores;
     int operacion_de_cpu = recibir_operacion(socketCPU);
+    pcb* proceso_en_ejecucion;
+    char* recurso;
 
     switch(operacion_de_cpu)
     {
         case YIELD:
-            lista_recepcion_valores = recibir_paquete(socketCPU);
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
             contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
-            pcb* proceso_en_ejecucion = desalojar_proceso_en_exec();
+            proceso_en_ejecucion = desalojar_proceso_en_exec();
             
             if(!es_fifo)
             {
@@ -206,7 +208,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             log_info(logger_planificador_extra, "Contexto del proceso: < %d > recibido por CPU.", proceso_en_ejecucion->pid);
             loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
 
-            //liberar_contexto_ejecucion(contexto_recibido)
+            liberar_contexto_ejecucion(contexto_recibido);
 
             agregar_proceso_ready(proceso_en_ejecucion);
             
@@ -215,10 +217,61 @@ void ejecutar(pcb* proceso_a_ejecutar)
             //manejar_proceso_recibido(proceso_recibido);
         break;
 
-        //case IO:
-        //    
-        //break;
+        case IO:
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
+            contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
+            proceso_en_ejecucion = desalojar_proceso_en_exec();
+
+            if(!es_fifo)
+            {
+                proceso_en_ejecucion->estimado_prox_rafaga = estimar_proxima_rafaga(proceso_en_ejecucion);
+                temporal_destroy(proceso_en_ejecucion->tiempo_ejecucion);
+            }
+
+            actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
+            log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < IO >" , proceso_en_ejecucion->pid);
+            proceso_en_ejecucion->estado = BLOCKED;
+
+            pthread_t hilo_io;
+            pthread_create(&hilo_io, NULL, esperar_io, (void*) proceso_en_ejecucion);
+            pthread_detach(hilo_io);
+
+            list_destroy(lista_recepcion_valores);
+            liberar_contexto_ejecucion(contexto_recibido);
+        break;
         
+        case EXIT:
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
+            contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
+            proceso_en_ejecucion = desalojar_proceso_en_exec();
+
+            actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
+            log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < SUCCESS >", proceso_en_ejecucion->pid);
+            
+            agregar_proceso_terminated(proceso_en_ejecucion);
+            terminar_proceso(proceso_en_ejecucion);
+            //TODO
+            //avisar_finalizacion_memoria();
+
+            list_destroy(lista_recepcion_valores);
+            liberar_contexto_ejecucion(contexto_recibido);
+        break;
+
+        case WAIT:
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
+            recurso = list_get(lista_recepcion_valores, 0);
+            
+            wait_recurso(proceso_a_ejecutar, recurso);
+
+        break;
+
+        case SIGNAL:
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
+            recurso = list_get(lista_recepcion_valores, 0);
+            
+            signal_recurso(proceso_a_ejecutar, recurso);
+        break;
+
         case DESCONEXION:
             log_info(logger_planificador_obligatorio, "CPU Desconectado");
         break;
@@ -227,6 +280,29 @@ void ejecutar(pcb* proceso_a_ejecutar)
             log_warning(logger_planificador_obligatorio, "Operación desconocida.");
         break;
     }
+}
+
+void* esperar_io(pcb* un_pcb)
+{
+    log_info(logger_planificador_obligatorio, "PID: < %d > Ejecuta IO < %d >.", proceso_en_ejecucion->pid, proceso_en_ejecucion->tiempo_io);
+    sleep(un_pcb->tiempo_io);
+    log_info(logger_planificador_extra, "Tiempo de io del proceso < %d > esperado correctamente", un_pcb->pid);
+    agregar_proceso_ready(un_pcb);
+}
+
+void terminar_proceso(pcb* un_pcb)
+{
+    char* lugar_en_diccionario = string_from_format("%d", un_pcb->pid);
+    int socket_a_consola = dictionary_get(diccionario_de_consolas, lugar_en_diccionario);
+    t_paquete* paquete_a_consola = crear_paquete_operacion(EXIT);
+    enviar_paquete(paquete_a_consola, socket_a_consola);   
+}
+
+// TODO
+void avisar_finalizacion_memoria()
+{
+    t_paquete* paquete_finalizacion = crear_paquete_operacion(FIN_PROCESO);
+    enviar_paquete(paquete_finalizacion, socketMemoria);
 }
 
 void agregar_proceso_new(pcb* un_pcb)

@@ -69,3 +69,13 @@ void liberar_contexto_ejecucion(pcb* un_contexto)
     list_destroy_and_destroy_elements(un_contexto->lista_de_instrucciones, (void*)liberar_instruccion);
     free(un_contexto);
 }
+
+void wait_recurso(pcb* un_pcb, char* un_recurso)
+{
+    printf("Wait todavia no implementado");
+}
+
+void signal_recurso(pcb* un_pcb, char* un_recurso)
+{
+    printf("Signal todavia no implementado");
+}

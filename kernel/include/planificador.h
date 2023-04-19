@@ -40,6 +40,12 @@ void* planificador_corto_plazo_hrrn();
 
 void ejecutar(pcb*);
 
+void* esperar_io(pcb*);
+
+void terminar_proceso(pcb*);
+
+void avisar_finalizacion_memoria();
+
 /*****************************************************************************
  *              FUNCIONES PARA MOVER PROCESOS POR LAS COALS
 ******************************************************************************/
