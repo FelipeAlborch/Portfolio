@@ -128,6 +128,7 @@ pcb* recibir_contexto_ejecucion(t_list*);
 void enviar_contexto_ejecucion(pcb*, int, int);
 void serializar_contexto_ejecucion(t_paquete*, pcb*);
 void actualizar_contexto_ejecucion(pcb*, pcb*);
+void liberar_contexto_ejecucion(pcb*);
 
 /**
  * @NAME: valor_del_registro_como_string

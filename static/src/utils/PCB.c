@@ -407,3 +407,21 @@ void dump(Lista *instrucciones)
     );
   }
 }
+
+void liberar_contexto_ejecucion(pcb* un_contexto)
+{
+    free(un_contexto->AX);
+    free(un_contexto->BX);
+    free(un_contexto->CX);
+    free(un_contexto->DX);
+    free(un_contexto->EAX);
+    free(un_contexto->EBX);
+    free(un_contexto->ECX);
+    free(un_contexto->EDX);
+    free(un_contexto->RAX);
+    free(un_contexto->RBX);
+    free(un_contexto->RCX);
+    free(un_contexto->RDX);
+    list_destroy_and_destroy_elements(un_contexto->lista_de_instrucciones, (void*)liberar_instruccion);
+    free(un_contexto);
+}

@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
     socket_kernel = socketKernel;
 
     enviar_instrucciones_a_kernel(archivo_pseudocodigo);
+    log_info(logger_consola, "Instrucciones enviadas correctamente");
     
     //FILE* el_archivo = fopen(archivo_codigo, "r");
     //char* linea = leer_linea(el_archivo);
@@ -56,7 +57,25 @@ int main(int argc, char *argv[]) {
     //free(tokens);
 //
     //free(linea);
+
+    /*
+    LineaInstruccion* instr1 = leer_linea_de_instruccion(archivo_pseudocodigo);
+    log_info(logger_consola, "%s %s %s %s", instr1->identificador, instr1->parametros[0], instr1->parametros[1], instr1->parametros[2]);
+    LineaInstruccion* instr2 = leer_linea_de_instruccion(archivo_pseudocodigo);
+    log_info(logger_consola, "%s %s %s %s", instr2->identificador, instr2->parametros[0], instr2->parametros[1], instr2->parametros[2]);
     
+    LineaInstruccion* instr3 = leer_linea_de_instruccion(archivo_pseudocodigo);
+    log_info(logger_consola, "%s %s %s %s", instr3->identificador, instr3->parametros[0], instr3->parametros[1], instr3->parametros[2]);
+    
+    LineaInstruccion* instr4 = leer_linea_de_instruccion(archivo_pseudocodigo);
+    log_info(logger_consola, "%s %s %s %s", instr4->identificador, instr4->parametros[0], instr4->parametros[1], instr4->parametros[2]);
+    
+    LineaInstruccion* instr5 = leer_linea_de_instruccion(archivo_pseudocodigo);
+    log_info(logger_consola, "%s %s %s %s", instr5->identificador, instr5->parametros[0], instr5->parametros[1], instr5->parametros[2]);
+    
+    LineaInstruccion* instr6 = leer_linea_de_instruccion(archivo_pseudocodigo);
+    log_info(logger_consola, "%s %s %s %s", instr6->identificador, instr6->parametros[0], instr6->parametros[1], instr6->parametros[2]);
+    */
 
     switch(recibir_operacion(socketKernel))
     {

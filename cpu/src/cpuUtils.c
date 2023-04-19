@@ -32,6 +32,10 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
       case IO:
         ejecutar_io(pcb, lineaInstruccion, socketKernel);
         break;
+      
+      /*case WAIT:
+        ejecutar_wait();
+        break; */ 
 
       case YIELD:
         ejecutar_yield(pcb, socketKernel);
@@ -45,9 +49,10 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
     }
 
-    if (instruccion == YIELD || instruccion == EXIT)
+    if (instruccion == YIELD || instruccion == EXIT || instruccion == IO)
     {
       log_destroy(logger);
+      //liberar_contexto_ejecucion(pcb);
       return;
     }
     
@@ -170,7 +175,6 @@ void ejecutar_io(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
 
-  pcb->estado = BLOCKED;
   pcb->tiempo_io = instruccion->parametros[0];
 
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
@@ -196,8 +200,6 @@ void ejecutar_yield(pcb *pcb, int socketKernel)
 void ejecutar_exit(pcb *pcb, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
-  
-  pcb->estado = TERMINATED;
 
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, EXIT); // Consultar con Facu
