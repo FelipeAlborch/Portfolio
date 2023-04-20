@@ -1,5 +1,7 @@
 #include <cpuUtils.h>
 
+bool recursoDisponible;
+
 void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socketMemoria)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
@@ -52,7 +54,6 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
     if (instruccion == YIELD || instruccion == EXIT || instruccion == IO)
     {
       log_destroy(logger);
-      liberar_contexto_ejecucion(pcb);
       return;
     }
     
@@ -184,6 +185,21 @@ void ejecutar_io(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
 
   log_destroy(logger);
 }
+
+/*void verificar_existencia_recurso(LineaInstruccion *instruccion, int socketKernel)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+
+  log_info(logger, "Solicitando a Kernel por la disponibilidad del recurso [%s]", instruccion->parametros[0]);
+  t_paquete *paquete = crear_paquete();
+  agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
+  enviar_paquete(paquete, socketKernel);
+  log_info(logger, "Peticion del recurso [%s] enviada a Kernel!", instruccion->parametros[0]);
+
+  log_info(logger, "Esperando respuesta de Kernel...");
+
+  log_destroy(logger);
+}*/
 
 void ejecutar_yield(pcb *pcb, int socketKernel)
 {
