@@ -233,7 +233,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 proceso_en_ejecucion->estimado_prox_rafaga = estimar_proxima_rafaga(proceso_en_ejecucion);
                 temporal_destroy(proceso_en_ejecucion->tiempo_ejecucion);
             }
-
+            
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
             loguear_pcb(proceso_en_ejecucion,logger_kernel_util_extra);
             log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < IO >" , proceso_en_ejecucion->pid);

@@ -73,7 +73,7 @@ Instruccion obtener_tipo_instruccion(char *instruccion)
     //printf("Lei la instruccion SET\n");
     return SET;
   }
-  else if (!strcmp(instruccion, "I/O")){
+  else if (!strcmp(instruccion, "IO")){
     //printf("Lei la instruccion I/0\n");
     return IO;
   }
@@ -176,7 +176,7 @@ void ejecutar_io(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
 
-  pcb->tiempo_io = instruccion->parametros[0];
+  pcb->tiempo_io = atoi(instruccion->parametros[0]);
 
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, IO); //Consultar con Facu
