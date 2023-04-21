@@ -35,7 +35,7 @@ pcb* crear_pcb(t_list* lista_de_instrucciones, int p_id, int estimado_rafaga)
 }
 
 char* valor_del_registro_como_string(void* registro, size_t tamanio) {
-    char* valor_str = malloc(tamanio + 1);
+    char* valor_str = malloc(tamanio + 1);      // Esta memoria hay que liberarla en algun lugar;
     strncpy(valor_str, registro, tamanio);
     valor_str[tamanio] = '\0';
     return valor_str;
@@ -49,19 +49,47 @@ void loguear_pcb(pcb* un_pcb, t_log* logger)
     log_info(logger, "Program Counter: <%d> ", un_pcb->program_counter);
     log_info(logger, "Registros: ");
 
+    char* AX = valor_del_registro_como_string(un_pcb->AX,4);
+    char* BX = valor_del_registro_como_string(un_pcb->BX,4);
+    char* CX = valor_del_registro_como_string(un_pcb->CX,4);
+    char* DX = valor_del_registro_como_string(un_pcb->DX,4);
+    char* EAX = valor_del_registro_como_string(un_pcb->EAX,8);
+    char* EBX = valor_del_registro_como_string(un_pcb->EBX,8);
+    char* ECX = valor_del_registro_como_string(un_pcb->ECX,8);
+    char* EDX = valor_del_registro_como_string(un_pcb->EDX,8);
+    char* RAX = valor_del_registro_como_string(un_pcb->RAX,16);
+    char* RBX = valor_del_registro_como_string(un_pcb->RBX,16);
+    char* RCX = valor_del_registro_como_string(un_pcb->RCX,16);
+    char* RDX = valor_del_registro_como_string(un_pcb->RDX,16);
+
     // log de valores en hexadecimal
-    log_info(logger, "AX = %08x ", *un_pcb->AX);
-    log_info(logger, "BX = %08x ", *un_pcb->BX);
-    log_info(logger, "CX = %08x ", *un_pcb->CX);
-    log_info(logger, "DX = %08x ", *un_pcb->DX);
-    log_info(logger, "EAX = %016llx ", *un_pcb->EAX);
-    log_info(logger, "EBX = %016llx ", *un_pcb->EBX);
-    log_info(logger, "ECX = %016llx ", *un_pcb->ECX);
-    log_info(logger, "EDX = %016llx ", *un_pcb->EDX);
-    log_info(logger, "RAX = %016llx ", *un_pcb->RAX);
-    log_info(logger, "RBX = %016llx ", *un_pcb->RBX);
-    log_info(logger, "RCX = %016llx ", *un_pcb->RCX);
-    log_info(logger, "RDX = %016llx ", *un_pcb->RDX);
+    log_info(logger, "AX = %08x = %s", *un_pcb->AX, AX);
+    log_info(logger, "BX = %08x = %s", *un_pcb->BX, BX);
+    log_info(logger, "CX = %08x = %s", *un_pcb->CX, CX);
+    log_info(logger, "DX = %08x = %s", *un_pcb->DX, DX);
+    log_info(logger, "EAX = %016llx = %s", *un_pcb->EAX, EAX);
+    log_info(logger, "EBX = %016llx = %s", *un_pcb->EBX, EBX);
+    log_info(logger, "ECX = %016llx = %s", *un_pcb->ECX, ECX);
+    log_info(logger, "EDX = %016llx = %s", *un_pcb->EDX, EDX);
+    log_info(logger, "RAX = %016llx = %s", *un_pcb->RAX, RAX);
+    log_info(logger, "RBX = %016llx = %s", *un_pcb->RBX, RBX);
+    log_info(logger, "RCX = %016llx = %s", *un_pcb->RCX, RCX);
+    log_info(logger, "RDX = %016llx = %s", *un_pcb->RDX, RDX);
+
+    free(AX);
+    free(BX);
+    free(CX);
+    free(DX);
+
+    free(EAX);
+    free(EBX);
+    free(ECX);
+    free(EDX);
+
+    free(RAX);
+    free(RBX);
+    free(RCX);
+    free(RDX);
 
     log_info(logger, "Estimacion proxima rafaga: %f", un_pcb->estimado_prox_rafaga);
     log_info(logger, "Tiempo IO: %d ", un_pcb->tiempo_io);

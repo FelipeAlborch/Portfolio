@@ -231,14 +231,39 @@ void estado_de_los_registros(pcb *unPcb)
 
   log_info(logger, "ESTADO DE LOS REGISTROS");
 
-  log_info(logger, "AX: %s | BX: %s | CX: %s | DX: %s",
-  unPcb->AX, unPcb->BX, unPcb->CX, unPcb->DX);
+  char* AX = valor_del_registro_como_string(unPcb->AX,4);   // valor_del_registro_como_string hace malloc, asi que hay que hacer un free despues de usar los valores
+  char* BX = valor_del_registro_como_string(unPcb->BX,4);
+  char* CX = valor_del_registro_como_string(unPcb->CX,4);
+  char* DX = valor_del_registro_como_string(unPcb->DX,4);
+  char* EAX = valor_del_registro_como_string(unPcb->EAX,8);
+  char* EBX = valor_del_registro_como_string(unPcb->EBX,8);
+  char* ECX = valor_del_registro_como_string(unPcb->ECX,8);
+  char* EDX = valor_del_registro_como_string(unPcb->EDX,8);
+  char* RAX = valor_del_registro_como_string(unPcb->RAX,16);
+  char* RBX = valor_del_registro_como_string(unPcb->RBX,16);
+  char* RCX = valor_del_registro_como_string(unPcb->RCX,16);
+  char* RDX = valor_del_registro_como_string(unPcb->RDX,16);
 
-  log_info(logger, "EAX: %s | EBX: %s | ECX: %s | EDX: %s",
-  unPcb->EAX, unPcb->EBX, unPcb->ECX, unPcb->EDX);
+  log_info(logger, "AX: %s | BX: %s | CX: %s | DX: %s", AX, BX, CX, DX);
 
-  log_info(logger, "RAX: %s | RBX: %s | RCX: %s | RDX: %s",
-  unPcb->RAX, unPcb->RBX, unPcb->RCX, unPcb->RDX);
+  log_info(logger, "EAX: %s | EBX: %s | ECX: %s | EDX: %s", EAX, EBX, ECX, EDX);
+
+  log_info(logger, "RAX: %s | RBX: %s | RCX: %s | RDX: %s", RAX, RBX, RCX, RDX);
+
+  free(AX);
+  free(BX);
+  free(CX);
+  free(DX);
+
+  free(EAX);
+  free(EBX);
+  free(ECX);
+  free(EDX);
+
+  free(RAX);
+  free(RBX);
+  free(RCX);
+  free(RDX);
 
   log_destroy(logger);
 }
