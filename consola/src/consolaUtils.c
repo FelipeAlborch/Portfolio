@@ -1,7 +1,7 @@
 #include <consolaUtils.h>
 
 int socket_kernel;
-
+/*
 void enviar_instrucciones_a_kernel(FILE* archivo_pseudocodigo)
 {
   Logger *logger = iniciar_logger_modulo(CONSOLA_LOGGER);
@@ -125,21 +125,7 @@ void asignar_tokens_a_linea_instruccion(LineaInstruccion *linea_instruccion, cha
 
 void agregar_linea_de_instruccion_a_lista(LineaInstruccion *linea_instruccion, Lista *lista)
 {
-  
   list_add(lista, linea_instruccion);
-  
-  /*if (!strcmp(linea_instruccion->identificador, "NO_OP"))
-  {
-    for (int i = 0; i < linea_instruccion->parametros[0]; i++)
-    {
-      list_add(lista, linea_instruccion);
-    }
-    linea_instruccion->parametros[0] = -1;
-  }
-  else
-  {
-    list_add(lista, linea_instruccion);
-  }*/
 }
 
 void* liberar_tokens(char** tokens)
@@ -151,7 +137,7 @@ void* liberar_tokens(char** tokens)
   free(tokens[3]);
   free(tokens);
 }
-
+*/
 void empaquetar_instrucciones(t_paquete* paquete_a_kernel, t_list* lista_de_instrucciones)
 {
   LineaInstruccion* una_instruccion;
@@ -167,4 +153,125 @@ void empaquetar_instrucciones(t_paquete* paquete_a_kernel, t_list* lista_de_inst
     agregar_a_paquete(paquete_a_kernel, una_instruccion->parametros[1], strlen(una_instruccion->parametros[1]) + 1);
     agregar_a_paquete(paquete_a_kernel, una_instruccion->parametros[2], strlen(una_instruccion->parametros[2]) + 1);
   }
+}
+
+
+
+
+
+char* leer_linea(FILE* archivo)
+{
+  char* linea_leida; //= string_new();
+  size_t tam_linea = 0;
+
+  getline(&linea_leida, &tam_linea, archivo);
+
+  if(linea_leida[string_length(linea_leida) -1] == '\n')
+  {
+    linea_leida[string_length(linea_leida) -1] = '\0';
+  }
+    
+  return linea_leida;
+}
+
+int cantidad_de_valores(char* linea)
+{
+  int cantidad_de_valores = 0;
+
+  for(int i = 0; i < string_length(linea); i++)
+  {
+    if(linea[i] == ' ')
+    {
+      cantidad_de_valores++;
+    }
+  }
+  return cantidad_de_valores+1;
+}
+
+void inicializar_parametros(char** parametros, int cantidad_valores)
+{
+  if(cantidad_valores < 2)
+  {
+    parametros[1] = "-1";
+    parametros[2] = "-1";
+    parametros[3] = "-1";
+  }
+  else if(cantidad_valores < 3)
+  {
+    parametros[2] = "-1";
+    parametros[3] = "-1";
+  }
+  else if(cantidad_valores < 4)
+  {
+    parametros[3] = "-1";
+  }
+}
+
+char** identificar_parametros(char* linea)
+{
+  int cantidad_valores = cantidad_de_valores(linea);
+  char** parametros = string_n_split(linea, cantidad_valores, " ");
+  inicializar_parametros(parametros, cantidad_valores);
+
+  return parametros;
+}
+
+LineaInstruccion* leer_instruccion(FILE* archivo)
+{
+  char* linea = leer_linea(archivo);
+  char** parametros = identificar_parametros(linea);
+  
+  LineaInstruccion* instruccion_leida = malloc(sizeof(LineaInstruccion));
+  
+  crear_instruccion(instruccion_leida, parametros);
+    
+  free(linea);
+
+  return instruccion_leida;
+}
+
+void crear_instruccion(LineaInstruccion* instruccion_leida, char** parametros)
+{
+  instruccion_leida->identificador = string_duplicate(parametros[0]);
+  instruccion_leida->parametros[0] = string_duplicate(parametros[1]);
+  instruccion_leida->parametros[1] = string_duplicate(parametros[2]);
+  instruccion_leida->parametros[2] = string_duplicate(parametros[3]);
+}
+
+void leer_archivo(FILE* archivo, t_log* logger)
+{
+  LineaInstruccion* una_instruccion;
+
+  while(!feof(archivo))
+  {
+    una_instruccion = leer_instruccion(archivo);
+    log_info(logger, "Se leyo: %s con los parametros %s %s %s", una_instruccion->identificador, una_instruccion->parametros[0], una_instruccion->parametros[1], una_instruccion->parametros[2]);
+    liberar_instruccion(una_instruccion);
+  }
+}
+
+t_list* enlistar_instrucciones(FILE* archivo)
+{
+  t_list* lista_instrucciones = list_create();
+  while(!feof(archivo))
+  {
+    LineaInstruccion* una_instruccion = leer_instruccion(archivo);
+    list_add(lista_instrucciones, una_instruccion);
+  }
+  return lista_instrucciones;
+}
+
+void leer_lista_de_instrucciones(t_list* lista_instrucciones)
+{
+  int i;
+  for(i = 0; i < list_size(lista_instrucciones); i++)
+  {
+    LineaInstruccion* una_instruccion = list_get(lista_instrucciones, i);
+    imprimir_instruccion(una_instruccion, i+1);
+  }
+}
+
+void imprimir_instruccion(LineaInstruccion* una_instruccion, int nro_instruccion)
+{
+  printf("INSTRUCCION [%d]: %s %s %s\n", nro_instruccion, una_instruccion->identificador, una_instruccion->parametros[0], una_instruccion->parametros[1], una_instruccion->parametros[2]);
 }
