@@ -278,12 +278,15 @@ void ejecutar(pcb* proceso_a_ejecutar)
             if(!resultado_recurso)
             {
                 t_list* lista_contexto_wait;
+                pcb* contexto_de_wait;
                 int operacion_wait = recibir_operacion(socketCPU);
+                log_warning(logger_planificador_extra, "LA OP FUE %d", operacion_wait);
                 lista_contexto_wait = _recibir_paquete(lista_contexto_wait);
-                contexto_recibido = recibir_contexto_ejecucion(lista_contexto_wait);
-                actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_recibido);
+                contexto_de_wait = recibir_contexto_ejecucion(lista_contexto_wait);
+                actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_wait);
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
                 resultado_recurso = true;
+                return;
             }
             
             goto recibirOperacion;
@@ -299,12 +302,14 @@ void ejecutar(pcb* proceso_a_ejecutar)
             if(!resultado_recurso)
             {
                 t_list* lista_contexto_signal;
+                pcb* contexto_de_signal;
                 int operacion_signal = recibir_operacion(socketCPU);
                 lista_contexto_signal = _recibir_paquete(lista_contexto_signal);
-                contexto_recibido = recibir_contexto_ejecucion(lista_contexto_signal);
-                actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_recibido);
+                contexto_de_signal = recibir_contexto_ejecucion(lista_contexto_signal);
+                actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_signal);
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
                 resultado_recurso = true;
+                return;
             }
             
             goto recibirOperacion;
