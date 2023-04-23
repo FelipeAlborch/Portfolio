@@ -271,6 +271,13 @@ void ejecutar(pcb* proceso_a_ejecutar)
             
             wait_recurso(proceso_a_ejecutar, recurso);
 
+            t_list* lista_contexto_wait;
+            int operacion_wait = recibir_operacion(socketCPU);
+            lista_contexto_wait = _recibir_paquete(lista_contexto_wait);
+            //contexto_recibido = recibir_contexto_ejecucion(lista_contexto_wait);
+            //actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_recibido);
+            //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
         break;
 
         case SIGNAL:
@@ -278,6 +285,14 @@ void ejecutar(pcb* proceso_a_ejecutar)
             recurso = list_get(lista_recepcion_valores, 0);
             
             signal_recurso(proceso_a_ejecutar, recurso);
+
+            t_list* lista_contexto_signal;
+            int operacion_signal = recibir_operacion(socketCPU);
+            lista_contexto_signal = _recibir_paquete(lista_contexto_signal);
+            contexto_recibido = recibir_contexto_ejecucion(lista_contexto_signal);
+            actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_recibido);
+            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
         break;
 
         case DESCONEXION:
