@@ -6,11 +6,11 @@
 typedef enum
 {
 	DESCONEXION = -1,
-	MENSAJE,
+	CONTEXTO_EJECUCION,
 	PAQUETE,
 	LISTA_INSTRUCCIONES,
 	PCB,
-	CONTEXTO_EJECUCION
+	MENSAJE
 }op_code;
 
 typedef struct

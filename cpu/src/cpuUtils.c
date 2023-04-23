@@ -195,22 +195,15 @@ void ejecutar_io(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
 void ejecutar_wait(pcb *pcb , LineaInstruccion *instruccion, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
-  //int respuesta = verificar_existencia_recurso(instruccion, socketKernel, WAIT);
-  /*
-  if(respuesta == WAIT_FAILURE)
-  {
-    recursoDisponible = false;
-    log_warning(logger, "Recurso [%s] NO disponible, enviando contexto de ejecucion devuelta al Kernel...", instruccion->parametros[0]);
-    enviar_contexto_ejecucion(pcb, socketKernel, WAIT);
-  }*/
-  log_info(logger, "Solicitando a Kernel por la disponibilidad del recurso [%s]", instruccion->parametros[0]);
-  t_paquete *paquete = crear_paquete_operacion(WAIT);
-  agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
-  enviar_paquete(paquete, socketKernel);
-  log_info(logger, "Peticion del recurso [%s] enviada a Kernel!", instruccion->parametros[0]);
-
-  log_info(logger, "Esperando respuesta de Kernel...");
-  switch(recibir_operacion(socketKernel))
+  int respuesta = verificar_existencia_recurso(instruccion, socketKernel, WAIT);
+  
+  //if(respuesta == WAIT_FAILURE)
+  //{
+  //  recursoDisponible = false;
+  //  log_warning(logger, "Recurso [%s] NO disponible, enviando contexto de ejecucion devuelta al Kernel...", instruccion->parametros[0]);
+  //  enviar_contexto_ejecucion(pcb, socketKernel, WAIT);
+  //}
+  switch(respuesta)
   {
     case WAIT_FAILURE:
       recursoDisponible = false;
@@ -230,11 +223,23 @@ void ejecutar_signal(pcb *pcb, LineaInstruccion* instruccion, int socketKernel)
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   int respuesta = verificar_existencia_recurso(instruccion, socketKernel, SIGNAL);
 
-  if(respuesta == SIGNAL_FAILURE)
+  //if(respuesta == SIGNAL_FAILURE)
+  //{
+  //  recursoDisponible = false;
+  //  log_warning(logger, "Recurso [%s] NO disponible, enviando contexto de ejecucion devuelta al Kernel...", instruccion->parametros[0]);
+  //  enviar_contexto_ejecucion(pcb, socketKernel, SIGNAL);
+  //}
+
+switch(respuesta)
   {
-    recursoDisponible = false;
-    log_warning(logger, "Recurso [%s] NO disponible, enviando contexto de ejecucion devuelta al Kernel...", instruccion->parametros[0]);
-    enviar_contexto_ejecucion(pcb, socketKernel, SIGNAL);
+    case SIGNAL_FAILURE:
+      recursoDisponible = false;
+      log_warning(logger, "Recurso [%s] NO disponible, enviando contexto de ejecucion devuelta al Kernel...", instruccion->parametros[0]);
+      enviar_contexto_ejecucion(pcb, socketKernel, WAIT);
+    break;
+    case SIGNAL_SUCCESS:
+      log_warning(logger, "Recurso [%s] estaba disponible!", instruccion->parametros[0]);
+    break;
   }
 
   log_destroy(logger);
@@ -251,7 +256,8 @@ int verificar_existencia_recurso(LineaInstruccion *instruccion, int socketKernel
   log_info(logger, "Peticion del recurso [%s] enviada a Kernel!", instruccion->parametros[0]);
 
   log_info(logger, "Esperando respuesta de Kernel...");
-  int operacion = recibir_operacion(socketKernel);
+  int operacion;
+  recv(socketKernel, &operacion, sizeof(int), MSG_WAITALL);
   log_info(logger, "Respuesta de kernel recibida");
 
   log_destroy(logger);

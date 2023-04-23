@@ -77,5 +77,6 @@ void enviar_mensaje(char*, int);
 */
 void liberar_conexion(int);
 
+void enviar_operacion(int, int);
 
 #endif

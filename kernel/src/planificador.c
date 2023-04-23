@@ -195,9 +195,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
     pcb* contexto_recibido;
     t_list* lista_recepcion_valores;
-    int operacion_de_cpu = recibir_operacion(socketCPU);
     pcb* proceso_en_ejecucion;
     char* recurso;
+
+    recibirOperacion:
+    int operacion_de_cpu = recibir_operacion(socketCPU);
 
     switch(operacion_de_cpu)
     {
@@ -237,9 +239,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
             
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
+            proceso_en_ejecucion->estado = BLOCKED;
             loguear_pcb(proceso_en_ejecucion,logger_kernel_util_extra);
             log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < IO >" , proceso_en_ejecucion->pid);
-            proceso_en_ejecucion->estado = BLOCKED;
 
             pthread_t hilo_io;
             pthread_create(&hilo_io, NULL, esperar_io, (void*) proceso_en_ejecucion);
@@ -270,7 +272,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
         case WAIT:
             lista_recepcion_valores = _recibir_paquete(socketCPU);
             recurso = list_get(lista_recepcion_valores, 0);
-            
+            log_info(logger_planificador_extra,"Recurso recibido para realizar WAIT: %s", recurso);
             wait_recurso(proceso_a_ejecutar, recurso);
 
             if(!resultado_recurso)
@@ -284,13 +286,14 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 resultado_recurso = true;
             }
             
-
+            goto recibirOperacion;
+        
         break;
 
         case SIGNAL:
             lista_recepcion_valores = _recibir_paquete(socketCPU);
             recurso = list_get(lista_recepcion_valores, 0);
-            
+            log_info(logger_planificador_extra,"Recurso recibido para realizar SIGNAL: %s", recurso);
             signal_recurso(proceso_a_ejecutar, recurso);
 
             if(!resultado_recurso)
@@ -304,6 +307,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 resultado_recurso = true;
             }
             
+            goto recibirOperacion;
 
         break;
 
@@ -341,7 +345,8 @@ void wait_recurso(pcb* un_pcb, char* un_recurso)
     if(recurso == NULL)
     {
         terminar_proceso(un_pcb);
-        avisar_cpu(WAIT_FAILURE);
+        //avisar_cpu(WAIT_FAILURE);
+        enviar_operacion(socketCPU, WAIT_FAILURE);
         //avisar_memoria(FIN_PROCESO);
         resultado_recurso = false;
         return;
@@ -358,7 +363,8 @@ void wait_recurso(pcb* un_pcb, char* un_recurso)
         pthread_mutex_unlock(&(recurso->mutex_cola));
     }
     
-    avisar_cpu(WAIT_SUCCESS);
+    //avisar_cpu(WAIT_SUCCESS);
+    enviar_operacion(socketCPU, WAIT_SUCCESS);
     log_info(logger_kernel_util_obligatorio, "PID: < %d > - Wait: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
     return;
     //avisar_cpu(WAIT_SUCCESS);
@@ -370,7 +376,8 @@ void signal_recurso(pcb* un_pcb, char* un_recurso)
     if(recurso == NULL)
     {
         terminar_proceso(un_pcb);
-        avisar_cpu(SIGNAL_FAILURE);
+        //avisar_cpu(SIGNAL_FAILURE);
+        enviar_operacion(socketCPU, SIGNAL_FAILURE);
         //avisar_memoria(FIN_PROCESO);
         resultado_recurso = false;
         return;
@@ -390,7 +397,8 @@ void signal_recurso(pcb* un_pcb, char* un_recurso)
     }
 
     log_info(logger_kernel_util_obligatorio, "PID: < %d > - Signal: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
-    avisar_cpu(SIGNAL_SUCCESS);
+    //avisar_cpu(SIGNAL_SUCCESS);
+    enviar_operacion(socketCPU, SIGNAL_SUCCESS);
 
     return;
 }
