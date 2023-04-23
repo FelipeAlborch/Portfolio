@@ -26,9 +26,10 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
     switch (instruccion)
     {
       case SET:
+        log_info(logger,"Ejecutando Set");
+        sleep(configuracionCPU.RETARDO_INSTRUCCION/1000);
         ejecutar_set(pcb, lineaInstruccion);
         estado_de_los_registros(pcb);
-        //sleep(configuracionCPU.RETARDO_INSTRUCCION);
         break;
 
       case IO:
@@ -194,13 +195,31 @@ void ejecutar_io(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
 void ejecutar_wait(pcb *pcb , LineaInstruccion *instruccion, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
-  int respuesta = verificar_existencia_recurso(instruccion, socketKernel, WAIT);
-
+  //int respuesta = verificar_existencia_recurso(instruccion, socketKernel, WAIT);
+  /*
   if(respuesta == WAIT_FAILURE)
   {
     recursoDisponible = false;
     log_warning(logger, "Recurso [%s] NO disponible, enviando contexto de ejecucion devuelta al Kernel...", instruccion->parametros[0]);
     enviar_contexto_ejecucion(pcb, socketKernel, WAIT);
+  }*/
+  log_info(logger, "Solicitando a Kernel por la disponibilidad del recurso [%s]", instruccion->parametros[0]);
+  t_paquete *paquete = crear_paquete_operacion(WAIT);
+  agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
+  enviar_paquete(paquete, socketKernel);
+  log_info(logger, "Peticion del recurso [%s] enviada a Kernel!", instruccion->parametros[0]);
+
+  log_info(logger, "Esperando respuesta de Kernel...");
+  switch(recibir_operacion(socketKernel))
+  {
+    case WAIT_FAILURE:
+      recursoDisponible = false;
+      log_warning(logger, "Recurso [%s] NO disponible, enviando contexto de ejecucion devuelta al Kernel...", instruccion->parametros[0]);
+      enviar_contexto_ejecucion(pcb, socketKernel, WAIT);
+    break;
+    case WAIT_SUCCESS:
+      log_warning(logger, "Recurso [%s] estaba disponible!", instruccion->parametros[0]);
+    break;
   }
 
   log_destroy(logger);
@@ -233,6 +252,7 @@ int verificar_existencia_recurso(LineaInstruccion *instruccion, int socketKernel
 
   log_info(logger, "Esperando respuesta de Kernel...");
   int operacion = recibir_operacion(socketKernel);
+  log_info(logger, "Respuesta de kernel recibida");
 
   log_destroy(logger);
   return operacion;
