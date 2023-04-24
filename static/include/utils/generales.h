@@ -65,7 +65,8 @@ typedef enum
 	SIGNAL_SUCCESS,
 	SIGNAL_FAILURE,
 	WAIT_SUCCESS,
-	WAIT_FAILURE
+	WAIT_FAILURE,
+	WAIT_BLOCKED
 }recurso_comunicacion;
 
 typedef struct{
