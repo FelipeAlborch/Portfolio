@@ -30,13 +30,13 @@ void* esperar_consolas(int socketServidorConsolas)
 		if(socketConsola < 0)
 		{
 			log_error(logger, "Error en la conexion de la consola");
+			log_destroy(logger);
 			return;
 		}
 		log_info(logger, "Consola conectada: %d", socketConsola);
 
 		Hilo hiloConsola; 
 		pthread_create(&hiloConsola, NULL, (void*)escuchar_consola, (void*) socketConsola);
-		//pthread_join(hiloConsola, NULL);
 		pthread_detach(hiloConsola);
 	}
 
@@ -80,6 +80,8 @@ void escuchar_consola(int socketConsola)
 			//pthread_create(&hilo_memoria_new, NULL, (void*) esperar_tabla_segmentos, (void*) nuevo_pcb);
 			
 			agregar_proceso_new(nuevo_pcb);
+
+			list_destroy(lista_de_consola);
 			return;
             break;
 
@@ -151,6 +153,7 @@ int conectar_con_cpu(config_de_kernel configuracionKernel){
 	if(socketCPU < 0)
     {
 		log_error(logger, "Error al conectarse con cpu");
+		log_destroy(logger);
 		return EXIT_FAILURE;
 	}
 	
@@ -171,6 +174,7 @@ int conectar_con_memoria(config_de_kernel configuracion_kernel){
 	if(socketMemoria < 0)
     {
 		log_error(logger, "Error al conectarse con memoria");
+		log_destroy(logger);
 		return EXIT_FAILURE;
 	}
 	
@@ -198,6 +202,7 @@ int conectar_con_filesystem(config_de_kernel configuracionKernel)
 	if(socketFS < 0)
     {
 		log_error(logger, "Error al conectarse con FileSystem");
+		log_destroy(logger);
 		return EXIT_FAILURE;
 	}
 	

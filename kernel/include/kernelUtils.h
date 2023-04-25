@@ -66,4 +66,5 @@ void avisar_cpu(int);
 
 void avisar_memoria(int);
 
+
 #endif

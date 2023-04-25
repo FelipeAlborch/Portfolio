@@ -27,6 +27,7 @@ void leer_diccionario_consolas()
         char* key = string_from_format("%d", i+1);
         int socket_consola = dictionary_get(diccionario_de_consolas, key);
         printf("EL SOCKET ES: %d", socket_consola);
+        free(key);
     }
 }
 
@@ -67,3 +68,4 @@ void avisar_memoria(int aviso)
     enviar_paquete(paquete_a_memoria, socketMemoria);
     eliminar_paquete(paquete_a_memoria);
 }
+

@@ -81,4 +81,10 @@ void loguear_procesos_en_cola(t_queue*);
 void loguear_procesos_en_lista(t_list*);
 
 
+
+void startSigHandlers();
+
+void sigHandler_sigint(int);
+
+
 #endif

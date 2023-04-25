@@ -113,6 +113,11 @@ void destruir_estructuras_planificacion()
 
     // Destruyo diccionarios;
     dictionary_destroy(diccionario_de_consolas);
+    dictionary_destroy_and_destroy_elements(diccionario_recursos, liberar_recurso);
+
+    // Termino los hilos
+    pthread_exit(&hilo_corto_plazo);
+    pthread_exit(&hilo_largo_plazo);
 }
 
 void iniciar_planificadores()
@@ -218,12 +223,12 @@ void ejecutar(pcb* proceso_a_ejecutar)
             log_info(logger_planificador_extra, "Contexto del proceso: < %d > recibido por CPU.", proceso_en_ejecucion->pid);
             loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
 
-            liberar_contexto_ejecucion(contexto_recibido);
 
             agregar_proceso_ready(proceso_en_ejecucion);
             
 
             list_destroy(lista_recepcion_valores);
+            liberar_contexto_ejecucion(contexto_recibido);
             
         break;
 
@@ -370,7 +375,8 @@ void terminar_proceso(pcb* un_pcb)
     char* lugar_en_diccionario = string_from_format("%d", un_pcb->pid);
     int socket_a_consola = dictionary_get(diccionario_de_consolas, lugar_en_diccionario);
     t_paquete* paquete_a_consola = crear_paquete_operacion(EXIT);
-    enviar_paquete(paquete_a_consola, socket_a_consola);   
+    enviar_paquete(paquete_a_consola, socket_a_consola);  
+    eliminar_paquete(paquete_a_consola); 
     agregar_proceso_terminated(un_pcb);
     //liberar_pcb(un_pcb);
 }
@@ -595,4 +601,20 @@ void loguear_procesos_en_lista(t_list* lista_de_procesos)
         pcb* un_proceso = list_get(lista_de_procesos,i);
         log_info(logger_planificador_obligatorio, "Proceso: < %d >", un_proceso->pid);
     }
+}
+
+void startSigHandlers(void) {
+	signal(SIGINT, sigHandler_sigint);
+}
+
+void sigHandler_sigint(int signo) {
+	log_warning(logger_kernel_util_extra, "Tiraste un CTRL+C, macho, abortaste el proceso.");
+	
+	destruir_estructuras_planificacion();
+    close(socketCPU);
+    //close(socketFS);
+    //close(socketMemoria);
+	printf("-------------------FINAL POR CTRL+C-------------------");
+
+	exit(-1);
 }

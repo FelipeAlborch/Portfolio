@@ -4,6 +4,7 @@
 int main(int argc, char *argv[]) {
 
     //Logger* loggerKernel = iniciar_logger_modulo(KERNEL_LOGGER);
+    //startSigHandlers();
 
     Config* kernelConfig = config_create(argv[1]);
     configuracionKernel = obtener_valores_de_configuracion_kernel(kernelConfig);
