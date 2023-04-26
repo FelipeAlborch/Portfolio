@@ -46,6 +46,7 @@ pthread_t hilo_corto_plazo;
 
 bool es_fifo = 0;
 bool resultado_recurso = true;
+bool proceso_bloqueado_por_wait = false;
 
 
 void inicializar_estructuras_planificacion() {
@@ -211,6 +212,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
         case YIELD:
             lista_recepcion_valores = _recibir_paquete(socketCPU);
             contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
+            log_info(logger_planificador_extra, "Contexto del proceso: < %d > recibido por YIELD.", proceso_a_ejecutar->pid);
             proceso_en_ejecucion = desalojar_proceso_en_exec();
             
             if(!es_fifo)
@@ -220,7 +222,6 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
             
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
-            log_info(logger_planificador_extra, "Contexto del proceso: < %d > recibido por CPU.", proceso_en_ejecucion->pid);
             loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
 
 
@@ -236,6 +237,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
             lista_recepcion_valores = _recibir_paquete(socketCPU);
             contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
             proceso_en_ejecucion = desalojar_proceso_en_exec();
+            proceso_en_ejecucion->estado = BLOCKED;
+            
+            log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < IO >" , proceso_en_ejecucion->pid);
 
             if(!es_fifo)
             {
@@ -244,9 +248,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
             
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
-            proceso_en_ejecucion->estado = BLOCKED;
             loguear_pcb(proceso_en_ejecucion,logger_kernel_util_extra);
-            log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < IO >" , proceso_en_ejecucion->pid);
+            
 
             pthread_t hilo_io;
             pthread_create(&hilo_io, NULL, esperar_io, (void*) proceso_en_ejecucion);
@@ -278,25 +281,26 @@ void ejecutar(pcb* proceso_a_ejecutar)
             lista_recepcion_valores = _recibir_paquete(socketCPU);
             recurso = list_get(lista_recepcion_valores, 0);
             log_info(logger_planificador_extra,"Recurso recibido para realizar WAIT: %s", recurso);
+
+            int operacion_wait = recibir_operacion(socketCPU);
+            t_list* lista_contexto_wait = _recibir_paquete(socketCPU);
+            pcb* contexto_de_wait = recibir_contexto_ejecucion(lista_contexto_wait);
+
+            log_info(logger_planificador_extra, "Contexto recibido por WAIT");
+
+            actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_wait);
+
+            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
             wait_recurso(proceso_a_ejecutar, recurso);
 
-            if(!resultado_recurso)
-            {
-                t_list* lista_contexto_wait;
-                pcb* contexto_de_wait;
-                int operacion_wait = recibir_operacion(socketCPU);
-                
-                log_warning(logger_planificador_extra, "El recurso no se encuentra disponible para WAIT. Terminando proceso");
-                proceso_en_ejecucion = desalojar_proceso_en_exec();
 
-                lista_contexto_wait = _recibir_paquete(socketCPU);
-                contexto_de_wait = recibir_contexto_ejecucion(lista_contexto_wait);
+            if(!resultado_recurso)
+            {   
+                log_warning(logger_planificador_extra, "El recurso NO EXISTE. Terminando proceso");
+                proceso_en_ejecucion = desalojar_proceso_en_exec();
                 
                 log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO EXISTE RECURSO >", proceso_en_ejecucion->pid);
-                
-                actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_de_wait);
-                
-                loguear_pcb(proceso_en_ejecucion, logger_kernel_util_extra);
                 
                 terminar_proceso(proceso_en_ejecucion);
 
@@ -307,6 +311,18 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 list_destroy(lista_contexto_wait);
                 return;
             }
+
+            liberar_contexto_ejecucion(contexto_de_wait);
+            list_destroy(lista_recepcion_valores);
+            list_destroy(lista_contexto_wait);
+            
+            if(proceso_bloqueado_por_wait)
+            {
+                proceso_bloqueado_por_wait = false;
+                return;
+            }
+
+            enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
             
             goto recibirOperacion;
         
@@ -316,26 +332,25 @@ void ejecutar(pcb* proceso_a_ejecutar)
             lista_recepcion_valores = _recibir_paquete(socketCPU);
             recurso = list_get(lista_recepcion_valores, 0);
             log_info(logger_planificador_extra,"Recurso recibido para realizar SIGNAL: %s", recurso);
+            
+            int operacion_signal = recibir_operacion(socketCPU);
+            t_list* lista_contexto_signal = _recibir_paquete(socketCPU);
+            pcb* contexto_de_signal = recibir_contexto_ejecucion(lista_contexto_signal);
+
+            log_info(logger_planificador_extra, "Contexto recibido por SIGNAL");
+
+            actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_signal);
+
+            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
             signal_recurso(proceso_a_ejecutar, recurso);
 
             if(!resultado_recurso)
-            {
-                t_list* lista_contexto_signal;
-                pcb* contexto_de_signal;
-                int operacion_signal = recibir_operacion(socketCPU);
-                
-                
-                log_warning(logger_planificador_extra, "El recurso no se encuentra disponible para SIGNAL. Terminando proceso");
+            {   
+                log_warning(logger_planificador_extra, "El recurso NO EXISTE. Terminando proceso");
                 proceso_en_ejecucion = desalojar_proceso_en_exec();
                 
-                lista_contexto_signal = _recibir_paquete(socketCPU);
-                contexto_de_signal = recibir_contexto_ejecucion(lista_contexto_signal);
-                
                 log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO EXISTE RECURSO >", proceso_en_ejecucion->pid);
-                
-                actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_de_signal);
-                
-                loguear_pcb(proceso_en_ejecucion, logger_kernel_util_extra);
                 
                 terminar_proceso(proceso_en_ejecucion);
                 
@@ -347,6 +362,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 
                 return;
             }
+
+            liberar_contexto_ejecucion(contexto_de_signal);
+            list_destroy(lista_recepcion_valores);
+            list_destroy(lista_contexto_signal);
+            enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
             
             goto recibirOperacion;
 
@@ -387,36 +407,37 @@ void wait_recurso(pcb* un_pcb, char* un_recurso)
     recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
     if(recurso == NULL)
     {
-        //terminar_proceso(un_pcb);
-        //avisar_cpu(WAIT_FAILURE);
-        enviar_operacion(socketCPU, WAIT_FAILURE);
         //avisar_memoria(FIN_PROCESO);
         resultado_recurso = false;
         return;
     } 
 
     recurso->instancias--;
+    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Wait: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
+
     if(recurso->instancias < 0)
     {
-        pthread_mutex_lock(&(recurso->mutex_cola));
-
         pcb* proceso_en_ejecucion = desalojar_proceso_en_exec();
+        proceso_en_ejecucion->estado = BLOCKED;
+        proceso_bloqueado_por_wait = true;
 
-        log_info(logger_kernel_util_obligatorio, "PID: < %d > - Bloqueado por: < %s >", proceso_en_ejecucion->pid, recurso->nombre);
+        if(!es_fifo)
+        {
+            proceso_en_ejecucion->estimado_prox_rafaga = estimar_proxima_rafaga(proceso_en_ejecucion);
+            temporal_destroy(proceso_en_ejecucion->tiempo_ejecucion);
+        }
+        
+        pthread_mutex_lock(&(recurso->mutex_cola));
+        
         queue_push(recurso->cola_bloqueados, proceso_en_ejecucion);
 
         pthread_mutex_unlock(&(recurso->mutex_cola));
 
-        //enviar_operacion(socketCPU, WAIT_BLOCKED);
-
-        return;
+        log_info(logger_kernel_util_obligatorio, "PID: < %d > - Bloqueado por: < %s >", proceso_en_ejecucion->pid, recurso->nombre);
+        
     }
-    
-    //avisar_cpu(WAIT_SUCCESS);
-    enviar_operacion(socketCPU, WAIT_SUCCESS);
-    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Wait: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
+
     return;
-    //avisar_cpu(WAIT_SUCCESS);
 }
 
 void signal_recurso(pcb* un_pcb, char* un_recurso)
@@ -424,15 +445,14 @@ void signal_recurso(pcb* un_pcb, char* un_recurso)
     recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
     if(recurso == NULL)
     {
-        //terminar_proceso(un_pcb);
-        //avisar_cpu(SIGNAL_FAILURE);
-        enviar_operacion(socketCPU, SIGNAL_FAILURE);
         //avisar_memoria(FIN_PROCESO);
         resultado_recurso = false;
         return;
     } 
 
     recurso->instancias++;
+    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Signal: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
+    
     if(!queue_is_empty(recurso->cola_bloqueados))
     {
         pthread_mutex_lock(&(recurso->mutex_cola));
@@ -444,10 +464,6 @@ void signal_recurso(pcb* un_pcb, char* un_recurso)
 
         agregar_proceso_ready(proceso_bloqueado);
     }
-
-    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Signal: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
-    //avisar_cpu(SIGNAL_SUCCESS);
-    enviar_operacion(socketCPU, SIGNAL_SUCCESS);
 
     return;
 }
