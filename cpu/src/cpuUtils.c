@@ -43,11 +43,11 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
 
       case CREATE_SEGMENT:
-        ejecutar_create_segment(lineaInstruccion, socketKernel);
+        ejecutar_create_segment(lineaInstruccion, socketKernel, pcb);
         break;
 
       case DELETE_SEGMENT:
-        ejecutar_delete_segment(lineaInstruccion, socketKernel);
+        ejecutar_delete_segment(lineaInstruccion, socketKernel, pcb);
         break;
 
       case YIELD:
@@ -231,7 +231,7 @@ void ejecutar_signal(pcb *pcb, LineaInstruccion* instruccion, int socketKernel)
   log_destroy(logger);
 }
 
-void ejecutar_create_segment(LineaInstruccion *instruccion, int socketKernel)
+void ejecutar_create_segment(LineaInstruccion *instruccion, int socketKernel, pcb *pcb)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   t_paquete *paquete = crear_paquete_operacion(CREATE_SEGMENT);
@@ -240,12 +240,13 @@ void ejecutar_create_segment(LineaInstruccion *instruccion, int socketKernel)
   agregar_a_paquete(paquete, atoi(instruccion->parametros[0]), sizeof(int));
   agregar_a_paquete(paquete, atoi(instruccion->parametros[1]), sizeof(int));
   enviar_paquete(paquete, socketKernel);
+  enviar_contexto_ejecucion(pcb, socketKernel, CREATE_SEGMENT);
   log_info(logger, "Solicitud de creacion de segmento enviada al Kernel!");
 
   log_destroy(logger);
 }
 
-void ejecutar_delete_segment(LineaInstruccion *instruccion, int socketKernel)
+void ejecutar_delete_segment(LineaInstruccion *instruccion, int socketKernel, pcb *pcb)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   t_paquete *paquete = crear_paquete_operacion(DELETE_SEGMENT);
@@ -253,6 +254,7 @@ void ejecutar_delete_segment(LineaInstruccion *instruccion, int socketKernel)
   log_info(logger, "Solicitandole a Kernel que elimine el segmento [%s]...", instruccion->parametros[0]);
   agregar_a_paquete(paquete, atoi(instruccion->parametros[0]), sizeof(int));
   enviar_paquete(paquete, socketKernel);
+  enviar_contexto_ejecucion(pcb, socketKernel, DELETE_SEGMENT);
   log_info(logger, "Solicitud de eliminacion de segmento enviada al Kernel!");
 
   log_destroy(logger);
