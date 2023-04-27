@@ -42,11 +42,11 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         ejecutar_signal(pcb, lineaInstruccion, socketKernel);
         break;
 
-      case CREATE_SEGMENT:
+      case CREATE_SEGMENT_INSTRUCTION:
         ejecutar_create_segment(lineaInstruccion, socketKernel, pcb);
         break;
 
-      case DELETE_SEGMENT:
+      case DELETE_SEGMENT_INSTRUCTION:
         ejecutar_delete_segment(lineaInstruccion, socketKernel, pcb);
         break;
 
@@ -237,8 +237,10 @@ void ejecutar_create_segment(LineaInstruccion *instruccion, int socketKernel, pc
   t_paquete *paquete = crear_paquete_operacion(CREATE_SEGMENT);
 
   log_info(logger, "Solicitandole a Kernel que cree el segmento [%s] de tamanio [%s]...", instruccion->parametros[0], instruccion->parametros[1]);
-  agregar_a_paquete(paquete, atoi(instruccion->parametros[0]), sizeof(int));
-  agregar_a_paquete(paquete, atoi(instruccion->parametros[1]), sizeof(int));
+  int nro_segmento = atoi(instruccion->parametros[0]);
+  int tam_segmento = atoi(instruccion->parametros[1]);
+  agregar_a_paquete(paquete, &nro_segmento, sizeof(int));
+  agregar_a_paquete(paquete, &tam_segmento, sizeof(int));
   enviar_paquete(paquete, socketKernel);
   enviar_contexto_ejecucion(pcb, socketKernel, CREATE_SEGMENT);
   log_info(logger, "Solicitud de creacion de segmento enviada al Kernel!");
@@ -252,7 +254,8 @@ void ejecutar_delete_segment(LineaInstruccion *instruccion, int socketKernel, pc
   t_paquete *paquete = crear_paquete_operacion(DELETE_SEGMENT);
 
   log_info(logger, "Solicitandole a Kernel que elimine el segmento [%s]...", instruccion->parametros[0]);
-  agregar_a_paquete(paquete, atoi(instruccion->parametros[0]), sizeof(int));
+  int nro_segmento = atoi(instruccion->parametros[0]);
+  agregar_a_paquete(paquete, &nro_segmento, sizeof(int));
   enviar_paquete(paquete, socketKernel);
   enviar_contexto_ejecucion(pcb, socketKernel, DELETE_SEGMENT);
   log_info(logger, "Solicitud de eliminacion de segmento enviada al Kernel!");
@@ -355,7 +358,7 @@ void logear_instruccion(int pid, LineaInstruccion *instruccion)
 
 bool es_instruccion_de_corte(Instruccion instruccion) 
 {
-  if(instruccion == DELETE_SEGMENT || instruccion == CREATE_SEGMENT || instruccion == EXIT || instruccion == IO || instruccion == YIELD || instruccion == WAIT || instruccion == SIGNAL)
+  if(instruccion == DELETE_SEGMENT_INSTRUCTION || instruccion == CREATE_SEGMENT_INSTRUCTION || instruccion == EXIT || instruccion == IO || instruccion == YIELD || instruccion == WAIT || instruccion == SIGNAL)
     return true;
   else
     return false;

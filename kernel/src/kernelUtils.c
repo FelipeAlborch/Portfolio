@@ -69,3 +69,23 @@ void avisar_memoria(int aviso)
     eliminar_paquete(paquete_a_memoria);
 }
 
+
+
+void solicitar_creacion_segmento(int nro_segmento, int tam_segmento, int pid_proceso)
+{
+    t_paquete* paquete_cs = crear_paquete_operacion(CREATE_SEGMENT);
+    agregar_a_paquete(paquete_cs, &nro_segmento, sizeof(int));
+    agregar_a_paquete(paquete_cs, &tam_segmento, sizeof(int));
+    agregar_a_paquete(paquete_cs, &pid_proceso, sizeof(int));
+    enviar_paquete(paquete_cs, socketMemoria);
+    eliminar_paquete(paquete_cs);
+}
+
+void solicitar_eliminacion_segmento(int nro_segmento, int pid_proceso)
+{
+    t_paquete* paquete_cs = crear_paquete_operacion(DELETE_SEGMENT);
+    agregar_a_paquete(paquete_cs, &nro_segmento, sizeof(int));
+    agregar_a_paquete(paquete_cs, &pid_proceso, sizeof(int));
+    enviar_paquete(paquete_cs, socketMemoria);
+    eliminar_paquete(paquete_cs);
+}

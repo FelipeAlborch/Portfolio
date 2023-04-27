@@ -66,5 +66,8 @@ void avisar_cpu(int);
 
 void avisar_memoria(int);
 
+void solicitar_creacion_segmento(int, int, int);
+
+void solicitar_eliminacion_segmento(int, int);
 
 #endif

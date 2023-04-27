@@ -372,6 +372,119 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
         break;
 
+        case CREATE_SEGMENT:
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
+            int nro_segmento_crear = *(int*) list_get(lista_recepcion_valores, 0);
+            int tam_segmento = *(int*) list_get(lista_recepcion_valores, 1);
+
+            int op_create_seg = recibir_operacion(socketCPU);
+            t_list* lista_contexto_cs = _recibir_paquete(socketCPU);
+            pcb* contexto_cs = recibir_contexto_ejecucion(lista_contexto_cs);
+
+            actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_cs);
+            loguear_pcb(proceso_a_ejecutar, logger_planificador_extra);
+
+            log_info(logger_kernel_util_obligatorio, "PID: < %d > - Crear Segmento - Id: < %d > - Tamaño:< %d >", proceso_a_ejecutar->pid, nro_segmento_crear, tam_segmento);
+            
+            log_warning(logger_kernel_util_extra, "CREATE_SEGMENT TODAVIA NO IMPLMENETADO");
+            
+            //crear_segmento:
+            //solicitar_creacion_segmento(nro_segmento_crear, tam_segmento, proceso_a_ejecutar->pid);
+
+            //int rta_crecion_memoria;
+            //recv(socketMemoria, &rta_crecion_memoria, sizeof(int), MSG_WAITALL);
+            /*
+            int rta_crecion_memoria = recibir_operacion(socketMemoria);
+            switch(rta_crecion_memoria)
+            {
+                case CREATE_SEGMENT_SUCCESS:
+                    log_info(logger_planificador_extra, "CREATE_SEGMENT realizado con exito");
+                    
+                    t_list* valores_tabla_actualizada = _recibir_paquete(socketMemoria);
+                    t_list* tabla_actualizada = armar_tabla_segmentos(valores_tabla_actualizada);
+                    list_destroy_and_destroy_elements(proceso_a_ejecutar->tabla_de_segmentos, (void*) destruir_segmento);
+                    proceso_a_ejecutar->tabla_archivos_abiertos = list_duplicate(tabla_actualizada);
+
+                    list_destroy(valores_tabla_actualizada);
+                break;
+
+                case OUT_OF_MEMORY:
+                    log_error(logger_planificador_extra, "CREATE_SEGMENT ERROR OUT_OF_MEMORY");
+                    log_info(logger_kernel_util_obligatorio, "Finaliza el proceso < %d > - Motivo: < OUT_OF_MEMORY >", proceso_a_ejecutar->pid);
+                    proceso_en_ejecucion = desalojar_proceso_en_exec();
+                    terminar_proceso(proceso_en_ejecucion);
+                    
+                    list_destroy(lista_contexto_cs);
+                    liberar_contexto_ejecucion(contexto_cs);
+                    return;
+                break;  
+
+                case INICIO_COMPACTAR:
+                    
+                    pthread_mutex_lock(&op_entre_mem_y_fs);
+                    
+                    enviar_operacion(socketMemoria, INICIO_COMPACTAR);
+                    rta_memoria = recibir_operacion(socketMemoria);
+                    t_list* valores_de_todos_segmentos = _recibir_paquete();
+                    t_dictionary* nuevas_tablas = armar_nuevas_tablas(valores_de_todos_segmentos);
+                    actualizar_tablas_segmentos(nuevas_tablas);
+
+                    list_destroy(valores_de_todos_segmentos);
+
+                    goto crear_segmento;
+
+                break;
+
+                default:
+                    log_warning(logger_kernel_util_extra, "Operacion de memoria al crear segmento desconocida");
+                break;
+            }*/
+
+            list_destroy(lista_contexto_cs);
+            liberar_contexto_ejecucion(contexto_cs);
+
+            enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
+            
+            goto recibirOperacion;
+
+        break;
+
+        case DELETE_SEGMENT:
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
+            int nro_segmento_eliminar = *(int*) list_get(lista_recepcion_valores, 0);
+
+            int op_delete_seg = recibir_operacion(socketCPU);
+            t_list* lista_contexto_ds = _recibir_paquete(socketCPU);
+            pcb* contexto_ds = recibir_contexto_ejecucion(lista_contexto_ds);
+
+            actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_ds);
+
+            log_info(logger_kernel_util_obligatorio, "PID: < %d > - Eliminar Segmento - Id: < %d >", proceso_a_ejecutar->pid, nro_segmento_eliminar);
+
+            log_warning(logger_kernel_util_extra, "DELETE_SEGMENT TODAVIA NO IMPLMENETADO");
+
+            // soliciar_eliminacion_segmento(nro_segmento_eliminar, proceso_a_ejecutar->pid);
+            /*
+            int rta_eliminacion_memoria = recibir_operacion(socketMemoria);
+
+            log_info(logger_planificador_extra, "DELETE_SEGMENT realizado con exito");
+                    
+            t_list* valores_tras_eliminacion = _recibir_paquete(socketMemoria);
+            t_list* tabla_tras_eliminacion = armar_tabla_segmentos(valores_tras_eliminacion);
+            list_destroy_and_destroy_elements(proceso_a_ejecutar->tabla_de_segmentos, (void*) destruir_segmento);
+            proceso_a_ejecutar->tabla_archivos_abiertos = list_duplicate(tabla_tras_eliminacion);
+            */
+
+            //list_destroy(valores_tras_eliminacion);
+            list_destroy(lista_recepcion_valores);
+            liberar_contexto_ejecucion(contexto_ds);
+
+            enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
+
+            goto recibirOperacion;
+
+        break;
+
         case DESCONEXION:
             log_info(logger_planificador_obligatorio, "CPU Desconectado");
         break;
