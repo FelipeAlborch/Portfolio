@@ -236,7 +236,20 @@ void ejecutar_create_segment(LineaInstruccion *instruccion, int socketKernel)
   agregar_a_paquete(paquete, atoi(instruccion->parametros[0]), sizeof(int));
   agregar_a_paquete(paquete, atoi(instruccion->parametros[1]), sizeof(int));
   enviar_paquete(paquete, socketKernel);
-  log_info(logger, "SOlicitud enviada al Kernel!");
+  log_info(logger, "Solicitud de creacion de segmento enviada al Kernel!");
+
+  log_destroy(logger);
+}
+
+void ejecutar_delete_segment(LineaInstruccion *instruccion, int socketKernel)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+  t_paquete *paquete = crear_paquete_operacion(DELETE_SEGMENT);
+
+  log_info(logger, "Solicitandole a Kernel que elimine el segmento [%s]...", instruccion->parametros[0]);
+  agregar_a_paquete(paquete, atoi(instruccion->parametros[0]), sizeof(int));
+  enviar_paquete(paquete, socketKernel);
+  log_info(logger, "Solicitud de eliminacion de segmento enviada al Kernel!");
 
   log_destroy(logger);
 }
