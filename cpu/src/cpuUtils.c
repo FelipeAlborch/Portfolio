@@ -43,11 +43,15 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
 
       case CREATE_SEGMENT_INSTRUCTION:
-        ejecutar_create_segment(lineaInstruccion, socketKernel, pcb);
+        ejecutar_create_segment(pcb, lineaInstruccion, socketKernel);
         break;
 
       case DELETE_SEGMENT_INSTRUCTION:
-        ejecutar_delete_segment(lineaInstruccion, socketKernel, pcb);
+        ejecutar_delete_segment(pcb, lineaInstruccion, socketKernel);
+        break;
+      
+      case F_OPEN:
+        ejecutar_f_open(pcb, lineaInstruccion, socketKernel);
         break;
 
       case YIELD:
@@ -67,14 +71,6 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
       log_destroy(logger);
       return;
     }
-    
-    /*if (instruccion == IO || instruccion == EXIT || haySegmentationFault || hayPageFault)
-    {
-      haySegmentationFault = false;
-      hayPageFault = false;
-      log_destroy(logger);
-      return;
-    }*/
   }
 }
 
@@ -231,7 +227,7 @@ void ejecutar_signal(pcb *pcb, LineaInstruccion* instruccion, int socketKernel)
   log_destroy(logger);
 }
 
-void ejecutar_create_segment(LineaInstruccion *instruccion, int socketKernel, pcb *pcb)
+void ejecutar_create_segment(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   t_paquete *paquete = crear_paquete_operacion(CREATE_SEGMENT);
@@ -248,7 +244,7 @@ void ejecutar_create_segment(LineaInstruccion *instruccion, int socketKernel, pc
   log_destroy(logger);
 }
 
-void ejecutar_delete_segment(LineaInstruccion *instruccion, int socketKernel, pcb *pcb)
+void ejecutar_delete_segment(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   t_paquete *paquete = crear_paquete_operacion(DELETE_SEGMENT);
@@ -259,6 +255,20 @@ void ejecutar_delete_segment(LineaInstruccion *instruccion, int socketKernel, pc
   enviar_paquete(paquete, socketKernel);
   enviar_contexto_ejecucion(pcb, socketKernel, DELETE_SEGMENT);
   log_info(logger, "Solicitud de eliminacion de segmento enviada al Kernel!");
+
+  log_destroy(logger);
+}
+
+void ejecutar_f_open(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+  t_paquete *paquete = crear_paquete_operacion(F_OPEN);
+
+  log_info(logger, "Solicitandole a Kernel que abra el archivo [%s]...", instruccion->parametros[0]);
+  agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
+  enviar_paquete(paquete, socketKernel);
+  enviar_contexto_ejecucion(pcb, socketKernel, F_OPEN);
+  log_info(logger, "Solicitud enviada al Kernel!");
 
   log_destroy(logger);
 }
@@ -358,8 +368,30 @@ void logear_instruccion(int pid, LineaInstruccion *instruccion)
 
 bool es_instruccion_de_corte(Instruccion instruccion) 
 {
-  if(instruccion == DELETE_SEGMENT_INSTRUCTION || instruccion == CREATE_SEGMENT_INSTRUCTION || instruccion == EXIT || instruccion == IO || instruccion == YIELD || instruccion == WAIT || instruccion == SIGNAL)
+  /*if(instruccion == F_OPEN || instruccion == DELETE_SEGMENT_INSTRUCTION || instruccion == CREATE_SEGMENT_INSTRUCTION || instruccion == EXIT || instruccion == IO || instruccion == YIELD || instruccion == WAIT || instruccion == SIGNAL)
     return true;
   else
+    return false; */
+
+  switch (instruccion)
+  {
+  case F_OPEN:
+    return true;
+  case DELETE_SEGMENT_INSTRUCTION:
+    return true;
+  case CREATE_SEGMENT_INSTRUCTION:
+    return true;
+  case EXIT:
+    return true;
+  case IO:
+    return true;
+  case YIELD:
+    return true;
+  case WAIT:
+    return true;
+  case SIGNAL:
+    return true;
+  default:
     return false;
+  }
 }
