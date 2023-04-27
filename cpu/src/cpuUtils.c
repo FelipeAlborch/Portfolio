@@ -46,6 +46,10 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         ejecutar_create_segment(lineaInstruccion, socketKernel);
         break;
 
+      case DELETE_SEGMENT:
+        ejecutar_delete_segment(lineaInstruccion, socketKernel);
+        break;
+
       case YIELD:
         ejecutar_yield(pcb, socketKernel);
         break;
