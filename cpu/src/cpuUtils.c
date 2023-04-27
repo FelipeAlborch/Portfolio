@@ -51,7 +51,7 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
       
       case F_OPEN:
-        ejecutar_f_open(pcb, lineaInstruccion, socketKernel);
+        //ejecutar_f_open(pcb, lineaInstruccion, socketKernel);
         break;
 
       case YIELD:
