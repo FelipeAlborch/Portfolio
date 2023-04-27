@@ -1,7 +1,5 @@
 #include <cpuUtils.h>
 
-bool recursoDisponible = true;
-
 void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socketMemoria)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
@@ -44,6 +42,10 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         ejecutar_signal(pcb, lineaInstruccion, socketKernel);
         break;
 
+      case CREATE_SEGMENT:
+        ejecutar_create_segment(lineaInstruccion, socketKernel);
+        break;
+
       case YIELD:
         ejecutar_yield(pcb, socketKernel);
         break;
@@ -56,9 +58,8 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
     }
 
-    if (instruccion == YIELD || instruccion == EXIT || instruccion == IO || /*!recursoDisponible ||*/ instruccion == WAIT || instruccion == SIGNAL)
+    if (es_instruccion_de_corte(instruccion))
     {
-      //recursoDisponible = true;
       log_destroy(logger);
       return;
     }
@@ -195,7 +196,6 @@ void ejecutar_io(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
 void ejecutar_wait(pcb *pcb , LineaInstruccion *instruccion, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
-  //int respuesta = verificar_existencia_recurso(instruccion, socketKernel, WAIT);
 
   log_info(logger, "Solicitando WAIT a Kernel por el recurso [%s]", instruccion->parametros[0]);
   
@@ -206,27 +206,6 @@ void ejecutar_wait(pcb *pcb , LineaInstruccion *instruccion, int socketKernel)
   enviar_contexto_ejecucion(pcb, socketKernel, WAIT);
   
   log_info(logger, "Peticion del recurso [%s] enviada y devuelto el contexto de ejecucion a Kernel", instruccion->parametros[0]);
-  
-  //if(respuesta == WAIT_FAILURE)
-  //{
-  //  recursoDisponible = false;
-  //  log_warning(logger, "Recurso [%s] NO disponible, enviando contexto de ejecucion devuelta al Kernel...", instruccion->parametros[0]);
-  //  enviar_contexto_ejecucion(pcb, socketKernel, WAIT);
-  //}
-  //log_info(logger, "Esperando respuesta de Kernel...");
-  //int respuesta;
-  //recv(socketKernel, &respuesta, sizeof(int), MSG_WAITALL);
-
-  //switch(respuesta)
-  //{
-  //  case WAIT_FAILURE:
-  //    //recursoDisponible = false;
-  //    log_warning(logger, "Recurso [%s] Inexistente, esperando proximo contexto...", instruccion->parametros[0]);
-  //  break;
-  //  case WAIT_SUCCESS:
-  //    log_warning(logger, "Recurso [%s] Existia, esperando proximo contexto...", instruccion->parametros[0]);
-  //  break;
-  //}
 
   log_destroy(logger);
 }
@@ -234,7 +213,6 @@ void ejecutar_wait(pcb *pcb , LineaInstruccion *instruccion, int socketKernel)
 void ejecutar_signal(pcb *pcb, LineaInstruccion* instruccion, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
-  //int respuesta = verificar_existencia_recurso(instruccion, socketKernel, SIGNAL);
 
   log_info(logger, "Solicitando SIGNAL a Kernel por el recurso [%s]", instruccion->parametros[0]);
   
@@ -246,46 +224,21 @@ void ejecutar_signal(pcb *pcb, LineaInstruccion* instruccion, int socketKernel)
   
   log_info(logger, "Peticion del recurso [%s] enviada y devuelto el contexto de ejecucion a Kernel", instruccion->parametros[0]);
 
-  //if(respuesta == SIGNAL_FAILURE)
-  //{
-  //  recursoDisponible = false;
-  //  log_warning(logger, "Recurso [%s] NO disponible, enviando contexto de ejecucion devuelta al Kernel...", instruccion->parametros[0]);
-  //  enviar_contexto_ejecucion(pcb, socketKernel, SIGNAL);
-  //}
-
-//switch(respuesta)
-//  {
-//    case SIGNAL_FAILURE:
-//      recursoDisponible = false;
-//      log_warning(logger, "Recurso [%s] NO disponible, enviando contexto de ejecucion devuelta al Kernel...", instruccion->parametros[0]);
-//      enviar_contexto_ejecucion(pcb, socketKernel, WAIT);
-//    break;
-//    case SIGNAL_SUCCESS:
-//      log_warning(logger, "Recurso [%s] estaba disponible!", instruccion->parametros[0]);
-//    break;
-//  }
-
   log_destroy(logger);
 }
 
-// Esta funcion al final no es necesaria
-int verificar_existencia_recurso(LineaInstruccion *instruccion, int socketKernel, int codigo)
+void ejecutar_create_segment(LineaInstruccion *instruccion, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+  t_paquete *paquete = crear_paquete_operacion(CREATE_SEGMENT);
 
-  log_info(logger, "Solicitando a Kernel por la disponibilidad del recurso [%s]", instruccion->parametros[0]);
-  t_paquete *paquete = crear_paquete_operacion(codigo);
-  agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
+  log_info(logger, "Solicitandole a Kernel que cree el segmento [%s] de tamanio [%s]...", instruccion->parametros[0], instruccion->parametros[1]);
+  agregar_a_paquete(paquete, atoi(instruccion->parametros[0]), sizeof(int));
+  agregar_a_paquete(paquete, atoi(instruccion->parametros[1]), sizeof(int));
   enviar_paquete(paquete, socketKernel);
-  log_info(logger, "Peticion del recurso [%s] enviada a Kernel!", instruccion->parametros[0]);
-
-  log_info(logger, "Esperando respuesta de Kernel...");
-  int operacion;
-  recv(socketKernel, &operacion, sizeof(int), MSG_WAITALL);
-  log_info(logger, "Respuesta de kernel recibida");
+  log_info(logger, "SOlicitud enviada al Kernel!");
 
   log_destroy(logger);
-  return operacion;
 }
 
 void ejecutar_yield(pcb *pcb, int socketKernel)
@@ -379,4 +332,12 @@ void logear_instruccion(int pid, LineaInstruccion *instruccion)
   }
   
   log_destroy(logger);
+}
+
+bool es_instruccion_de_corte(Instruccion instruccion) 
+{
+  if(instruccion == DELETE_SEGMENT || instruccion == CREATE_SEGMENT || instruccion == EXIT || instruccion == IO || instruccion == YIELD || instruccion == WAIT || instruccion == SIGNAL)
+    return true;
+  else
+    return false;
 }

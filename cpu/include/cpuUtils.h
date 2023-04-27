@@ -5,7 +5,7 @@
 
 void ejecutar_lista_instrucciones_del_pcb(pcb*, int, int);
 Instruccion obtener_tipo_instruccion(char*);
-int verificar_existencia_recurso(LineaInstruccion*, int, int);
+bool es_instruccion_de_corte(Instruccion);
 
 // Funciones que ejecutan instrucciones
 
@@ -15,6 +15,7 @@ void ejecutar_exit(pcb*, int);
 void ejecutar_io(pcb*, LineaInstruccion*, int);
 void ejecutar_wait(pcb*, LineaInstruccion*, int);
 void ejecutar_signal(pcb*, LineaInstruccion*, int);
+void ejecutar_create_segment(LineaInstruccion*, int);
 
 //
 
