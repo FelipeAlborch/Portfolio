@@ -3,8 +3,6 @@
 
 #include <commons/collections/dictionary.h>
 
-t_dictionary *tabla_global_archivos_abiertos;
-
 typedef struct ArchivoAbierto
 {
 	char *nombreArchivo;	 // Nombre del archivo

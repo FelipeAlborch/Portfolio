@@ -1,6 +1,18 @@
 #include <planificador.h>
 #include <kernelArchivos.h>
 
+extern t_dictionary* tabla_global_archivos_abiertos;
+
+// Estos sockets ya no los necesitamos porque puse unos globales en un archivo previo que se incluye aca, y se incializan en el main.
+//int socket_cpu_planificador;
+//int socket_memoria_planificador;
+//int socket_fs_planificador;
+
+// LOGGER PARA EL PLANIFICADOR
+t_log* logger_planificador_obligatorio;
+t_log* logger_planificador_extra;
+
+
 // variable global para el process id
 int pid_global = 0;
 
