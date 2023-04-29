@@ -1,4 +1,5 @@
 #include <planificador.h>
+#include <kernelArchivos.h>
 
 // variable global para el process id
 int pid_global = 0;
@@ -450,20 +451,41 @@ void ejecutar(pcb* proceso_a_ejecutar)
             char* nombre_archivo =  (char*) list_get(lista_recepcion_valores, 0);
             log_info(logger_planificador_extra,"Nombre archivo para realizar F_OPEN: %s", nombre_archivo);
 
+            ArchivoAbierto *archivo;
             // BUSCAR EN TABLA DE ARCHIVOS ABIERTOS
+            if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_archivo))
+            {
+                // PEDIR AL FS
+                // archivo = obtener_archivo_de_fs();
 
-            // SI NO ESTA, PEDIR AL FS
+                // SI NO EXISTE, CREARLO
+                // archivo = archivo_abierto_init();
+                // dictionary_put(tabla_global_archivos_abiertos, nombre_archivo, archivo);
+            } else {
+                // SI ESTA, BLOQUEAR EL PROCESO
+                proceso_en_ejecucion = desalojar_proceso_en_exec();
+                proceso_en_ejecucion->estado = BLOCKED;
+                log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < F_OPEN >", proceso_en_ejecucion->pid);
 
-            // SI ESTA, BLOQUEAR EL PROCESO
-            // (Y ESPERAR A QUE SE LIBERE? COMO?)
+                // AGREGAR A LA LISTA DE PROCESOS BLOQUEADOS DEL ARCHIVO
+                archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_archivo);
+                archivo->numProcesos++;
+                list_add(archivo->procesosBloqueados, proceso_a_ejecutar->pid);
+
+                // AGREGAR A LA LISTA DE ARCHIVOS ABIERTOS DEL PROCESO
+                list_add(proceso_a_ejecutar->tabla_archivos_abiertos, archivo);
+            }
+
+            // ENVIAR RESPUESTA A CPU
+            goto recibirOperacion;
 
         break;
 
-        // case F_CLOSE:
-        // case F_SEEK:
-        // case F_READ:
-        // case F_WRITE:
-        // case F_TRUNCATE:
+            // case F_CLOSE:
+            // case F_SEEK:
+            // case F_READ:
+            // case F_WRITE:
+            // case F_TRUNCATE:
 
         case DESCONEXION:
             log_info(logger_planificador_obligatorio, "CPU Desconectado");

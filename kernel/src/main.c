@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     iniciar_tabla_de_procesos();
     inicializar_estructuras_planificacion();
     iniciar_planificadores();
-    
+    inicializar_archivos_kernel();
 
     int socketServicioConsolas = iniciar_servidor_para_consolas(configuracionKernel);
 
