@@ -6,6 +6,7 @@
 //#include <kernelConfig.h>
 
 #include <kernelUtils.h>
+#include <kernelArchivos.h>
 
 //extern int socket_cpu_planificador;
 //extern int socket_memoria_planificador;
@@ -16,6 +17,9 @@ extern int pid_global;
 
 // Cola de planificacion new global.
 //extern t_queue* cola_new;
+
+// Tabla de manejo de archivos abiertos.
+extern t_dictionary* tabla_global_archivos_abiertos;
 
 /*****************************************************************************
  *              FUNCIONES PARA LAS ESTRUCTURAS DE PLANIFICACION

@@ -1,7 +1,4 @@
 #include <main.h>
-#include <kernelArchivos.h>
-
-extern t_dictionary* tabla_global_archivos_abiertos;
 
 int main(int argc, char *argv[]) {
 

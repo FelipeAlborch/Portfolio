@@ -1,7 +1,4 @@
 #include <planificador.h>
-#include <kernelArchivos.h>
-
-extern t_dictionary* tabla_global_archivos_abiertos;
 
 // Estos sockets ya no los necesitamos porque puse unos globales en un archivo previo que se incluye aca, y se incializan en el main.
 //int socket_cpu_planificador;
