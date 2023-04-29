@@ -444,6 +444,27 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
         break;
 
+        case F_OPEN: 
+            // RECIBIR PARAMETRO(S) DE CPU
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
+            char* nombre_archivo =  (char*) list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Nombre archivo para realizar F_OPEN: %s", nombre_archivo);
+
+            // BUSCAR EN TABLA DE ARCHIVOS ABIERTOS
+
+            // SI NO ESTA, PEDIR AL FS
+
+            // SI ESTA, BLOQUEAR EL PROCESO
+            // (Y ESPERAR A QUE SE LIBERE? COMO?)
+
+        break;
+
+        // case F_CLOSE:
+        // case F_SEEK:
+        // case F_READ:
+        // case F_WRITE:
+        // case F_TRUNCATE:
+
         case DESCONEXION:
             log_info(logger_planificador_obligatorio, "CPU Desconectado");
         break;
