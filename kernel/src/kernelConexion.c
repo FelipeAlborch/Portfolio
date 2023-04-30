@@ -107,7 +107,12 @@ void escuchar_consola(int socketConsola)
 
 void* esperar_tabla_segmentos(pcb* un_pcb)
 {
-	enviar_operacion(socketMemoria, INICIO_PROCESO);
+	t_paquete* paquete_incializacion = crear_paquete_operacion(INICIO_PROCESO);
+	int p_id = un_pcb->pid;
+	agregar_a_paquete(paquete_incializacion, &p_id, socketMemoria);
+	enviar_paquete(paquete_incializacion, socketMemoria);
+	eliminar_paquete(paquete_incializacion);
+
 	t_list* segmentos_recibidos;
 
 	switch(recibir_operacion(socketMemoria))
