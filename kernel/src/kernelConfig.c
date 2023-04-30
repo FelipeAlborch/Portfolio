@@ -2,6 +2,7 @@
 
 config_de_kernel configuracionKernel;
 t_dictionary* diccionario_recursos;
+t_dictionary* tabla_de_procesos;
 
 config_de_kernel obtener_valores_de_configuracion_kernel(Config* kernelConfig){
     configuracionKernel.IP_MEMORIA = config_get_string_value(kernelConfig,"IP_MEMORIA");
@@ -38,6 +39,39 @@ void mostrar_valores_de_configuracion_kernel(config_de_kernel configuracion_kern
     //{
     //    printf("RECURSO = %s, INSTANCIAS = %s \n", configuracionKernel.RECURSOS[i], configuracion_kernel.INSTANCIAS_RECURSOS[i]);
     //}
+}
+
+void iniciar_tabla_de_procesos()
+{
+    tabla_de_procesos = dictionary_create();
+}
+
+void agregar_proceso_a_tabla(pcb* un_pcb)
+{
+    char* key = string_from_format("%d", un_pcb->pid);
+    dictionary_put(tabla_de_procesos, key, un_pcb);
+}
+
+void leer_tabla_procesos()
+{
+    for(int i = 0; i < dictionary_size; i++)
+    {
+        char* key = string_from_format("%d", i+1);
+        pcb* pcb = dictionary_get(tabla_de_procesos, key);
+        printf("Proceso: %d\n", pcb->pid);
+        free(key);
+    }
+}
+
+void destruir_tabla_de_procesos()
+{
+    for(int i = 0; i < dictionary_size; i++)
+    {
+        char* key = string_from_format("%d", i+1);
+        dictionary_remove_and_destroy(tabla_de_procesos, key, liberar_pcb);
+        free(key);
+    }
+    dictionary_destroy(tabla_de_procesos);
 }
 
 void crear_diccionario_recursos()

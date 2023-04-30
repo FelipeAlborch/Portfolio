@@ -70,9 +70,14 @@ void escuchar_consola(int socketConsola)
 			
 			pid_global++;
 			pcb* nuevo_pcb = crear_pcb(lista_instrucciones, pid_global, configuracionKernel.ESTIMACION_INICIAL/1000);
+			
 			log_info(logger, "Se crea el proceso < %d > en NEW", pid_global);
+			
 			agregar_socket_a_diccionario(nuevo_pcb->pid, socketConsola);
 			leer_diccionario_consolas();
+			
+			agregar_proceso_a_tabla(nuevo_pcb);
+
 			loguear_pcb(nuevo_pcb,logger);
 			
 			// TO-DO:
@@ -102,7 +107,7 @@ void escuchar_consola(int socketConsola)
 
 void* esperar_tabla_segmentos(pcb* un_pcb)
 {
-	avisar_memoria(INICIO_PROCESO);
+	enviar_operacion(socketMemoria, INICIO_PROCESO);
 	t_list* segmentos_recibidos;
 
 	switch(recibir_operacion(socketMemoria))

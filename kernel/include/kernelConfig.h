@@ -32,6 +32,7 @@ typedef struct{
 
 extern config_de_kernel configuracionKernel;
 extern t_dictionary* diccionario_recursos;
+extern t_dictionary* tabla_de_procesos;
 
 
 /**
@@ -51,6 +52,14 @@ config_de_kernel obtener_valores_de_configuracion_kernel(t_config*);
 *        config_de_kernel configuracion_kernel - La configuracion creada previamente a partir del t_config*
 */
 void mostrar_valores_de_configuracion_kernel(config_de_kernel);
+
+void iniciar_tabla_de_procesos();
+
+void agregar_proceso_a_tabla(pcb*);
+
+void leer_tabla_procesos();
+
+void destruir_tabla_de_procesos();
 
 void crear_diccionario_recursos();
 
