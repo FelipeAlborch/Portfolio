@@ -70,4 +70,6 @@ void solicitar_creacion_segmento(int, int, int);
 
 void solicitar_eliminacion_segmento(int, int);
 
+void remover_recurso_si_esta(t_list*,recurso*);
+
 #endif

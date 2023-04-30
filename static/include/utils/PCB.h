@@ -55,6 +55,7 @@ typedef struct pcb
     t_list* lista_de_instrucciones;
     t_list* tabla_de_segmentos;
     t_list* tabla_archivos_abiertos;
+    t_list* recursos_asignados;
 
     t_temporal* llegada_ready;
     t_temporal* tiempo_ejecucion;

@@ -48,6 +48,9 @@ void wait_recurso(pcb*, char*);
 
 void signal_recurso(pcb*, char*);
 
+void liberar_recursos(pcb*);
+
+
 /*****************************************************************************
  *              FUNCIONES PARA MOVER PROCESOS POR LAS COALS
 ******************************************************************************/

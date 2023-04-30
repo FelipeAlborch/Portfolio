@@ -511,6 +511,7 @@ void terminar_proceso(pcb* un_pcb)
     enviar_paquete(paquete_a_consola, socket_a_consola);  
     eliminar_paquete(paquete_a_consola); 
     agregar_proceso_terminated(un_pcb);
+    liberar_recursos(un_pcb);
     //liberar_pcb(un_pcb);
 }
 
@@ -527,6 +528,7 @@ void wait_recurso(pcb* un_pcb, char* un_recurso)
 
     recurso->instancias--;
     log_info(logger_kernel_util_obligatorio, "PID: < %d > - Wait: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
+    list_add(un_pcb->recursos_asignados, recurso);
 
     if(recurso->instancias < 0)
     {
@@ -565,7 +567,8 @@ void signal_recurso(pcb* un_pcb, char* un_recurso)
 
     recurso->instancias++;
     log_info(logger_kernel_util_obligatorio, "PID: < %d > - Signal: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
-    
+    remover_recurso_si_esta(un_pcb->recursos_asignados, recurso);
+
     if(!queue_is_empty(recurso->cola_bloqueados))
     {
         pthread_mutex_lock(&(recurso->mutex_cola));
@@ -579,6 +582,28 @@ void signal_recurso(pcb* un_pcb, char* un_recurso)
     }
 
     return;
+}
+
+void liberar_recursos(pcb* un_pcb)
+{
+    while(!list_is_empty(un_pcb->recursos_asignados))
+    {
+        int i = 0;
+        recurso* un_rec = list_remove(un_pcb->recursos_asignados, i);
+        un_rec->instancias++;
+        log_info(logger_kernel_util_extra, "Se libera instancia del recurso: %s. Instancias: %d", un_rec->nombre, un_rec->instancias);
+        
+        if(!queue_is_empty(un_rec->cola_bloqueados))
+        {
+            pthread_mutex_lock(&(un_rec->mutex_cola));
+            pcb* pcb_liberado = queue_pop(un_rec->cola_bloqueados);
+            log_info(logger_kernel_util_obligatorio, "PID: < %d > - Desbloqueado por: < %s >", pcb_liberado->pid, un_rec->nombre);
+
+            pthread_mutex_unlock(&(un_rec->mutex_cola));
+            agregar_proceso_ready(pcb_liberado);
+        }
+        i++;
+    }
 }
 
 void agregar_proceso_new(pcb* un_pcb)

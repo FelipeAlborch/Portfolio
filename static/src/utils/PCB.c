@@ -28,6 +28,7 @@ pcb* crear_pcb(t_list* lista_de_instrucciones, int p_id, int estimado_rafaga)
     proceso->lista_de_instrucciones = list_duplicate(lista_de_instrucciones);
     proceso->tabla_de_segmentos = list_create();
     proceso->tabla_archivos_abiertos = list_create();
+    proceso->recursos_asignados = list_create();
 
     // Los t_temporal se crean cuando llegan a ready o a exec.
 
@@ -135,6 +136,7 @@ void liberar_pcb(pcb* un_pcb)
     list_destroy_and_destroy_elements(un_pcb->lista_de_instrucciones, (void*)liberar_instruccion);
     //list_destroy_and_destroy_elements(un_pcb->tabla_de_segmentos, (void*)liberar_segmento);
     //list_destroy_and_destroy_elements(un_pcb->tabla_archivos_abiertos, (void*)liberar_archivo);
+    list_destroy(un_pcb->recursos_asignados);
 
     //temporal_destroy(un_pcb->llegada_ready);      Estos temporals despues se destruyen
     //temporal_destroy(un_pcb->tiempo_ejecucion);

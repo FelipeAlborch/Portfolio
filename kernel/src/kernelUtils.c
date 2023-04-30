@@ -89,3 +89,16 @@ void solicitar_eliminacion_segmento(int nro_segmento, int pid_proceso)
     enviar_paquete(paquete_cs, socketMemoria);
     eliminar_paquete(paquete_cs);
 }
+
+
+void remover_recurso_si_esta(t_list* lista,recurso* un_recurso)
+{
+    for(int i = 0; i < list_size(lista); i++)
+    {
+        recurso* un_rec = list_get(lista, i);
+        if(un_recurso->nombre == un_rec->nombre)
+        {
+            list_remove(lista, i);
+        }
+    }
+}
