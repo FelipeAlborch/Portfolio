@@ -150,3 +150,9 @@ void liberar_conexion(int socket_cliente)
 {
 	close(socket_cliente);
 }
+
+void enviar_operacion(int socket, int una_operacion)
+{
+	int operacion = una_operacion;
+	send(socket, &operacion, sizeof(operacion), 0);
+}

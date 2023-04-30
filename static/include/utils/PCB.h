@@ -13,28 +13,53 @@ typedef enum
     TERMINATED
 } estado_pcb;
 
+typedef enum Instruccion
+{
+  DESCONOCIDA = -1,
+  SET,
+  MOV_IN,
+  MOV_OUT,
+  IO,
+  F_OPEN,
+  F_CLOSE,
+  F_SEEK,
+  F_READ,
+  F_WRITE,
+  F_TRUNCATE,
+  WAIT,
+  SIGNAL,
+  CREATE_SEGMENT_INSTRUCTION,
+  DELETE_SEGMENT_INSTRUCTION,
+  YIELD,
+  EXIT
+} Instruccion;
+
 typedef struct pcb
 {
     int pid;
     int program_counter;
-    char* AX;
-    char* BX;
-    char* CX;
-    char* DX;
-    char* EAX;
-    char* EBX;
-    char* ECX;
-    char* EDX;
-    char* RAX;
-    char* RBX;
-    char* RCX;
-    char* RDX;
+    char AX[4];
+    char BX[4];
+    char CX[4];
+    char DX[4];
+    char EAX[8];
+    char EBX[8];
+    char ECX[8];
+    char EDX[8];
+    char RAX[16];
+    char RBX[16];
+    char RCX[16];
+    char RDX[16];
     
     estado_pcb estado;
     t_list* lista_de_instrucciones;
     t_list* tabla_de_segmentos;
+    t_list* tabla_archivos_abiertos;
 
-    int estimado_prox_rafaga;
+    t_temporal* llegada_ready;
+    t_temporal* tiempo_ejecucion;
+    double estimado_prox_rafaga;
+    int tiempo_io;
 } pcb;
 
 typedef struct LineaInstruccion
@@ -42,25 +67,6 @@ typedef struct LineaInstruccion
   char *identificador;
   char *parametros[3];
 } LineaInstruccion;
-
-/*typedef enum parametros
-{
-  AX,
-  BX,
-  CX,
-  DX,
-  EAX,
-  EBX,
-  ECX,
-  EDX,
-  RAX,
-  RBX,
-  RCX,
-  RDX,
-  DISCO,
-  ARCHIVO,
-} parametros; */
-
 
 /**
 * @NAME: crear_pcb
@@ -117,5 +123,23 @@ void loguear_lista_de_instrucciones(t_list*, t_log*);
 *        LineaInstruccion* una_instruccion - la instruccion que se desea liberar.
 */
 void* liberar_instruccion(LineaInstruccion*);
+void dump(Lista*);
+pcb* recibir_contexto_ejecucion(t_list*);
+void enviar_contexto_ejecucion(pcb*, int, int);
+void serializar_contexto_ejecucion(t_paquete*, pcb*);
+void actualizar_contexto_ejecucion(pcb*, pcb*);
+void liberar_contexto_ejecucion(pcb*);
+
+/**
+ * @NAME: valor_del_registro_como_string
+ * @DESC: formatea el valor del registro para imprimirse como string
+ * @PARAMS:
+ *      void* registro - el registro a formatear
+ *      size_t tamanio - el tamanio del registro
+ * @RETURN:
+ *     retorna un string con el valor del registro formateado
+ *     (nota: liberar la memoria luego de usarlo)
+ */
+char* valor_del_registro_como_string(void* registro, size_t tamano);
 
 #endif

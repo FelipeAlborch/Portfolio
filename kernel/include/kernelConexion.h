@@ -51,4 +51,10 @@ void* esperar_consolas(int);
 */
 void escuchar_consola(int socketConsola);
 
+void deserializar_lista_de_consola(t_list*, t_list*, int, int);
+
+void* esperar_tabla_segmentos(pcb*);
+
+
+
 #endif
