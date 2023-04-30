@@ -86,11 +86,11 @@ Instruccion obtener_tipo_instruccion(char *instruccion)
   }
   else if (!strcmp(instruccion, "MOV_IN")){
     //printf("Lei la instruccion MOV_IN\n");
-    return MOV_IN;
+    return MOV_IN_INSTRUCTION;
   }
   else if (!strcmp(instruccion, "MOV_OUT")){
     //printf("Lei la instruccion MOV_OUT\n");
-    return MOV_OUT;
+    return MOV_OUT_INSTRUCTION;
   }
   else if (!strcmp(instruccion, "F_OPEN")){
     //printf("Lei la instruccion F_OPEN\n");

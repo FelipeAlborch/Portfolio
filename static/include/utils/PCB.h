@@ -17,8 +17,8 @@ typedef enum Instruccion
 {
   DESCONOCIDA = -1,
   SET,
-  MOV_IN,
-  MOV_OUT,
+  MOV_IN_INSTRUCTION,
+  MOV_OUT_INSTRUCTION,
   IO,
   F_OPEN,
   F_CLOSE,
