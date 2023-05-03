@@ -84,7 +84,7 @@ t_list* _recibir_paquete(int socket_cliente)
 
 void eliminar_paquete(t_paquete* paquete)
 {
-	//free(paquete->buffer->stream);
+	free(paquete->buffer->stream);
 	free(paquete->buffer);
 	free(paquete);
 }
@@ -118,7 +118,7 @@ t_paquete* recibir_paquete (int socket) {
 	paquete->buffer->stream = stream;
 	paquete->buffer->size = size;
 
-	free(stream);
+	//free(stream);
 	log_destroy(logger);
 	return paquete;
 }

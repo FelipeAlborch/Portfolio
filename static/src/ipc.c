@@ -267,7 +267,7 @@ t_buffer *buffer_create(int size)
 
 void buffer_destroy(t_buffer *buffer)
 {
-    //free(buffer->stream);
+    free(buffer->stream);
     free(buffer);
 }
 
