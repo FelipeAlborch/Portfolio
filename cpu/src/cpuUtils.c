@@ -51,7 +51,13 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
       
       case F_OPEN:
-        //ejecutar_f_open(pcb, lineaInstruccion, socketKernel);
+        log_info(logger, "Solicitandole a Kernel que abra el archivo [%s]...", instruccion->parametros[0]);
+        abrir_o_cerrar_archivo(pcb, lineaInstruccion, socketKernel, F_OPEN);
+        break;
+
+      case F_CLOSE:
+        log_info(logger, "Solicitandole a Kernel que cierre el archivo [%s]...", instruccion->parametros[0]);
+        abrir_o_cerrar_archivo(pcb, lineaInstruccion, socketKernel, F_CLOSE);
         break;
 
       case YIELD:
@@ -259,15 +265,14 @@ void ejecutar_delete_segment(pcb *pcb, LineaInstruccion *instruccion, int socket
   log_destroy(logger);
 }
 
-void ejecutar_f_open(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
+void abrir_o_cerrar_archivo(pcb *pcb, LineaInstruccion *instruccion, int socketKernel, int operacion)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   t_paquete *paquete = crear_paquete_operacion(F_OPEN);
 
-  log_info(logger, "Solicitandole a Kernel que abra el archivo [%s]...", instruccion->parametros[0]);
   agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
   enviar_paquete(paquete, socketKernel);
-  enviar_contexto_ejecucion(pcb, socketKernel, F_OPEN);
+  enviar_contexto_ejecucion(pcb, socketKernel, operacion);
   log_info(logger, "Solicitud enviada al Kernel!");
 
   log_destroy(logger);
@@ -368,13 +373,18 @@ void logear_instruccion(int pid, LineaInstruccion *instruccion)
 
 bool es_instruccion_de_corte(Instruccion instruccion) 
 {
-  /*if(instruccion == F_OPEN || instruccion == DELETE_SEGMENT_INSTRUCTION || instruccion == CREATE_SEGMENT_INSTRUCTION || instruccion == EXIT || instruccion == IO || instruccion == YIELD || instruccion == WAIT || instruccion == SIGNAL)
-    return true;
-  else
-    return false; */
-
   switch (instruccion)
   {
+  case F_WRITE:
+    return true;
+  case F_TRUNCATE:
+    return true;
+  case F_SEEK:
+    return true;
+  case F_READ:
+    return true;
+  case F_CLOSE:
+    return true;
   case F_OPEN:
     return true;
   case DELETE_SEGMENT_INSTRUCTION:

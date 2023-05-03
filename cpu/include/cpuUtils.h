@@ -17,7 +17,7 @@ void ejecutar_wait(pcb*, LineaInstruccion*, int);
 void ejecutar_signal(pcb*, LineaInstruccion*, int);
 void ejecutar_create_segment(pcb*, LineaInstruccion*, int);
 void ejecutar_delete_segment(pcb*, LineaInstruccion*, int);
-void ejecutar_f_open(pcb*, LineaInstruccion*, int);
+void abrir_o_cerrar_archivo(pcb*, LineaInstruccion*, int, int);
 
 //
 
