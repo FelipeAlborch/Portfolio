@@ -55,6 +55,10 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         abrir_o_cerrar_archivo(pcb, lineaInstruccion, socketKernel, F_OPEN);
         break;
 
+      case F_SEEK:
+        ejecutar_f_seek(pcb, lineaInstruccion, socketKernel);
+        break;
+
       case F_CLOSE:
         log_info(logger, "Solicitandole a Kernel que cierre el archivo [%s]...", instruccion->parametros[0]);
         abrir_o_cerrar_archivo(pcb, lineaInstruccion, socketKernel, F_CLOSE);
@@ -268,11 +272,29 @@ void ejecutar_delete_segment(pcb *pcb, LineaInstruccion *instruccion, int socket
 void abrir_o_cerrar_archivo(pcb *pcb, LineaInstruccion *instruccion, int socketKernel, int operacion)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
-  t_paquete *paquete = crear_paquete_operacion(F_OPEN);
+  t_paquete *paquete = crear_paquete_operacion(operacion);
 
   agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
   enviar_paquete(paquete, socketKernel);
   enviar_contexto_ejecucion(pcb, socketKernel, operacion);
+  log_info(logger, "Solicitud enviada al Kernel!");
+
+  log_destroy(logger);
+}
+
+void ejecutar_f_seek(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+  t_paquete *paquete = crear_paquete_operacion(F_SEEK);
+  int posicion = atoi(instruccion->parametros[1]);
+
+  log_info(logger, "Solicitandole al Kernel que cambie el archivo [%s] a la posicion [%d]...", instruccion->parametros[0], posicion);
+
+  agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
+  agregar_a_paquete(paquete, &posicion, sizeof(int));
+  enviar_paquete(paquete, socketKernel);
+  enviar_contexto_ejecucion(pcb, socketKernel, F_SEEK);
+
   log_info(logger, "Solicitud enviada al Kernel!");
 
   log_destroy(logger);
