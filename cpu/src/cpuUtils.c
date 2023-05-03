@@ -59,6 +59,10 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         ejecutar_f_seek(pcb, lineaInstruccion, socketKernel);
         break;
 
+      case F_TRUNCATE:
+        ejecutar_f_truncate(pcb, lineaInstruccion, socketKernel);
+        break;
+
       case F_CLOSE:
         log_info(logger, "Solicitandole a Kernel que cierre el archivo [%s]...", instruccion->parametros[0]);
         abrir_o_cerrar_archivo(pcb, lineaInstruccion, socketKernel, F_CLOSE);
@@ -300,6 +304,24 @@ void ejecutar_f_seek(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
   log_destroy(logger);
 }
 
+void ejecutar_f_truncate(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+  t_paquete *paquete = crear_paquete_operacion(F_TRUNCATE);
+  int tamanio = atoi(instruccion->parametros[1]);
+
+  log_info(logger, "Solicitandole al Kernel que modifique el archivo [%s] al tamanio [%d]...", instruccion->parametros[0], tamanio);
+
+  agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
+  agregar_a_paquete(paquete, &tamanio, sizeof(int));
+  enviar_paquete(paquete, socketKernel);
+  enviar_contexto_ejecucion(pcb, socketKernel, F_TRUNCATE);
+
+  log_info(logger, "Solicitud enviada al Kernel!");
+
+  log_destroy(logger);
+}
+
 void ejecutar_yield(pcb *pcb, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
@@ -397,14 +419,14 @@ bool es_instruccion_de_corte(Instruccion instruccion)
 {
   switch (instruccion)
   {
-  case F_WRITE:
-    return true;
+  /*case F_WRITE:
+    return true; */
   case F_TRUNCATE:
     return true;
   case F_SEEK:
     return true;
-  case F_READ:
-    return true;
+  /*case F_READ:
+    return true; */
   case F_CLOSE:
     return true;
   case F_OPEN:
