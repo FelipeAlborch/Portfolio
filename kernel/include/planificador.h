@@ -3,7 +3,7 @@
 
 #include <utils/conexion.h>
 #include <commons/collections/queue.h>
-//#include <kernelConfig.h>
+#include <kernelConfig.h>
 
 #include <kernelUtils.h>
 #include <kernelArchivos.h>

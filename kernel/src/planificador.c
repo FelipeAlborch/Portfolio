@@ -1,15 +1,5 @@
 #include <planificador.h>
 
-// Estos sockets ya no los necesitamos porque puse unos globales en un archivo previo que se incluye aca, y se incializan en el main.
-//int socket_cpu_planificador;
-//int socket_memoria_planificador;
-//int socket_fs_planificador;
-
-// LOGGER PARA EL PLANIFICADOR
-t_log* logger_planificador_obligatorio;
-t_log* logger_planificador_extra;
-
-
 // variable global para el process id
 int pid_global = 0;
 
@@ -453,23 +443,66 @@ void ejecutar(pcb* proceso_a_ejecutar)
             goto recibirOperacion;
 
         break;
+        // case F_OPEN: 
+        //     // RECIBIR PARAMETRO(S) DE CPU
+        //     lista_recepcion_valores = _recibir_paquete(socketCPU);
+        //     char* nombre_archivo =  (char*) list_get(lista_recepcion_valores, 0);
+        //     log_info(logger_planificador_extra,"Nombre archivo para realizar F_OPEN: %s", nombre_archivo);
 
+        //     recurso *archivo;
+        //     // BUSCAR EN TABLA DE ARCHIVOS ABIERTOS
+        //     if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_archivo))
+        //     {
+        //         // PEDIR AL FS
+        //         // archivo = obtener_archivo_de_fs();
+
+        //         // SI NO EXISTE, CREARLO
+        //         // archivo = archivo_abierto_init();
+        //         // dictionary_put(tabla_global_archivos_abiertos, nombre_archivo, archivo);
+        //     } else {
+        //         // SI ESTA, BLOQUEAR EL PROCESO
+        //         proceso_en_ejecucion = desalojar_proceso_en_exec();
+        //         proceso_en_ejecucion->estado = BLOCKED;
+        //         log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < F_OPEN >", proceso_en_ejecucion->pid);
+
+        //         // AGREGAR A LA LISTA DE PROCESOS BLOQUEADOS DEL ARCHIVO
+        //         archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_archivo);
+        //         archivo->numProcesos++;
+        //         list_add(archivo->procesosBloqueados, proceso_a_ejecutar->pid);
+
+        //         // AGREGAR A LA LISTA DE ARCHIVOS ABIERTOS DEL PROCESO
+        //         list_add(proceso_a_ejecutar->tabla_archivos_abiertos, archivo);
+        //     }
+
+        //     // ENVIAR RESPUESTA A CPU
+        //     goto recibirOperacion;
         case F_OPEN: 
             // RECIBIR PARAMETRO(S) DE CPU
             lista_recepcion_valores = _recibir_paquete(socketCPU);
-            char* nombre_archivo =  (char*) list_get(lista_recepcion_valores, 0);
-            log_info(logger_planificador_extra,"Nombre archivo para realizar F_OPEN: %s", nombre_archivo);
+            recurso = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_OPEN: %s", recurso);
 
-            ArchivoAbierto *archivo;
+            int operacion_fopen = recibir_operacion(socketCPU);
+            t_list* lista_contexto_fopen = _recibir_paquete(socketCPU);
+            pcb* contexto_de_fopen = recibir_contexto_ejecucion(lista_contexto_fopen);
+
+            log_info(logger_planificador_extra, "Contexto recibido por F_OPEN");
+
+            actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fopen);
+
+            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
+            fopen_recurso(proceso_a_ejecutar, recurso);
+
             // BUSCAR EN TABLA DE ARCHIVOS ABIERTOS
-            if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_archivo))
+            if (!dictionary_has_key(tabla_global_archivos_abiertos, recurso))
             {
                 // PEDIR AL FS
                 // archivo = obtener_archivo_de_fs();
 
                 // SI NO EXISTE, CREARLO
-                // archivo = archivo_abierto_init();
-                // dictionary_put(tabla_global_archivos_abiertos, nombre_archivo, archivo);
+                recurso archivo = archivo_abierto_init();
+                dictionary_put(tabla_global_archivos_abiertos, recurso, archivo);
             } else {
                 // SI ESTA, BLOQUEAR EL PROCESO
                 proceso_en_ejecucion = desalojar_proceso_en_exec();
@@ -484,10 +517,36 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 // AGREGAR A LA LISTA DE ARCHIVOS ABIERTOS DEL PROCESO
                 list_add(proceso_a_ejecutar->tabla_archivos_abiertos, archivo);
             }
+            if(!resultado_recurso)
+            {   
+                log_warning(logger_planificador_extra, "El recurso NO EXISTE. Terminando proceso");
+                proceso_en_ejecucion = desalojar_proceso_en_exec();
+                
+                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO EXISTE RECURSO >", proceso_en_ejecucion->pid);
+                
+                terminar_proceso(proceso_en_ejecucion);
 
-            // ENVIAR RESPUESTA A CPU
+                resultado_recurso = true;
+
+                liberar_contexto_ejecucion(contexto_de_wait);
+                list_destroy(lista_recepcion_valores);
+                list_destroy(lista_contexto_wait);
+                return;
+            }
+
+            liberar_contexto_ejecucion(contexto_de_wait);
+            list_destroy(lista_recepcion_valores);
+            list_destroy(lista_contexto_wait);
+            
+            if(proceso_bloqueado_por_wait)
+            {
+                proceso_bloqueado_por_wait = false;
+                return;
+            }
+
+            enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
+            
             goto recibirOperacion;
-
         break;
 
             // case F_CLOSE:

@@ -1,4 +1,7 @@
 #include "kernelUtils.h"
+#include "kernelArchivos.h"
+
+extern t_dictionary* tabla_global_archivos_abiertos;
 
 t_log* logger_kernel_util_obligatorio;
 t_log* logger_kernel_util_extra;
@@ -144,10 +147,16 @@ void terminar_proceso(pcb* un_pcb)
     //liberar_pcb(un_pcb);
 }
 
+void wait_recurso(pcb* un_pcb, char* un_recurso) {
+    wait_recurso_generico(un_pcb, un_recurso, diccionario_recursos);
+}
 
-void wait_recurso(pcb* un_pcb, char* un_recurso)
-{
-    recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
+void fopen_recurso(pcb* un_pcb, char* un_recurso) {
+    wait_recurso_generico(un_pcb, un_recurso, tabla_global_archivos_abiertos);
+}
+
+void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictionary){
+   recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
     if(recurso == NULL)
     {
         //avisar_memoria(FIN_PROCESO);
@@ -231,10 +240,6 @@ void solicitar_eliminacion_segmento(int nro_segmento, int pid_proceso)
     enviar_paquete(paquete_cs, socketMemoria);
     eliminar_paquete(paquete_cs);
 }
-
-
-
-
 
 void startSigHandlers(void) {
 	signal(SIGINT, sigHandler_sigint);
