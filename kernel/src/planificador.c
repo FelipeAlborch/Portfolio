@@ -467,7 +467,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 // archivo = obtener_archivo_de_fs();
 
                 // SI NO EXISTE, CREARLO
-                t_recurso archivo = archivo_abierto_init();
+                t_recurso* archivo = crear_recurso(nombre_recurso, 1);
+
                 dictionary_put(tabla_global_archivos_abiertos, nombre_recurso, archivo);
             }
 
