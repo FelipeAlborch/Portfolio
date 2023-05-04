@@ -51,7 +51,7 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
       
       case F_OPEN:
-        log_info(logger, "Solicitandole a Kernel que abra el archivo [%s]...", instruccion->parametros[0]);
+        log_info(logger, "Solicitandole a Kernel que abra el archivo [%s]...", lineaInstruccion->parametros[0]);
         abrir_o_cerrar_archivo(pcb, lineaInstruccion, socketKernel, F_OPEN);
         break;
 
@@ -64,7 +64,7 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
 
       case F_CLOSE:
-        log_info(logger, "Solicitandole a Kernel que cierre el archivo [%s]...", instruccion->parametros[0]);
+        log_info(logger, "Solicitandole a Kernel que cierre el archivo [%s]...", lineaInstruccion->parametros[0]);
         abrir_o_cerrar_archivo(pcb, lineaInstruccion, socketKernel, F_CLOSE);
         break;
 
