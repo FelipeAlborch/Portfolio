@@ -231,6 +231,17 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
     return;
 }
 
+void fseek_archivo(pcb* un_pcb, char* un_recurso, int posicion) {
+     t_recurso* archivo = dictionary_get(tabla_global_archivos_abiertos, un_recurso);
+    if(archivo == NULL)
+    {
+        resultado_recurso = false;
+        return;
+    }
+
+    archivo->posicion = posicion;
+}
+
 void solicitar_creacion_segmento(int nro_segmento, int tam_segmento, int pid_proceso)
 {
     t_paquete* paquete_cs = crear_paquete_operacion(CREATE_SEGMENT);

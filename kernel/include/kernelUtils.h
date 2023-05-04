@@ -109,10 +109,11 @@ void fclose_recurso(pcb*, char*);
 
 void signal_recurso_generico(pcb*, char*, t_dictionary*);
 
+void fseek_archivo(pcb*, char*, int);
+
 void solicitar_creacion_segmento(int, int, int);
 
 void solicitar_eliminacion_segmento(int, int);
-
 
 
 

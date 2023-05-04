@@ -28,7 +28,7 @@ typedef struct{
     int instancias;
     t_queue* cola_bloqueados;
     pthread_mutex_t mutex_cola;
-    void* puntero_archivo;
+    int posicion;
 }t_recurso;
 
 extern config_de_kernel configuracionKernel;
