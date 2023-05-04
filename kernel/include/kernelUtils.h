@@ -99,7 +99,15 @@ void terminar_proceso(pcb*);
 
 void wait_recurso(pcb*, char*);
 
+void fopen_recurso(pcb*, char*);
+
+void wait_recurso_generico(pcb*, char*, t_dictionary*);
+
 void signal_recurso(pcb*, char*);
+
+void fclose_recurso(pcb*, char*);
+
+void signal_recurso_generico(pcb*, char*, t_dictionary*);
 
 void solicitar_creacion_segmento(int, int, int);
 

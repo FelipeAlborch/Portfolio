@@ -507,6 +507,60 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
         break;
 
+        case F_CLOSE: 
+            // RECIBIR PARAMETRO(S) DE CPU
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
+            nombre_recurso = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_CLOSE: %s", nombre_recurso);
+
+            int operacion_fclose = recibir_operacion(socketCPU);
+            t_list* lista_contexto_fclose = _recibir_paquete(socketCPU);
+            pcb* contexto_de_fclose = recibir_contexto_ejecucion(lista_contexto_fclose);
+
+            log_info(logger_planificador_extra, "Contexto recibido por F_CLOSE");
+
+            actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fclose);
+
+            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
+            fclose_recurso(proceso_a_ejecutar, nombre_recurso);
+
+            if(!resultado_recurso)
+            {   
+                log_warning(logger_planificador_extra, "Error al cerrar el archivo. Terminando proceso");
+                proceso_en_ejecucion = desalojar_proceso_en_exec();
+                
+                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO SE PUDO CERRAR CORRECTAMENTE EL ARCHIVO >", proceso_en_ejecucion->pid);
+                
+                terminar_proceso(proceso_en_ejecucion);
+
+                resultado_recurso = true;
+
+                liberar_contexto_ejecucion(contexto_de_fclose);
+                list_destroy(lista_recepcion_valores);
+                list_destroy(lista_contexto_fclose);
+                return;
+            }
+
+            // REMOVER DE LA TABLA DE ARCHIVOS ABIERTOS
+            dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
+
+            liberar_contexto_ejecucion(contexto_de_fclose);
+            list_destroy(lista_recepcion_valores);
+            list_destroy(lista_contexto_fclose);
+            
+            if(proceso_bloqueado_por_recurso)
+            {
+                proceso_bloqueado_por_recurso = false;
+                return;
+            }
+
+            enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
+            
+            goto recibirOperacion;
+
+        break;
+
             // case F_CLOSE:
             // case F_SEEK:
             // case F_READ:
