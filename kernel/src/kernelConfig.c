@@ -82,7 +82,7 @@ void crear_diccionario_recursos()
     {
         char* key = configuracionKernel.RECURSOS[i];
         int instancias = atoi(configuracionKernel.INSTANCIAS_RECURSOS[i]);
-        recurso* nuevo_recurso = crear_recurso(key, instancias);
+        t_recurso* nuevo_recurso = crear_recurso(key, instancias);
         dictionary_put(diccionario_recursos,key, nuevo_recurso);
     }
 }
@@ -92,7 +92,7 @@ void leer_diccionario_recursos()
     for(int i = 0; i < dictionary_size(diccionario_recursos); i++)
     {   
         char* key = configuracionKernel.RECURSOS[i];
-        recurso* un_recurso = dictionary_get(diccionario_recursos, (void*) key);
+        t_recurso* un_recurso = dictionary_get(diccionario_recursos, (void*) key);
         
         printf("Recurso: %s, ",un_recurso->nombre);
         printf("Instancias: %d \n",un_recurso->instancias);
@@ -101,9 +101,9 @@ void leer_diccionario_recursos()
     }
 }
 
-recurso* crear_recurso(char* nombre, int instancias)
+t_recurso* crear_recurso(char* nombre, int instancias)
 {
-    recurso* nuevo_recurso = malloc(sizeof(recurso));
+    t_recurso* nuevo_recurso = malloc(sizeof(t_recurso));
     
     nuevo_recurso->nombre = (char*) malloc(strlen(nombre) + 1);
     strcpy(nuevo_recurso->nombre, nombre);
@@ -118,7 +118,7 @@ recurso* crear_recurso(char* nombre, int instancias)
 }
 
 
-void liberar_recurso(recurso* un_recurso)
+void liberar_recurso(t_recurso* un_recurso)
 {
     free(un_recurso->nombre);
     queue_destroy_and_destroy_elements(un_recurso->cola_bloqueados, (void*)liberar_pcb);

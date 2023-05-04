@@ -449,7 +449,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
         //     char* nombre_archivo =  (char*) list_get(lista_recepcion_valores, 0);
         //     log_info(logger_planificador_extra,"Nombre archivo para realizar F_OPEN: %s", nombre_archivo);
 
-        //     recurso *archivo;
+        //     t_recurso *archivo;
         //     // BUSCAR EN TABLA DE ARCHIVOS ABIERTOS
         //     if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_archivo))
         //     {
@@ -501,7 +501,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 // archivo = obtener_archivo_de_fs();
 
                 // SI NO EXISTE, CREARLO
-                recurso archivo = archivo_abierto_init();
+                t_recurso archivo = archivo_abierto_init();
                 dictionary_put(tabla_global_archivos_abiertos, recurso, archivo);
             } else {
                 // SI ESTA, BLOQUEAR EL PROCESO

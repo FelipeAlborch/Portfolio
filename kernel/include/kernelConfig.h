@@ -29,7 +29,7 @@ typedef struct{
     t_queue* cola_bloqueados;
     pthread_mutex_t mutex_cola;
     void* puntero_archivo;
-}recurso;
+}t_recurso;
 
 extern config_de_kernel configuracionKernel;
 extern t_dictionary* diccionario_recursos;
@@ -66,8 +66,8 @@ void crear_diccionario_recursos();
 
 void leer_diccionario_recursos();
 
-recurso* crear_recurso(char*, int);
+t_recurso* crear_recurso(char*, int);
 
-void liberar_recurso(recurso*);
+void liberar_recurso(t_recurso*);
 
 #endif

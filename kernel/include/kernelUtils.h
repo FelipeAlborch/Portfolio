@@ -37,7 +37,7 @@ void agregar_socket_a_diccionario(int, int);
 // Esta funcion es solo para probar que se estan guardando bien los sockets.
 void leer_diccionario_consolas();
 
-void remover_recurso_si_esta(t_list*,recurso*);
+void remover_recurso_si_esta(t_list*,t_recurso*);
 
 void liberar_recursos(pcb*);
 

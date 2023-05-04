@@ -40,11 +40,11 @@ void leer_diccionario_consolas()
     }
 }
 
-void remover_recurso_si_esta(t_list* lista,recurso* un_recurso)
+void remover_recurso_si_esta(t_list* lista,t_recurso* un_recurso)
 {
     for(int i = 0; i < list_size(lista); i++)
     {
-        recurso* un_rec = list_get(lista, i);
+        t_recurso* un_rec = list_get(lista, i);
         if(un_recurso->nombre == un_rec->nombre)
         {
             list_remove(lista, i);
@@ -57,7 +57,7 @@ void liberar_recursos(pcb* un_pcb)
     while(!list_is_empty(un_pcb->recursos_asignados))
     {
         int i = 0;
-        recurso* un_rec = list_remove(un_pcb->recursos_asignados, i);
+        t_recurso* un_rec = list_remove(un_pcb->recursos_asignados, i);
         un_rec->instancias++;
         log_info(logger_kernel_util_extra, "Se libera instancia del recurso: %s. Instancias: %d", un_rec->nombre, un_rec->instancias);
         
@@ -156,7 +156,7 @@ void fopen_recurso(pcb* un_pcb, char* un_recurso) {
 }
 
 void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictionary){
-   recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
+   t_recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
     if(recurso == NULL)
     {
         //avisar_memoria(FIN_PROCESO);
@@ -195,7 +195,7 @@ void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictiona
 
 void signal_recurso(pcb* un_pcb, char* un_recurso)
 {
-    recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
+    t_recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
     if(recurso == NULL)
     {
         //avisar_memoria(FIN_PROCESO);
