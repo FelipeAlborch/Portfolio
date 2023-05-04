@@ -161,7 +161,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
     pcb* contexto_recibido;
     t_list* lista_recepcion_valores;
     pcb* proceso_en_ejecucion;
-    char* recurso;
+    char* nombre_recurso;
 
     recibirOperacion:
     int operacion_de_cpu = recibir_operacion(socketCPU);
@@ -238,8 +238,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
         case WAIT:
             lista_recepcion_valores = _recibir_paquete(socketCPU);
-            recurso = list_get(lista_recepcion_valores, 0);
-            log_info(logger_planificador_extra,"Recurso recibido para realizar WAIT: %s", recurso);
+            nombre_recurso = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Recurso recibido para realizar WAIT: %s", nombre_recurso);
 
             int operacion_wait = recibir_operacion(socketCPU);
             t_list* lista_contexto_wait = _recibir_paquete(socketCPU);
@@ -251,7 +251,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
-            wait_recurso(proceso_a_ejecutar, recurso);
+            wait_recurso(proceso_a_ejecutar, nombre_recurso);
 
 
             if(!resultado_recurso)
@@ -289,8 +289,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
         case SIGNAL:
             lista_recepcion_valores = _recibir_paquete(socketCPU);
-            recurso = list_get(lista_recepcion_valores, 0);
-            log_info(logger_planificador_extra,"Recurso recibido para realizar SIGNAL: %s", recurso);
+            nombre_recurso = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Recurso recibido para realizar SIGNAL: %s", nombre_recurso);
             
             int operacion_signal = recibir_operacion(socketCPU);
             t_list* lista_contexto_signal = _recibir_paquete(socketCPU);
@@ -302,7 +302,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
-            signal_recurso(proceso_a_ejecutar, recurso);
+            signal_recurso(proceso_a_ejecutar, nombre_recurso);
 
             if(!resultado_recurso)
             {   
@@ -479,8 +479,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
         case F_OPEN: 
             // RECIBIR PARAMETRO(S) DE CPU
             lista_recepcion_valores = _recibir_paquete(socketCPU);
-            recurso = list_get(lista_recepcion_valores, 0);
-            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_OPEN: %s", recurso);
+            nombre_recurso = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_OPEN: %s", nombre_recurso);
 
             int operacion_fopen = recibir_operacion(socketCPU);
             t_list* lista_contexto_fopen = _recibir_paquete(socketCPU);
@@ -492,17 +492,17 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
-            fopen_recurso(proceso_a_ejecutar, recurso);
+            fopen_recurso(proceso_a_ejecutar, nombre_recurso);
 
             // BUSCAR EN TABLA DE ARCHIVOS ABIERTOS
-            if (!dictionary_has_key(tabla_global_archivos_abiertos, recurso))
+            if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_recurso))
             {
                 // PEDIR AL FS
                 // archivo = obtener_archivo_de_fs();
 
                 // SI NO EXISTE, CREARLO
                 t_recurso archivo = archivo_abierto_init();
-                dictionary_put(tabla_global_archivos_abiertos, recurso, archivo);
+                dictionary_put(tabla_global_archivos_abiertos, nombre_recurso, archivo);
             } else {
                 // SI ESTA, BLOQUEAR EL PROCESO
                 proceso_en_ejecucion = desalojar_proceso_en_exec();
