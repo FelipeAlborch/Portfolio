@@ -15,7 +15,7 @@ int socketCPU;
 int socketFS;
 
 bool resultado_recurso = true;
-bool proceso_bloqueado_por_wait = false;
+bool proceso_bloqueado_por_recurso = false;
 
 
 /*****************************************************************************
@@ -172,7 +172,7 @@ void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictiona
     {
         pcb* proceso_en_ejecucion = desalojar_proceso_en_exec();
         proceso_en_ejecucion->estado = BLOCKED;
-        proceso_bloqueado_por_wait = true;
+        proceso_bloqueado_por_recurso = true;
 
         if(!es_fifo)
         {

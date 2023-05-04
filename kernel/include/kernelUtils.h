@@ -17,7 +17,7 @@ extern int socketCPU;
 extern int socketFS;
 
 extern bool resultado_recurso;
-extern bool proceso_bloqueado_por_wait;
+extern bool proceso_bloqueado_por_recurso;
 
 
 /*****************************************************************************
