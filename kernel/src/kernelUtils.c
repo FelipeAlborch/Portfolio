@@ -156,7 +156,7 @@ void fopen_recurso(pcb* un_pcb, char* un_recurso) {
 }
 
 void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictionary){
-   t_recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
+   t_recurso* recurso = dictionary_get(dictionary, un_recurso);
     if(recurso == NULL)
     {
         //avisar_memoria(FIN_PROCESO);
