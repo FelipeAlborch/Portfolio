@@ -34,18 +34,22 @@ void mostrar_valores_de_configuracion_kernel(config_de_kernel configuracion_kern
     printf("GRADO_MAX_MULTIPROGRAMACION = %d\n", configuracionKernel.GRADO_MAX_MULTIPROGRAMACION);
     //printf("RECURSOS = %s\n", configuracionKernel.RECURSOS[0]);                                    // SOLO IMPRIMO UNO PARA VER SI SE TOMO BIEN
     //printf("INSTANCIAS_RECURSOS = %s\n", configuracionKernel.INSTANCIAS_RECURSOS[0]);              // SOLO IMPRIMO UNO PARA VER SI SE TOMO BIEN
-    for(int i = 0; i < string_array_size(configuracionKernel.RECURSOS); i++)
-    {
-        printf("RECURSO = %s, INSTANCIAS = %s \n", configuracionKernel.RECURSOS[i], configuracion_kernel.INSTANCIAS_RECURSOS[i]);
-    }
+    //for(int i = 0; i < string_array_size(configuracionKernel.RECURSOS); i++)
+    //{
+    //    printf("RECURSO = %s, INSTANCIAS = %s \n", configuracionKernel.RECURSOS[i], configuracion_kernel.INSTANCIAS_RECURSOS[i]);
+    //}
 }
 
 void crear_diccionario_recursos()
 {
     diccionario_recursos = dictionary_create();
+
     for(int i = 0; i < string_array_size(configuracionKernel.RECURSOS); i++)
     {
-        dictionary_put(diccionario_recursos, configuracionKernel.RECURSOS[i], atoi(configuracionKernel.INSTANCIAS_RECURSOS[i]));
+        char* key = configuracionKernel.RECURSOS[i];
+        int instancias = atoi(configuracionKernel.INSTANCIAS_RECURSOS[i]);
+        recurso* nuevo_recurso = crear_recurso(key, instancias);
+        dictionary_put(diccionario_recursos,key, nuevo_recurso);
     }
 }
 
@@ -53,8 +57,37 @@ void leer_diccionario_recursos()
 {
     for(int i = 0; i < dictionary_size(diccionario_recursos); i++)
     {   
-        //char* key = configuracionKernel.RECURSOS[i];
-        int instancia_recurso = dictionary_get(diccionario_recursos, configuracionKernel.RECURSOS[i]);
-        printf("LAS INSTANCIAS DEL RECURSO %s SON: %d \n",configuracionKernel.RECURSOS[i] ,instancia_recurso);
+        char* key = configuracionKernel.RECURSOS[i];
+        recurso* un_recurso = dictionary_get(diccionario_recursos, (void*) key);
+        
+        printf("Recurso: %s, ",un_recurso->nombre);
+        printf("Instancias: %d \n",un_recurso->instancias);
+        printf("Cant procesos bloqueados por el recurso: %d \n",queue_size(un_recurso->cola_bloqueados));
+
     }
+}
+
+recurso* crear_recurso(char* nombre, int instancias)
+{
+    recurso* nuevo_recurso = malloc(sizeof(recurso));
+    
+    nuevo_recurso->nombre = (char*) malloc(strlen(nombre) + 1);
+    strcpy(nuevo_recurso->nombre, nombre);
+    
+    nuevo_recurso->instancias = instancias;
+    
+    nuevo_recurso->cola_bloqueados = queue_create();
+    
+    pthread_mutex_init(&(nuevo_recurso->mutex_cola), NULL);
+
+    return nuevo_recurso;
+}
+
+
+void liberar_recurso(recurso* un_recurso)
+{
+    free(un_recurso->nombre);
+    queue_destroy_and_destroy_elements(un_recurso->cola_bloqueados, (void*)liberar_pcb);
+    pthread_mutex_destroy(&(un_recurso->mutex_cola));
+    free(un_recurso);
 }

@@ -31,7 +31,6 @@ int conectar_con_memoria(config_de_cpu configuracionCPU){
 void esperar_kernel_dispatch(int socketCpu)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
-  log_info(logger, "Entre a la funcion para esperar Kernel");
 
   bool desconecto = false;
 
@@ -62,7 +61,6 @@ bool manejar_paquete_kernel_dispatch(int socketKernel)
   while (true)
   {
     Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
-
     switch (recibir_operacion(socketKernel))
     {
         case DESCONEXION:
@@ -76,18 +74,20 @@ bool manejar_paquete_kernel_dispatch(int socketKernel)
             char *mensaje = obtener_mensaje_del_cliente(socketKernel);
             log_info(logger, "Mensaje: %s", mensaje);
             free(mensaje);
-            return;
-			//break;
+			      break;
 
-        /*case PCB:
+        case CONTEXTO_EJECUCION:
+            //log_info(logger, "Entre al case de CONTEXTO_EJECUCION");
+            t_list* lista_recepcion_valores = _recibir_paquete(socketKernel);
+            //log_info(logger, "Paquete recibido correctamente");
+            pcb *contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
             log_info(logger, "PCB recibido de Kernel.");
-            Pcb *pcb = deserializar_pcb(socketKernel);
-            //dump(pcb->instrucciones);
-
-            ejecutar_lista_instrucciones_del_pcb(pcb, socketKernel, socketMemoriaUtil);
-            liberar_pcb(pcb);
+            //dump(contexto_recibido->lista_de_instrucciones);
+            
+            ejecutar_lista_instrucciones_del_pcb(contexto_recibido, socketKernel, socketMemoriaUtil);
+            //liberar_contexto_ejecucion(contexto_recibido);
             break;
-		*/
+		
         default:
             break;
     } 

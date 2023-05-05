@@ -93,7 +93,7 @@ void conectar_cpu(){
 			pthread_exit(&hilo_cpu);
     }
     log_info(clogger,"Se conectó el CPU: %d \n",config_memo.cpu);
-		paquete_destroy(paquete);
+		eliminar_paquete(paquete);
     running_cpu=true;
     ejecutar_cpu();
 }
@@ -125,7 +125,7 @@ void conectar_fs(){
     }
     log_info(flogger,"Se conectó el FileSystem: %d \n",config_memo.fs);
 		
-    paquete_destroy(paquete);
+    eliminar_paquete(paquete);
     running_k=true;
     ejecutar_fs();
 }

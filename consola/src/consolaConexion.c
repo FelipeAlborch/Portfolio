@@ -10,6 +10,7 @@ int conectar_con_kernel(config_de_consola configuracionConsola)
 	if(socketKernel < 0)
     {
 		log_error(logger, "Error al conectarse con kernel");
+		log_destroy(logger);
 		return;
 	}
 	

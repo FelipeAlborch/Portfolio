@@ -3,6 +3,7 @@
 
 // Este include ya tiene incluidos muchos archivos de las commons y cosas tipo stdlib, stdio etc, tambien pcb y cosas del estilo.
 #include <utils/conexion.h>
+#include <ipc.h>
 
 #define FIRST_FIT 1
 #define BEST_FIT 2

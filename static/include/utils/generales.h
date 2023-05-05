@@ -15,14 +15,13 @@
 #include <commons/collections/list.h>
 #include <assert.h>
 #include <commons/config.h>
-
+#include <commons/temporal.h>
 
 typedef t_config Config;
 typedef t_list Lista;
 typedef t_log Logger;
 typedef pthread_t Hilo;
 typedef sem_t Semaforo;
-
 typedef enum
 {
 	KERNEL_LOGGER,
@@ -64,6 +63,15 @@ typedef enum
 	MOV_IN		//se lee el valor del registro en memoria
 	
 }msj_memoria;
+
+typedef enum
+{
+	SIGNAL_SUCCESS,
+	SIGNAL_FAILURE,
+	WAIT_SUCCESS,
+	WAIT_FAILURE,
+	WAIT_BLOCKED
+}recurso_comunicacion;
 
 typedef struct{
 	int pid;
