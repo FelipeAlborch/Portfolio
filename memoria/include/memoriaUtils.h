@@ -25,37 +25,24 @@ extern pthread_t hiloConexion;
 
 extern void* memoria;
 
-extern t_list* tabla_segmentos; //listado de t_tabla_seg de todos los procesos
-/*typedef struct
-{
-	bool libre;     //libre --> 1 ocupado -->0
-	void* inicio_segmento;
-	int tamanio_segmento;
-	int id_segmento;
-	int id_proceso;
+//extern t_tabla_segmentos* tabla_segmentos; //listado de t_segmentos de todos los procesos
+extern t_list* huecos_libres; //listado de t_hueco_libre
+extern t_list* tabla_segmentos_gral; //listado de t_segmentos de todos los procesos
+
+typedef struct {
+   // int id_seg;
     int base;
-    int direcion_fisica;
-    pthread_mutex_t* mutex_segmento;
-
-}t_segmento;*/
-
-typedef struct {
-    int id_seg;
     int size;
-    int libre;
+   // int libre;
 }t_segmento;
-
-typedef struct {
-    void* inicio;
-    int size;
-} t_hueco_libre;
 
 
 typedef struct 
 {   
+    int index;
     int pid;
     int direcion_fisica;
-    t_list* tabla_segmentos;
+    t_segmento* segmento;
 }t_tabla_segmentos;
 
 
@@ -89,12 +76,12 @@ typedef struct{
     char* puerto;
     char* algoritmo;
     char* ip; 
-    int cant_seg;
+    int cant_seg; // cantidad de segmentos por proceso
     int retardo;
     int compactacion;
     int tam_memo;
     int tam_seg_0;
-    int tam_maximo_seg;
+    int cant_seg_max;
     int bytes_libres;
     int cpu;    // para guardar la conexion
     int fs;     // para guardar la conexion
@@ -113,14 +100,18 @@ void crear_estructuras();
 void liberar_proceso(int pid); 
 void* leer_dato(int pid, int direccion, int size);
 void escribir_dato(int pid, int direccion, int size, void* valor);
-void crear_segmento(int pid, int size);
 void eliminar_segmento(int pid, int direccion);
 void compactar();
 void crear_segmento_(int pid, int size);
-void* crear_proceso(t_paquete* paquete);
+void crear_proceso(t_paquete* paquete);
+void modificar_tabla_segmentos(t_tabla_segmentos* tabla,int pid, int dir, int index,int base, int size);
+void modificar_segmento(t_segmento* segmento, int base, int size);
+void eliminar_segmento_por_id(int id_seg, t_list* segmentos);
+void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos);
 
 t_tabla_segmentos* crear_tabla_segmentos(int pid, int cant_seg, int tam_seg);
 t_tabla_segmentos* buscar_en_tabla(int pid);
 t_segmento* buscar_segmento(int id_seg, t_list* segmentos);
+t_segmento* crear_segmento(int pid, int size);
 
 #endif

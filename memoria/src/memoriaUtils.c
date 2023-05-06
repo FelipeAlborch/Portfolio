@@ -33,6 +33,8 @@ void sigHandler_sigint(int signo) {
 
 void terminar_programa(t_log* milogger, t_config* memoria){
     /*LEAKS*/
+  free(memoria->path);
+
 	liberar_memoria();
 	liberar_listas();
 	liberar_conexion_memoria();
@@ -49,7 +51,8 @@ void liberar_memoria(){
     log_destroy(klogger);
 };
 void liberar_listas(){
-    /* TO DO */
+    list_destroy_and_destroy_elements(tabla_segmentos_gral,free);
+    list_clean_and_destroy_elements(huecos_libres,free);
 };
 void liberar_conexion_memoria(){
     liberar_conexion(server_m);
@@ -68,12 +71,10 @@ void inicializar_memoria(){
 
     inicializar_configuracion();
     inicializar_logs();
-    inicializar_segmentos();
+    crear_estructuras();
     conectar();
 };
-void inicializar_segmentos(){
-    /* TO DO */
-};	
+	
 
 void inicializar_logs(){
     loggerMemoria = log_create("logs/memoria.log","Memoria",true,LOG_LEVEL_TRACE);
@@ -154,7 +155,7 @@ void obtener_valores_de_configuracion_memoria(t_config* memoriaConfig){
     config_memo.retardo = config_get_int_value(memoriaConfig,"RETARDO_MEMORIA");
     config_memo.compactacion = config_get_int_value(memoriaConfig,"RETARDO_COMPACTACION");
     config_memo.algoritmo = config_get_string_value(memoriaConfig,"ALGORITMO_ASIGNACION");
-    config_memo.tam_maximo_seg = config_memo.tam_memo / config_memo.cant_seg;
+    config_memo.cant_seg_max = config_memo.tam_memo / config_memo.tam_seg_0;
     config_memo.ip = string_duplicate("127.0.0.1");
     config_memo.bytes_libres=config_memo.tam_memo;
 }
@@ -167,7 +168,7 @@ void mostrar_valores_de_configuracion_memoria (){
     printf("retardo = %d\n" , config_memo.retardo);
     printf("compactacion = %d\n", config_memo.compactacion);
     printf("algoritmo = %s\n" , config_memo.algoritmo);
-    printf("Tamaño maximo = %d\n" , config_memo.tam_maximo_seg);
+    printf("Tamaño maximo = %d\n" , config_memo.cant_seg_max);
 
 }
 
@@ -288,11 +289,7 @@ void mostrar_valores_de_configuracion_memoria (){
         break;
     }
   }
-void* crear_proceso(t_paquete* paquete){
-  int pid=paquete->buffer->stream;
-  
-  return NULL;
-}
+
 void respuestas(int cliente, int code,t_paquete* paquete){
   
   paquete->codigo_operacion=code;
@@ -300,3 +297,9 @@ void respuestas(int cliente, int code,t_paquete* paquete){
   eliminar_paquete(paquete);
 }
 
+void crear_proceso(t_paquete* paquete){
+  int pid=(int)paquete->buffer->stream;
+  loggear(INICIO_PROCESO,pid,NULL,0,0,0);
+
+  
+}
