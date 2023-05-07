@@ -103,15 +103,16 @@ void escribir_dato(int pid, int direccion, int size, void* valor);
 void eliminar_segmento(int pid, int direccion);
 void compactar();
 void crear_segmento_(int pid, int size);
-void crear_proceso(t_paquete* paquete);
+void crear_proceso(int paquete);
 void modificar_tabla_segmentos(t_tabla_segmentos* tabla,int pid, int dir, int index,int base, int size);
 void modificar_segmento(t_segmento* segmento, int base, int size);
 void eliminar_segmento_por_id(int id_seg, t_list* segmentos);
 void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos);
-
+void imprimir_tabla(t_list* lista);
+void ejecutar_kernel_test();
 t_tabla_segmentos* crear_tabla_segmentos(int pid, int cant_seg, int tam_seg);
 t_tabla_segmentos* buscar_en_tabla(int pid);
 t_segmento* buscar_segmento(int id_seg, t_list* segmentos);
 t_segmento* crear_segmento(int pid, int size);
-
+t_list* crear_tabla_proceso(int pid);
 #endif

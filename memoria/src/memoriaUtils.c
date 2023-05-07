@@ -112,7 +112,8 @@ void conectar_kernel(){
 		
     eliminar_paquete(paquete);
     running_k=true;
-    ejecutar_kernel();
+    //ejecutar_kernel();
+    ejecutar_kernel_test();
 }
 void conectar_fs(){
   config_memo.fs=esperar_cliente(server_m);
@@ -178,24 +179,35 @@ void mostrar_valores_de_configuracion_memoria (){
     log_trace(mlogger, "Por ejecutar las tareas del kernel");
 
     t_paquete* paquete; // =malloc(size_of(t_paquete));
+    t_list* lista;
+    int pid = -1;
     while (running_k)
     {
     
-      paquete=recibir_paquete(conectar);
-      switch (paquete->codigo_operacion)
+      lista=_recibir_paquete(conectar);
+      int codigo=*(int*)list_get(lista,0);
+      switch (codigo)
       {
           case INICIO_PROCESO:
-            crear_proceso(paquete);
-            respuestas(config_memo.kernel,INICIO_PROCESO,paquete);
+            pid=*(int*)list_get(lista,1);
+            crear_proceso(pid);
+            loggear(INICIO_PROCESO,pid,NULL,0,0,0);
             break;
           case FIN_PROCESO:
-            
+            pid=*(int*)list_get(lista,1);
+            loggear(FIN_PROCESO,pid,NULL,0,0,0);
             break;
-          
+          case CREATE_SEGMENT:
+            pid=*(int*)list_get(lista,1);
+            int tam=*(int*)list_get(lista,2);
+            crear_segmento(pid,tam);
+            loggear(CREATE_SEGMENT,pid,NULL,tam,0,0);
+            break;
+          //case 
           default:
             break;
       }
-      eliminar_paquete(paquete);
+      list_destroy(lista);
       running_k=false;
       log_trace(klogger,"ejecute kernel");
   }
@@ -297,9 +309,22 @@ void respuestas(int cliente, int code,t_paquete* paquete){
   eliminar_paquete(paquete);
 }
 
-void crear_proceso(t_paquete* paquete){
-  int pid=(int)paquete->buffer->stream;
-  loggear(INICIO_PROCESO,pid,NULL,0,0,0);
+void crear_proceso(int pid){
+ // int pid = *(int*) list_get(lista, 1);
 
-  
+  t_list* listaS=crear_tabla_proceso(pid);
+  loggear(INICIO_PROCESO,pid,NULL,0,0,0);
+  t_paquete* paquete = malloc(TAM_PAQ);
+  serializar_tabla_segmentos(paquete,listaS);
+  respuestas(config_memo.kernel,INICIO_PROCESO,paquete);
+  eliminar_paquete(paquete);
+  list_destroy(listaS);
+}
+void ejecutar_kernel_test(){
+  int conectar=config_memo.kernel;
+  log_trace(mlogger, "Por ejecutar las tareas del kernel");
+  int pid =221;
+  crear_proceso(pid);
+  log_trace(klogger,"ejecute la creación del proceso %d",pid);
+
 }

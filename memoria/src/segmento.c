@@ -122,3 +122,27 @@ void eliminar_segmento_por_id(int id_seg, t_list* segmentos){
     t_segmento* segmento = buscar_segmento(id_seg, segmentos);
     eliminar_segmento_list(segmento, segmentos);
 }
+t_list* crear_tabla_proceso(int pid){
+    t_list* lista=list_create();
+
+    t_segmento* segmento = crear_segmento(0,config_memo.tam_seg_0);
+    list_add_in_index(lista,0,segmento);
+    for (size_t i = 1; i < config_memo.cant_seg; i++)
+    {
+        segmento->base=0;
+        segmento->size=0;
+        list_add_in_index(lista,i,segmento);
+    }
+
+    imprimir_tabla(lista);
+    free(segmento);
+    return lista;
+}
+void imprimir_tabla(t_list* lista){
+    for (size_t i = 0; i < list_size(lista); i++)
+    {
+        t_segmento* segmento = list_get(lista,i);
+        printf("base: %i, size: %i\n",segmento->base,segmento->size);
+    }
+    
+}
