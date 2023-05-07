@@ -15,8 +15,8 @@ void conectar_kernel(){
 		
     eliminar_paquete(paquete);
     running_k=true;
-    //ejecutar_kernel();
-    ejecutar_kernel_test();
+    ejecutar_kernel();        //DESCOMENTAR ESTA LINEA PARA EJECUTAR EL KERNEL
+    //ejecutar_kernel_test();     //COMENTAR ESTA LINEA PARA EJECUTAR EL KERNEL
 }
 void ejecutar_kernel(){
     int conectar=config_memo.kernel;
@@ -96,8 +96,13 @@ void ejecutar_kernel_test(){
     int conectar=config_memo.kernel;
     log_trace(mlogger, "Por ejecutar las tareas del kernel");
     int pid =221;
+    int tam = 4096 + 4096;
     crear_proceso(pid);
     log_trace(klogger,"ejecute la creación del proceso %d",pid);
+    sleep(1);
+    sleep(1);
+
+    create_segment(pid,tam,1);
     
 }
 void create_segment(int pid,int tam,int id){
