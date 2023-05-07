@@ -345,26 +345,28 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             log_info(logger_kernel_util_obligatorio, "PID: < %d > - Crear Segmento - Id: < %d > - Tamaño:< %d >", proceso_a_ejecutar->pid, nro_segmento_crear, tam_segmento);
             
-            log_warning(logger_kernel_util_extra, "CREATE_SEGMENT TODAVIA NO IMPLMENETADO");
+            //log_warning(logger_kernel_util_extra, "CREATE_SEGMENT TODAVIA NO IMPLMENETADO");
             
             //crear_segmento:
             //solicitar_creacion_segmento(nro_segmento_crear, tam_segmento, proceso_a_ejecutar->pid);
 
             //int rta_crecion_memoria;
             //recv(socketMemoria, &rta_crecion_memoria, sizeof(int), MSG_WAITALL);
-            /*
-            int rta_crecion_memoria = recibir_operacion(socketMemoria);
+            
+            /*int rta_crecion_memoria = recibir_operacion(socketMemoria);
             switch(rta_crecion_memoria)
             {
                 case CREATE_SEGMENT_SUCCESS:
                     log_info(logger_planificador_extra, "CREATE_SEGMENT realizado con exito");
                     
-                    t_list* valores_tabla_actualizada = _recibir_paquete(socketMemoria);
-                    t_list* tabla_actualizada = armar_tabla_segmentos(valores_tabla_actualizada);
-                    list_destroy_and_destroy_elements(proceso_a_ejecutar->tabla_de_segmentos, (void*) destruir_segmento);
-                    proceso_a_ejecutar->tabla_archivos_abiertos = list_duplicate(tabla_actualizada);
+                    t_list* valor_de_base = _recibir_paquete(socketMemoria);
+                    int base = *(int*) list_get(valor_de_base, 0);
+                    t_segmento* segmento_a_actualizar = list_get(proceso_a_ejecutar->tabla_de_segmentos, nro_segmento_crear);
+                    segmento_a_actualizar->base = base;
 
-                    list_destroy(valores_tabla_actualizada);
+                    printf("El segmento: %d quedo con la base en: %d\n", nro_segmento_crear, segmento_a_actualizar->base);
+
+                    list_destroy(valor_de_base);
                 break;
 
                 case OUT_OF_MEMORY:
@@ -380,13 +382,10 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 case INICIO_COMPACTAR:
                     
-                    pthread_mutex_lock(&op_entre_mem_y_fs);
-                    
                     enviar_operacion(socketMemoria, INICIO_COMPACTAR);
-                    rta_memoria = recibir_operacion(socketMemoria);
-                    t_list* valores_de_todos_segmentos = _recibir_paquete();
-                    t_dictionary* nuevas_tablas = armar_nuevas_tablas(valores_de_todos_segmentos);
-                    actualizar_tablas_segmentos(nuevas_tablas);
+                    int rta_memoria = recibir_operacion(socketMemoria);
+                    t_list* valores_de_todos_segmentos = _recibir_paquete(socketMemoria);
+                    actualizar_tablas_segmentos(valores_de_todos_segmentos);
 
                     list_destroy(valores_de_todos_segmentos);
 

@@ -28,14 +28,14 @@ extern void* memoria;
 //extern t_tabla_segmentos* tabla_segmentos; //listado de t_segmentos de todos los procesos
 extern t_list* huecos_libres; //listado de t_hueco_libre
 extern t_list* tabla_segmentos_gral; //listado de t_segmentos de todos los procesos
-
+/*
 typedef struct {
    // int id_seg;
     int base;
     int size;
    // int libre;
 }t_segmento;
-
+*/
 
 typedef struct 
 {   

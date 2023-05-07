@@ -119,7 +119,54 @@ void avisar_memoria(int aviso)
     eliminar_paquete(paquete_a_memoria);
 }
 
+void actualizar_tablas_segmentos(t_list* lista_de_valores)
+{
+    int cantidad_de_procesos = *(int*) list_get(lista_de_valores, 0);
 
+    int base=  0;
+    for(int i = 0; i < cantidad_de_procesos; i++)
+    {
+        int cantidad_de_segmentos = *(int*) list_get(lista_de_valores, base + 1);
+        
+        char* key = string_from_format("%d", i+1);
+        pcb* proceso = dictionary_get(tabla_de_procesos, key);
+        free(key);
+        t_list* tabla_a_actualizar = proceso->tabla_de_segmentos;
+
+        for(int j = 0; j < cantidad_de_segmentos; j++)
+        {
+            int base = *(int*) list_get(lista_de_valores, base + 2);
+            int tamanio = *(int*) list_get(lista_de_valores, base + 3);
+
+            t_segmento* segmento_a_actualizar = list_get(tabla_a_actualizar, j);
+            segmento_a_actualizar->base = base;
+            segmento_a_actualizar->size = tamanio;
+            
+            base += 2; 
+        }
+        base++;
+    }
+}
+
+//void serializar_tablas_de_segmentos(t_paquete* paquete,t_list* lista_general_de_segmentos)
+//{
+//    int cantidad_de_procesos = list_size(lista_general_de_segmentos);
+//    agregar_a_paquete(paquete, &cantidad_de_procesos, sizeof(int));
+//
+//    for(int i = 0; i < cantidad_de_procesos; i++)
+//    {
+//        t_list* tabla_del_proceso = list_get(lista_general_de_segmentos, i);
+//        int cantidad_de_segmentos = list_size(tabla_del_proceso);
+//        agregar_a_paquete(paquete, &cantidad_de_segmentos, sizeof(int));
+//        
+//        for(int j = 0; j < cantidad_de_procesos; j++)
+//        {
+//            t_segmento* segmento = list_Get(tabla_del_proceso, j);
+//            agregar_a_paquete(paquete, &(segmento->base), sizeof(int));
+//            agregar_a_paquete(paquete, &(segmento->size), sizeof(int));
+//        }
+//    }
+//}
 
 /*****************************************************************************
  *              FUNCIONES PARA EJECUCION
@@ -141,6 +188,13 @@ void terminar_proceso(pcb* un_pcb)
     int socket_a_consola = dictionary_get(diccionario_de_consolas, lugar_en_diccionario);
     t_paquete* paquete_a_consola = crear_paquete_operacion(EXIT);
     enviar_paquete(paquete_a_consola, socket_a_consola);  
+    
+    t_paquete* paquete_a_memoria = crear_paquete_operacion(FIN_PROCESO);
+    int p_id = un_pcb->pid;
+    agregar_a_paquete(paquete_a_memoria, &p_id, sizeof(int));
+    enviar_paquete(paquete_a_memoria, socketMemoria);
+    
+    eliminar_paquete(paquete_a_memoria);
     eliminar_paquete(paquete_a_consola); 
     agregar_proceso_terminated(un_pcb);
     liberar_recursos(un_pcb);
@@ -254,11 +308,11 @@ void solicitar_creacion_segmento(int nro_segmento, int tam_segmento, int pid_pro
 
 void solicitar_eliminacion_segmento(int nro_segmento, int pid_proceso)
 {
-    t_paquete* paquete_cs = crear_paquete_operacion(DELETE_SEGMENT);
-    agregar_a_paquete(paquete_cs, &nro_segmento, sizeof(int));
-    agregar_a_paquete(paquete_cs, &pid_proceso, sizeof(int));
-    enviar_paquete(paquete_cs, socketMemoria);
-    eliminar_paquete(paquete_cs);
+    t_paquete* paquete_ds = crear_paquete_operacion(DELETE_SEGMENT);
+    agregar_a_paquete(paquete_ds, &nro_segmento, sizeof(int));
+    agregar_a_paquete(paquete_ds, &pid_proceso, sizeof(int));
+    enviar_paquete(paquete_ds, socketMemoria);
+    eliminar_paquete(paquete_ds);
 }
 
 void startSigHandlers(void) {

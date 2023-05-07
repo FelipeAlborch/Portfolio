@@ -109,7 +109,7 @@ void* esperar_tabla_segmentos(pcb* un_pcb)
 {
 	t_paquete* paquete_incializacion = crear_paquete_operacion(INICIO_PROCESO);
 	int p_id = un_pcb->pid;
-	agregar_a_paquete(paquete_incializacion, &p_id, socketMemoria);
+	agregar_a_paquete(paquete_incializacion, &p_id, sizeof(int));
 	enviar_paquete(paquete_incializacion, socketMemoria);
 	eliminar_paquete(paquete_incializacion);
 
@@ -118,9 +118,9 @@ void* esperar_tabla_segmentos(pcb* un_pcb)
 	switch(recibir_operacion(socketMemoria))
 	{
 		case INICIO_PROCESO:
-			//segmentos_recibidos = _recibir_paquete(socketMemoria);
-			//t_list* tabla_de_segmentos = deserializar_segmentos(segmentos_recibidos);
-			//un_pcb->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
+			segmentos_recibidos = _recibir_paquete(socketMemoria);
+			t_list* tabla_de_segmentos = deserializar_tabla_segmentos(segmentos_recibidos);
+			un_pcb->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
 			//agregar_proceso_new(un_pcb);
 			//list_destroy(segmentos_recibidos);
 		break;

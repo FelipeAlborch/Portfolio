@@ -69,6 +69,14 @@ typedef struct LineaInstruccion
   char *parametros[3];
 } LineaInstruccion;
 
+
+typedef struct {
+   // int id_seg;
+    int base;
+    int size;
+   // int libre;
+}t_segmento;
+
 /**
 * @NAME: crear_pcb
 * @DESC: Crea un pcb para y se le asigna el contenido de la consola simulando un proceso.
@@ -142,5 +150,12 @@ void liberar_contexto_ejecucion(pcb*);
  *     (nota: liberar la memoria luego de usarlo)
  */
 char* valor_del_registro_como_string(void* registro, size_t tamano);
+
+
+t_list* deserializar_tabla_segmentos(t_list*);
+
+void serializar_tabla_segmentos(t_paquete*, t_list*);
+
+void liberar_segmento(t_segmento*);
 
 #endif
