@@ -186,8 +186,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             agregar_proceso_ready(proceso_en_ejecucion);
             
-
-            list_destroy(lista_recepcion_valores);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            //list_destroy(lista_recepcion_valores);
             liberar_contexto_ejecucion(contexto_recibido);
             
         break;
@@ -214,7 +214,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             pthread_create(&hilo_io, NULL, esperar_io, (void*) proceso_en_ejecucion);
             pthread_detach(hilo_io);
 
-            list_destroy(lista_recepcion_valores);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            //list_destroy(lista_recepcion_valores);
             liberar_contexto_ejecucion(contexto_recibido);
         break;
         
@@ -232,7 +233,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             //TODO
             //avisar_memoria(FIN_PROCESO);
 
-            list_destroy(lista_recepcion_valores);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            //list_destroy(lista_recepcion_valores);
             liberar_contexto_ejecucion(contexto_recibido);
         break;
 
@@ -266,14 +268,18 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 resultado_recurso = true;
 
                 liberar_contexto_ejecucion(contexto_de_wait);
-                list_destroy(lista_recepcion_valores);
-                list_destroy(lista_contexto_wait);
+                list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+                list_destroy_and_destroy_elements(lista_contexto_wait,free);
+                //list_destroy(lista_recepcion_valores);
+                //list_destroy(lista_contexto_wait);
                 return;
             }
 
             liberar_contexto_ejecucion(contexto_de_wait);
-            list_destroy(lista_recepcion_valores);
-            list_destroy(lista_contexto_wait);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            list_destroy_and_destroy_elements(lista_contexto_wait,free);
+            //list_destroy(lista_recepcion_valores);
+            //list_destroy(lista_contexto_wait);
             
             if(proceso_bloqueado_por_recurso)
             {
@@ -316,15 +322,19 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 resultado_recurso = true;
 
                 liberar_contexto_ejecucion(contexto_de_signal);
-                list_destroy(lista_recepcion_valores);
-                list_destroy(lista_contexto_signal);
+                list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+                list_destroy_and_destroy_elements(lista_contexto_signal,free);
+                //list_destroy(lista_recepcion_valores);
+                //list_destroy(lista_contexto_signal);
                 
                 return;
             }
 
             liberar_contexto_ejecucion(contexto_de_signal);
-            list_destroy(lista_recepcion_valores);
-            list_destroy(lista_contexto_signal);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            list_destroy_and_destroy_elements(lista_contexto_signal,free);
+            //list_destroy(lista_recepcion_valores);
+            //list_destroy(lista_contexto_signal);
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
             
             goto recibirOperacion;
@@ -398,7 +408,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 break;
             }*/
 
-            list_destroy(lista_contexto_cs);
+            list_destroy_and_destroy_elements(lista_contexto_cs, free);
+            //list_destroy(lista_contexto_cs);
             liberar_contexto_ejecucion(contexto_cs);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
@@ -434,7 +445,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             */
 
             //list_destroy(valores_tras_eliminacion);
-            list_destroy(lista_recepcion_valores);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            //list_destroy(lista_recepcion_valores);
             liberar_contexto_ejecucion(contexto_ds);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
@@ -485,14 +497,18 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 resultado_recurso = true;
 
                 liberar_contexto_ejecucion(contexto_de_fopen);
-                list_destroy(lista_recepcion_valores);
-                list_destroy(lista_contexto_fopen);
+                list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+                list_destroy_and_destroy_elements(lista_contexto_fopen,free);
+                //list_destroy(lista_recepcion_valores);
+                //list_destroy(lista_contexto_fopen);
                 return;
             }
 
             liberar_contexto_ejecucion(contexto_de_fopen);
-            list_destroy(lista_recepcion_valores);
-            list_destroy(lista_contexto_fopen);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            list_destroy_and_destroy_elements(lista_contexto_fopen,free);
+            //list_destroy(lista_recepcion_valores);
+            //list_destroy(lista_contexto_fopen);
             
             if(proceso_bloqueado_por_recurso)
             {
@@ -536,8 +552,10 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 resultado_recurso = true;
 
                 liberar_contexto_ejecucion(contexto_de_fclose);
-                list_destroy(lista_recepcion_valores);
-                list_destroy(lista_contexto_fclose);
+                list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+                list_destroy_and_destroy_elements(lista_contexto_fclose,free);
+                //list_destroy(lista_recepcion_valores);
+                //list_destroy(lista_contexto_fclose);
                 return;
             }
 
@@ -545,8 +563,10 @@ void ejecutar(pcb* proceso_a_ejecutar)
             dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
 
             liberar_contexto_ejecucion(contexto_de_fclose);
-            list_destroy(lista_recepcion_valores);
-            list_destroy(lista_contexto_fclose);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            list_destroy_and_destroy_elements(lista_contexto_fclose,free);
+            //list_destroy(lista_recepcion_valores);
+            //list_destroy(lista_contexto_fclose);
             
             if(proceso_bloqueado_por_recurso)
             {
@@ -591,14 +611,18 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 resultado_recurso = true;
 
                 liberar_contexto_ejecucion(contexto_de_fseek);
-                list_destroy(lista_recepcion_valores);
-                list_destroy(lista_contexto_fseek);
+                list_destroy_and_destroy_elements(lista_recepcion_valores, free);
+                list_destroy_and_destroy_elements(lista_contexto_fseek, free);
+                //list_destroy(lista_recepcion_valores);
+                //list_destroy(lista_contexto_fseek);
                 return;
             }
 
             liberar_contexto_ejecucion(contexto_de_fseek);
-            list_destroy(lista_recepcion_valores);
-            list_destroy(lista_contexto_fseek);
+            list_destroy_and_destroy_elements(lista_recepcion_valores, free);
+            list_destroy_and_destroy_elements(lista_contexto_fseek, free);
+            //list_destroy(lista_recepcion_valores);
+            //list_destroy(lista_contexto_fseek);
             
             if(proceso_bloqueado_por_recurso)
             {

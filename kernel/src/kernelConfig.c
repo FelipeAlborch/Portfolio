@@ -50,6 +50,7 @@ void agregar_proceso_a_tabla(pcb* un_pcb)
 {
     char* key = string_from_format("%d", un_pcb->pid);
     dictionary_put(tabla_de_procesos, key, un_pcb);
+    free(key);
 }
 
 void leer_tabla_procesos()

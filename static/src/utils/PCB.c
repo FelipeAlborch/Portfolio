@@ -121,18 +121,18 @@ char* identificar_estado(estado_pcb un_estado)
 
 void liberar_pcb(pcb* un_pcb)
 {
-    free(un_pcb->AX);
-    free(un_pcb->BX);
-    free(un_pcb->CX);
-    free(un_pcb->DX);
-    free(un_pcb->EAX);
-    free(un_pcb->EBX);
-    free(un_pcb->ECX);
-    free(un_pcb->EDX);
-    free(un_pcb->RAX);
-    free(un_pcb->RBX);
-    free(un_pcb->RCX);
-    free(un_pcb->RDX);
+    //free(un_pcb->AX);
+    //free(un_pcb->BX);
+    //free(un_pcb->CX);
+    //free(un_pcb->DX);
+    //free(un_pcb->EAX);
+    //free(un_pcb->EBX);
+    //free(un_pcb->ECX);
+    //free(un_pcb->EDX);
+    //free(un_pcb->RAX);
+    //free(un_pcb->RBX);
+    //free(un_pcb->RCX);
+    //free(un_pcb->RDX);
     list_destroy_and_destroy_elements(un_pcb->lista_de_instrucciones, (void*)liberar_instruccion);
     //list_destroy_and_destroy_elements(un_pcb->tabla_de_segmentos, (void*)liberar_segmento);
     //list_destroy_and_destroy_elements(un_pcb->tabla_archivos_abiertos, (void*)liberar_archivo);
@@ -403,8 +403,8 @@ pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
     contexto_recibido->lista_de_instrucciones = list_duplicate(lista_de_instrucciones);
     //contexto_recibido->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
 
-    list_destroy_and_destroy_elements(lista_de_instrucciones, (void*) liberar_instruccion);
-    //list_destroy_and_destroy_elements(tabla_de_segmentos, liberar_segmento);
+    list_destroy(lista_de_instrucciones); // No hay que hacer un destroy de los elements, porque estariamos borrando las instrucciones que guardamos en la duplicada tambien
+    //list_destroy(tabla_de_segmentos); // NO hay que hacer un destroy de los elements por el mismo motivo que arriba.
 
     return contexto_recibido;
 }
@@ -481,6 +481,7 @@ void liberar_contexto_ejecucion(pcb* un_contexto)
     //free(un_contexto->RCX);
     //free(un_contexto->RDX);
     list_destroy_and_destroy_elements(un_contexto->lista_de_instrucciones, (void*)liberar_instruccion);
+    //list_destroy_and_destroy_elements(un_contexto->tabla_de_segmentos, liberar_segmento);
     free(un_contexto);
 }
 

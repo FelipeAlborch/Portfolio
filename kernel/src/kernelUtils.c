@@ -26,7 +26,9 @@ void agregar_socket_a_diccionario(int pcb_pid, int socket_consola)
 {
     //int *p = malloc(sizeof(int));
 	//*p=socket_consola;
-	dictionary_put(diccionario_de_consolas, string_from_format("%d", pcb_pid), socket_consola);
+    char* key = string_from_format("%d", pcb_pid);
+	dictionary_put(diccionario_de_consolas, key, socket_consola);
+    free(key);
 }
 
 void leer_diccionario_consolas()
@@ -186,6 +188,7 @@ void terminar_proceso(pcb* un_pcb)
 {
     char* lugar_en_diccionario = string_from_format("%d", un_pcb->pid);
     int socket_a_consola = dictionary_get(diccionario_de_consolas, lugar_en_diccionario);
+    free(lugar_en_diccionario);
     t_paquete* paquete_a_consola = crear_paquete_operacion(EXIT);
     enviar_paquete(paquete_a_consola, socket_a_consola);  
     
