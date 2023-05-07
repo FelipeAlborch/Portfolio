@@ -189,12 +189,12 @@ void terminar_proceso(pcb* un_pcb)
     t_paquete* paquete_a_consola = crear_paquete_operacion(EXIT);
     enviar_paquete(paquete_a_consola, socket_a_consola);  
     
-    t_paquete* paquete_a_memoria = crear_paquete_operacion(FIN_PROCESO);
-    int p_id = un_pcb->pid;
-    agregar_a_paquete(paquete_a_memoria, &p_id, sizeof(int));
-    enviar_paquete(paquete_a_memoria, socketMemoria);
+//    t_paquete* paquete_a_memoria = crear_paquete_operacion(FIN_PROCESO);
+//    int p_id = un_pcb->pid;
+//    agregar_a_paquete(paquete_a_memoria, &p_id, sizeof(int));
+//    enviar_paquete(paquete_a_memoria, socketMemoria);
     
-    eliminar_paquete(paquete_a_memoria);
+//    eliminar_paquete(paquete_a_memoria);
     eliminar_paquete(paquete_a_consola); 
     agregar_proceso_terminated(un_pcb);
     liberar_recursos(un_pcb);
