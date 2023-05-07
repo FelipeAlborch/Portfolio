@@ -8,8 +8,8 @@ t_log* flogger;
 t_log* loggerMemoria;
 int conexion;
 int running_cpu;
-int running_k;
 int running_fs;
+//int running_k;
 int server_m;
 int clientes[4];
 t_config* memoriaConfig;
@@ -71,7 +71,7 @@ void inicializar_memoria(){
 
     inicializar_configuracion();
     inicializar_logs();
-    crear_estructuras();
+    crear_estructuras();   
     conectar();
 };
 	
@@ -98,23 +98,7 @@ void conectar_cpu(){
     running_cpu=true;
     ejecutar_cpu();
 }
-void conectar_kernel(){
-    config_memo.kernel=esperar_cliente(server_m);
-    t_paquete* paquete; // =malloc(TAM_PAQ);
-    paquete = recibir_paquete(config_memo.kernel);
-    if(paquete->codigo_operacion != KERNEL){
-      log_error(klogger,"Vos no sos el kernel. Se cancela la conexión %d",paquete->codigo_operacion);
-      eliminar_paquete(paquete);
-      pthread_detach(hilo_kernel);
-			pthread_exit(&hilo_kernel);
-    }
-    log_info(klogger,"Se conectó el kernel: %d \n",config_memo.kernel);
-		
-    eliminar_paquete(paquete);
-    running_k=true;
-    //ejecutar_kernel();
-    ejecutar_kernel_test();
-}
+
 void conectar_fs(){
   config_memo.fs=esperar_cliente(server_m);
     t_paquete* paquete;// =malloc(TAM_PAQ);
@@ -128,7 +112,7 @@ void conectar_fs(){
     log_info(flogger,"Se conectó el FileSystem: %d \n",config_memo.fs);
 		
     eliminar_paquete(paquete);
-    running_k=true;
+    running_fs=true;
     ejecutar_fs();
 }
 void conectar(){
@@ -174,46 +158,7 @@ void mostrar_valores_de_configuracion_memoria (){
 }
 
 
-  void ejecutar_kernel(){
-    int conectar=config_memo.kernel;
-    log_trace(mlogger, "Por ejecutar las tareas del kernel");
-
-    t_paquete* paquete; // =malloc(size_of(t_paquete));
-    t_list* lista;
-    int pid = -1;
-    while (running_k)
-    {
-    
-      lista=_recibir_paquete(conectar);
-      int codigo=*(int*)list_get(lista,0);
-      switch (codigo)
-      {
-          case INICIO_PROCESO:
-            pid=*(int*)list_get(lista,1);
-            crear_proceso(pid);
-            loggear(INICIO_PROCESO,pid,NULL,0,0,0);
-            break;
-          case FIN_PROCESO:
-            pid=*(int*)list_get(lista,1);
-            loggear(FIN_PROCESO,pid,NULL,0,0,0);
-            break;
-          case CREATE_SEGMENT:
-            pid=*(int*)list_get(lista,1);
-            int tam=*(int*)list_get(lista,2);
-            crear_segmento(pid,tam);
-            loggear(CREATE_SEGMENT,pid,NULL,tam,0,0);
-            break;
-          //case 
-          default:
-            break;
-      }
-      list_destroy(lista);
-      running_k=false;
-      log_trace(klogger,"ejecute kernel");
-  }
-  eliminar_paquete(paquete);
-  log_info(klogger,"Terminando de ejecutar las tareas del kernel");
-}
+  
   void ejecutar_cpu(){
     int conectar=config_memo.cpu;
     log_trace(clogger, "Por ejecutar las tareas del CPU");
@@ -296,35 +241,16 @@ void mostrar_valores_de_configuracion_memoria (){
       case FIN_PROCESO:
         log_trace(loggerMemoria,"Eliminación de Proceso PID: %d",pid);
         break;
-
+      
       default:
+        log_error(loggerMemoria,"Error en la operación, código de error: %d",code);
         break;
     }
   }
 
-void respuestas(int cliente, int code,t_paquete* paquete){
-  
-  paquete->codigo_operacion=code;
+void respuestas(int cliente, int code,void* algo){
+  t_paquete* paquete=crear_paquete_operacion(code);
+  agregar_a_paquete(paquete,algo,sizeof(algo)+1);
   enviar_paquete(paquete,cliente);
   eliminar_paquete(paquete);
-}
-
-void crear_proceso(int pid){
- // int pid = *(int*) list_get(lista, 1);
-
-  t_list* listaS=crear_tabla_proceso(pid);
-  loggear(INICIO_PROCESO,pid,NULL,0,0,0);
-  t_paquete* paquete = malloc(TAM_PAQ);
-  serializar_tabla_segmentos(paquete,listaS);
-  respuestas(config_memo.kernel,INICIO_PROCESO,paquete);
-  eliminar_paquete(paquete);
-  list_destroy(listaS);
-}
-void ejecutar_kernel_test(){
-  int conectar=config_memo.kernel;
-  log_trace(mlogger, "Por ejecutar las tareas del kernel");
-  int pid =221;
-  crear_proceso(pid);
-  log_trace(klogger,"ejecute la creación del proceso %d",pid);
-
 }

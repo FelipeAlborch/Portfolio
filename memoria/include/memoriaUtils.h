@@ -10,19 +10,21 @@
 #define WORST_FIT 3
 #define TAM_CABECERA sizeof(t_segmento)
 #define TAM_PAQ sizeof(t_paquete)
+#define LIBRE true
+#define OCUPADO false
 
 extern t_log* mlogger;
+extern t_log* klogger;
 extern t_log* loggerMemoria;
 extern int clientes[4];
 extern int conexion;
-extern int running;
+extern int running_k;
 extern int server_m;
 extern t_config* memoriaConfig;
 extern pthread_t hilo_cpu;
 extern pthread_t hilo_kernel;
 extern pthread_t hilo_fs;
 extern pthread_t hiloConexion;
-
 extern void* memoria;
 
 //extern t_tabla_segmentos* tabla_segmentos; //listado de t_segmentos de todos los procesos
@@ -94,22 +96,31 @@ void mostrar_valores_de_configuracion_memoria();
 
 // ID --> para el id del segmento y para la direc fisica
 void loggear(int code, int pid, void* algo, int id, int size, float base);
-
+void respuestas(int cliente, int code,void* algo);
 
 void crear_estructuras();
-void liberar_proceso(int pid); 
+
 void* leer_dato(int pid, int direccion, int size);
 void escribir_dato(int pid, int direccion, int size, void* valor);
 void eliminar_segmento(int pid, int direccion);
+
 void compactar();
+void actualizar_memoria(int size, int indice, int estado);
+
 void crear_segmento_(int pid, int size);
-void crear_proceso(int paquete);
 void modificar_tabla_segmentos(t_tabla_segmentos* tabla,int pid, int dir, int index,int base, int size);
 void modificar_segmento(t_segmento* segmento, int base, int size);
 void eliminar_segmento_por_id(int id_seg, t_list* segmentos);
 void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos);
+int buscar_en_tabla_index(int pid);
 void imprimir_tabla(t_list* lista);
+void imprimir_tabla_gral();
+
 void ejecutar_kernel_test();
+void crear_proceso(int paquete);
+void eliminar_proceso(int pid);
+void liberar_proceso(int pid);
+
 t_tabla_segmentos* crear_tabla_segmentos(int pid, int cant_seg, int tam_seg);
 t_tabla_segmentos* buscar_en_tabla(int pid);
 t_segmento* buscar_segmento(int id_seg, t_list* segmentos);

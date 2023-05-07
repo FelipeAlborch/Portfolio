@@ -19,14 +19,16 @@ log_info(logger_ram_hq,"Creando estructuras administrativas para esquema de memo
 void inicializar_segmentos(){
     t_tabla_segmentos* tabla = crear_tabla_segmentos(0,0,0);
     tabla_segmentos_gral = list_create();
-
+    int j = 0;
     for (size_t i = 0; i < config_memo.cant_seg_max; i++)
     {
-        modificar_tabla_segmentos(tabla,-1,-1,i,-1,0);
+        modificar_tabla_segmentos(tabla,j,-1,i,-1,0);
         list_add_in_index(tabla_segmentos_gral,i,tabla);
+       // printf("%d- pid: %d  base: %d  size %d\n",i, tabla->pid, tabla->segmento->base, tabla->segmento->size);
+        j--;
     }
-    modificar_tabla_segmentos(tabla,-1,-1,0,0,config_memo.tam_seg_0);
-    list_add_in_index(tabla_segmentos_gral,0,tabla);
+    modificar_tabla_segmentos(tabla,-1,0,0,0,config_memo.tam_seg_0);
+    list_replace(tabla_segmentos_gral,0,tabla);
     
     free(tabla->segmento);
     free(tabla);
@@ -52,9 +54,9 @@ void crear_estructuras(){
     
     for (size_t i = 0; i < config_memo.cant_seg_max; i++)
     {
-        list_add_in_index(huecos_libres,i,true);
+        list_add_in_index(huecos_libres,i,LIBRE);
     }
-    list_add_in_index(huecos_libres,0,false);
+    list_add_in_index(huecos_libres,0,OCUPADO);
 
     inicializar_segmentos();
     
@@ -70,24 +72,48 @@ void escribir_dato(int pid, int direccion, int size, void* valor){
 
 }
 
-void eliminar_segmento(int pid, int direccion){}
+void eliminar_segmento(int pid, int direccion){
+    int index = buscar_en_tabla_index(pid);
+    t_tabla_segmentos* tabla = malloc(sizeof(t_tabla_segmentos));
+    tabla = list_get(tabla_segmentos_gral,index);
+    modificar_tabla_segmentos(tabla,-1,-1,tabla->index,-1,tabla->segmento->size);
+
+        _Bool remover(t_tabla_segmentos* element) {
+            return element->pid == pid;
+        }
+    
+    list_replace_by_condition(tabla_segmentos_gral,(void*)remover, tabla);
+    
+    actualizar_memoria(tabla->segmento->size,index,LIBRE);
+
+    free(tabla->segmento);
+    free(tabla);
+}
 void compactar(){}
 void crear_segmento_(int pid, int size){}
 
 
 t_tabla_segmentos* crear_tabla_segmentos(int pid, int dir, int index){
 	t_tabla_segmentos* tabla_seg = malloc(sizeof(t_tabla_segmentos));
-    int size = config_memo.tam_seg_0;
-    int base =0;
+    
+    
     tabla_seg->pid = pid;
     tabla_seg->direcion_fisica=dir;
     tabla_seg->index=index;
-    tabla_seg->segmento = crear_segmento(base,size); 
+    tabla_seg->segmento = crear_segmento(0,config_memo.tam_seg_0); 
 
     return tabla_seg;
 }
-t_tabla_segmentos* buscar_en_tabla(int pid){
+t_tabla_segmentos* buscar_en_tabla(int pid){}
+int buscar_en_tabla_index(int pid){
+    for (int i = 0; i < list_size(tabla_segmentos_gral); i++) {
+        t_tabla_segmentos* tabla = list_get(tabla_segmentos_gral, i);
+        if (tabla->pid == pid) {
+            return i;
+        }
+    }
 
+    return NULL;
 }
 
 t_segmento* buscar_segmento(int base, t_list* segmentos){
@@ -101,16 +127,17 @@ t_segmento* buscar_segmento(int base, t_list* segmentos){
     return NULL;
 }
 void liberar_proceso(int pid) {
-    t_segmento* tabla_seg;
-   // = buscar_tabla_segmentos(pid);
-
-    if (tabla_seg == NULL) {
-        return;
+    t_list_iterator* iterator= list_iterator_create(tabla_segmentos_gral);
+    while (list_iterator_has_next(iterator)) {
+        t_tabla_segmentos* tabla = list_iterator_next(iterator);
+        if (tabla->pid == pid) {
+            eliminar_segmento(pid, tabla->direcion_fisica);
+        }
+        free(tabla);
     }
-
-    eliminar_segmento_list(tabla_seg, tabla_segmentos_gral);
-	//list_remove_by_condition(tabla_segmentos, (void*) es_tabla_segmentos_de_pid);
-    free(tabla_seg);
+    
+    list_iterator_destroy(iterator);
+    
 }
 
 void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos){
@@ -142,7 +169,27 @@ void imprimir_tabla(t_list* lista){
     for (size_t i = 0; i < list_size(lista); i++)
     {
         t_segmento* segmento = list_get(lista,i);
-        printf("base: %i, size: %i\n",segmento->base,segmento->size);
+        printf("%d - base: %d, size: %d\n",i,segmento->base,segmento->size);
     }
     
+}
+void actualizar_memoria(int size, int indice, int estado){
+    list_replace(huecos_libres,indice,estado);
+    if(estado){
+        config_memo.bytes_libres=config_memo.bytes_libres+size;
+    }else{
+        config_memo.bytes_libres=config_memo.bytes_libres-size;
+    }
+}
+void imprimir_tabla_gral(){
+    t_list_iterator* iterador = list_iterator_create(tabla_segmentos_gral);
+    int i = 0;
+    t_tabla_segmentos* tabla;
+    while(list_iterator_has_next(iterador)){
+        tabla= list_iterator_next(iterador);
+        printf("%d pid: %d, dir: %d, index: %d, base: %d, size: %d\n",i,tabla->pid,tabla->direcion_fisica,tabla->index,tabla->segmento->base,tabla->segmento->size);
+        i++;
+        free(tabla);
+    }
+    list_iterator_destroy(iterador);
 }
