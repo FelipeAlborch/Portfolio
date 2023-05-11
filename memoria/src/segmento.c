@@ -162,7 +162,7 @@ t_list* crear_tabla_proceso(int pid){
     }
 
     imprimir_tabla(lista);
-    free(segmento);
+    //free(segmento);   // Si liberas el segmento despues de crearlo, lo estas perdiendo por completo. Cuando lo intentes mandar al kernel, no va a existir.
     return lista;
 }
 void imprimir_tabla(t_list* lista){

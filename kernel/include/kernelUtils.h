@@ -89,6 +89,8 @@ void avisar_memoria(int);
 
 void actualizar_tablas_segmentos(t_list*);
 
+void* esperar_tabla_segmentos(pcb*);
+
 /*****************************************************************************
  *              FUNCIONES PARA EJECUCION
 ******************************************************************************/
@@ -116,7 +118,7 @@ void solicitar_creacion_segmento(int, int, int);
 void solicitar_eliminacion_segmento(int, int);
 
 
-
+void leer_segmentos(pcb*);
 
 void startSigHandlers();
 

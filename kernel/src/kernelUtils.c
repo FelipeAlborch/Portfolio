@@ -148,6 +148,32 @@ void actualizar_tablas_segmentos(t_list* lista_de_valores)
     }
 }
 
+void* esperar_tabla_segmentos(pcb* un_pcb)
+{
+	t_paquete* paquete_incializacion = crear_paquete_operacion(INICIO_PROCESO);
+	int p_id = un_pcb->pid;
+	agregar_a_paquete(paquete_incializacion, &p_id, sizeof(int));
+	enviar_paquete(paquete_incializacion, socketMemoria);
+	eliminar_paquete(paquete_incializacion);
+
+	t_list* segmentos_recibidos;
+
+	switch(recibir_operacion(socketMemoria))
+	{
+		case INICIO_PROCESO:
+			segmentos_recibidos = _recibir_paquete(socketMemoria);
+			t_list* tabla_de_segmentos = deserializar_tabla_segmentos(segmentos_recibidos);
+			un_pcb->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
+			list_destroy_and_destroy_elements(segmentos_recibidos, free);
+		break;
+
+		default:
+			log_warning(logger_kernel_util_extra, "Operacion de memoria esperando tabla de segmentos desconocida");
+			return;
+		break;
+	}
+}
+
 //void serializar_tablas_de_segmentos(t_paquete* paquete,t_list* lista_general_de_segmentos)
 //{
 //    int cantidad_de_procesos = list_size(lista_general_de_segmentos);
@@ -314,6 +340,16 @@ void solicitar_eliminacion_segmento(int nro_segmento, int pid_proceso)
     enviar_paquete(paquete_ds, socketMemoria);
     eliminar_paquete(paquete_ds);
 }
+
+void leer_segmentos(pcb* un_pcb)
+{
+    for(int i = 0; i < list_size(un_pcb->tabla_de_segmentos); i++)
+    {
+        t_segmento* segmento = list_get(un_pcb->tabla_de_segmentos, i);
+        printf("El segmento < %d > tiene un tamaño de: < %d > y su base es < %d >\n", i, segmento->size, segmento->base);
+    }
+}
+
 
 void startSigHandlers(void) {
 	signal(SIGINT, sigHandler_sigint);

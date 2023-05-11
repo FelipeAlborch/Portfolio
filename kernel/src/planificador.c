@@ -109,6 +109,12 @@ void* planificador_largo_plazo() {
         log_info(logger_planificador_extra, "El grado de multiprogramacion permite agregar un proceso a ready");
 
         pcb* proceso = obtener_proceso_new();
+
+        log_info(logger_planificador_extra, "Esperando tabla de segmentos para el nuevo proceso");
+        esperar_tabla_segmentos(proceso);
+
+        leer_segmentos(proceso);
+        
         agregar_proceso_ready(proceso);
     }
 }

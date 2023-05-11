@@ -28,35 +28,40 @@ void ejecutar_kernel(){
     while (running_k)
     {
     
-        lista=_recibir_paquete(conectar);
-        int codigo=*(int*)list_get(lista,0);
-        switch (codigo)
+        //lista=_recibir_paquete(conectar);
+        //int codigo=*(int*)list_get(lista,0);
+        switch (recibir_operacion(config_memo.kernel))
         {
           case INICIO_PROCESO:
-            pid=*(int*)list_get(lista,1);
+            lista = _recibir_paquete(config_memo.kernel); // Agregue esta linea
+            pid=*(int*)list_get(lista,0);   // Cambie el 1 por un 0
             crear_proceso(pid);
             
+          
             break;
           case FIN_PROCESO:
-            pid=*(int*)list_get(lista,1);
+            lista = _recibir_paquete(config_memo.kernel);    // Agregue esta linea
+            pid=*(int*)list_get(lista,0);   // Cambie el 1 por un 0
             eliminar_proceso(pid);
 
             break;
           case CREATE_SEGMENT:
-            int id=*(int*)list_get(lista,1);
-            pid=*(int*)list_get(lista,3);
-            int tam=*(int*)list_get(lista,2);
+            lista = _recibir_paquete(config_memo.kernel);    // Agregue esta linea
+            int id=*(int*)list_get(lista,0);    // Cambie los indices
+            pid=*(int*)list_get(lista,2);
+            int tam=*(int*)list_get(lista,1);
             
             break;
-          //case 
+          //case
+           
           default:
             break;
       }
-      list_destroy(lista);
-      running_k=false;
+      list_destroy_and_destroy_elements(lista, free);
+      //running_k=false;    // Por que pones esto en fales?, hace que salga del while, y no se quede esperando a la proxima tarea del kernel
       log_trace(klogger,"ejecute kernel");
   }
-  eliminar_paquete(paquete);
+  //eliminar_paquete(paquete);  // Este free esta tirando seg fault porque la funcion _recibir_paquete(socket) no recibe realmente un t_paquete, sino que enlista los valores que haya en el buffer del socket
   log_info(klogger,"Terminando de ejecutar las tareas del kernel");
 }
 
@@ -66,13 +71,15 @@ void crear_proceso(int pid){
     t_list* listaS=crear_tabla_proceso(pid);
     loggear(INICIO_PROCESO,pid,NULL,0,0,0);
     
-    t_paquete* paquete = malloc(TAM_PAQ);
+    //t_paquete* paquete = malloc(TAM_PAQ);
+    t_paquete* paquete = crear_paquete_operacion(INICIO_PROCESO);
     serializar_tabla_segmentos(paquete,listaS);
+    enviar_paquete(paquete,config_memo.kernel);
     
-    respuestas(config_memo.kernel,INICIO_PROCESO,paquete);
+    //respuestas(config_memo.kernel,INICIO_PROCESO,paquete);
     
     eliminar_paquete(paquete);
-    list_destroy(listaS);
+    //list_destroy(listaS);
 }
 
 void eliminar_proceso(int pid){
