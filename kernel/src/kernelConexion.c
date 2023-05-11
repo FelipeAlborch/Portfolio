@@ -80,13 +80,9 @@ void escuchar_consola(int socketConsola)
 
 			loguear_pcb(nuevo_pcb,logger_kernel_util_extra);
 			
-			// TO-DO:
-			//pthread_t hilo_memoria_new;
-			//pthread_create(&hilo_memoria_new, NULL, (void*) esperar_tabla_segmentos, (void*) nuevo_pcb);
-			
 			agregar_proceso_new(nuevo_pcb);
 			list_destroy_and_destroy_elements(lista_de_consola, free);
-			//list_destroy(lista_de_consola);
+
 			return;
             break;
 
@@ -103,33 +99,6 @@ void escuchar_consola(int socketConsola)
         //log_destroy(logger);
 
     }
-}
-
-void* esperar_tabla_segmentos(pcb* un_pcb)
-{
-	t_paquete* paquete_incializacion = crear_paquete_operacion(INICIO_PROCESO);
-	int p_id = un_pcb->pid;
-	agregar_a_paquete(paquete_incializacion, &p_id, sizeof(int));
-	enviar_paquete(paquete_incializacion, socketMemoria);
-	eliminar_paquete(paquete_incializacion);
-
-	t_list* segmentos_recibidos;
-
-	switch(recibir_operacion(socketMemoria))
-	{
-		case INICIO_PROCESO:
-			segmentos_recibidos = _recibir_paquete(socketMemoria);
-			t_list* tabla_de_segmentos = deserializar_tabla_segmentos(segmentos_recibidos);
-			un_pcb->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
-			//agregar_proceso_new(un_pcb);
-			//list_destroy(segmentos_recibidos);
-		break;
-
-		default:
-			log_warning(logger_kernel_util_extra, "Operacion de memoria esperando tabla de segmentos desconocida");
-			return;
-		break;
-	}
 }
 
 void deserializar_lista_de_consola(t_list* lista_de_instrucciones, t_list* lista_de_contenido_recibido, int indice_tamaño, int indice_lista)
