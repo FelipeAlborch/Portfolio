@@ -343,7 +343,7 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
   }
   else 
   {
-    log_info(logger, "Solicitandole al Kernel que escriba del archivo [%s], [%d] bytes, en la DF [%d]...", 
+    log_info(logger, "Solicitandole al Kernel que escriba en el archivo [%s], [%d] bytes, en la DF [%d]...", 
       instruccion->parametros[0], cantBytes, DF);
   }
 
@@ -353,6 +353,27 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
 
   enviar_contexto_ejecucion(pcb, socketKernel, operacion);
   log_info(logger, "Solicitud enciada al Kernel!");
+
+  log_destroy(logger);
+}
+
+void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+  t_paquete *paquete = crear_paquete_operacion(MOV_IN);
+  int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb);
+
+  agregar_a_paquete(paquete, &DF, sizeof(int));
+  enviar_paquete(paquete, socketMemoria);
+
+  /*switch (recibir_operacion(socketMemoria))
+  {
+  case  constant-expression :
+    break;
+  
+  default:
+    break;
+  } */
 
   log_destroy(logger);
 }
