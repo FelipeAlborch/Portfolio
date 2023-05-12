@@ -20,7 +20,7 @@ void ejecutar_delete_segment(pcb*, LineaInstruccion*, int);
 void abrir_o_cerrar_archivo(pcb*, LineaInstruccion*, int, int);
 void ejecutar_f_seek(pcb*, LineaInstruccion*, int);
 void ejecutar_f_truncate(pcb*, LineaInstruccion*, int);
-void ejecutar_f_read(pcb*, LineaInstruccion*, int );
+void ejecutar_f_read_o_f_write(pcb*, LineaInstruccion*, int, int);
 
 //
 

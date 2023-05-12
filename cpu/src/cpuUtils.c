@@ -69,7 +69,11 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
       
       case F_READ:
-        ejecutar_f_read(pcb, lineaInstruccion, socketKernel);
+        ejecutar_f_read_o_f_write(pcb, lineaInstruccion, socketKernel, F_READ);
+        break;
+
+      case F_WRITE:
+        ejecutar_f_read_o_f_write(pcb, lineaInstruccion, socketKernel, F_WRITE);
         break;
 
       case YIELD:
@@ -206,7 +210,6 @@ void ejecutar_io(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, IO); //Consultar con Facu
   log_info(logger, "Contexto de ejecucion enviado!");
-  log_info(logger, "Motivo del envio: IO");
 
   log_destroy(logger);
 }
@@ -326,20 +329,29 @@ void ejecutar_f_truncate(pcb *pcb, LineaInstruccion *instruccion, int socketKern
   log_destroy(logger);
 }
 
-void ejecutar_f_read(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
+void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int socketKernel, int operacion)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
-  t_paquete *paquete = crear_paquete_operacion(F_READ);
-  int cantBytesALeer = atoi(instruccion->parametros[2]);
+  t_paquete *paquete = crear_paquete_operacion(operacion);
+  int cantBytes = atoi(instruccion->parametros[2]);
   int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb);
 
-  log_info(logger, "Solicitandole al Kernel que escriba del archivo [%s], [%d] bytes, en la DF [%d]...", 
-    instruccion->parametros[0], cantBytesALeer, DF);
+  if(operacion == F_READ)
+  {
+    log_info(logger, "Solicitandole al Kernel que lea del archivo [%s], [%d] bytes, en la DF [%d]...", 
+      instruccion->parametros[0], cantBytes, DF);
+  }
+  else 
+  {
+    log_info(logger, "Solicitandole al Kernel que escriba del archivo [%s], [%d] bytes, en la DF [%d]...", 
+      instruccion->parametros[0], cantBytes, DF);
+  }
+
   agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
-  agregar_a_paquete(paquete, &cantBytesALeer, sizeof(int));
+  agregar_a_paquete(paquete, &cantBytes, sizeof(int));
   agregar_a_paquete(paquete, &DF, sizeof(int));
 
-  enviar_contexto_ejecucion(pcb, socketKernel, F_READ);
+  enviar_contexto_ejecucion(pcb, socketKernel, operacion);
   log_info(logger, "Solicitud enciada al Kernel!");
 
   log_destroy(logger);
@@ -352,7 +364,6 @@ void ejecutar_yield(pcb *pcb, int socketKernel)
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, YIELD);
   log_info(logger, "Contexto de ejecucion enviado!");
-  log_info(logger, "Motivo del envio: YIELD");
 
   log_destroy(logger);
 }
@@ -364,7 +375,6 @@ void ejecutar_exit(pcb *pcb, int socketKernel)
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, EXIT); // Consultar con Facu
   log_info(logger, "Contexto de ejecucion enviado!");
-  log_info(logger, "Motivo del envio: EXIT");
 
   log_destroy(logger);
 }
@@ -442,14 +452,14 @@ bool es_instruccion_de_corte(Instruccion instruccion)
 {
   switch (instruccion)
   {
-  /*case F_WRITE:
-    return true; */
+  case F_WRITE:
+    return true; 
   case F_TRUNCATE:
     return true;
   case F_SEEK:
     return true;
-  /*case F_READ:
-    return true; */
+  case F_READ:
+    return true; 
   case F_CLOSE:
     return true;
   case F_OPEN:
