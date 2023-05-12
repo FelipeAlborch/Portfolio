@@ -67,6 +67,10 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         log_info(logger, "Solicitandole a Kernel que cierre el archivo [%s]...", lineaInstruccion->parametros[0]);
         abrir_o_cerrar_archivo(pcb, lineaInstruccion, socketKernel, F_CLOSE);
         break;
+      
+      case F_READ:
+        ejecutar_f_read(pcb, lineaInstruccion, socketKernel);
+        break;
 
       case YIELD:
         ejecutar_yield(pcb, socketKernel);
@@ -318,6 +322,25 @@ void ejecutar_f_truncate(pcb *pcb, LineaInstruccion *instruccion, int socketKern
   enviar_contexto_ejecucion(pcb, socketKernel, F_TRUNCATE);
 
   log_info(logger, "Solicitud enviada al Kernel!");
+
+  log_destroy(logger);
+}
+
+void ejecutar_f_read(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+  t_paquete *paquete = crear_paquete_operacion(F_READ);
+  int cantBytesALeer = atoi(instruccion->parametros[2]);
+  int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb);
+
+  log_info(logger, "Solicitandole al Kernel que escriba del archivo [%s], [%d] bytes, en la DF [%d]...", 
+    instruccion->parametros[0], cantBytesALeer, DF);
+  agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
+  agregar_a_paquete(paquete, &cantBytesALeer, sizeof(int));
+  agregar_a_paquete(paquete, &DF, sizeof(int));
+
+  enviar_contexto_ejecucion(pcb, socketKernel, F_READ);
+  log_info(logger, "Solicitud enciada al Kernel!");
 
   log_destroy(logger);
 }
