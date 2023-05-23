@@ -103,15 +103,19 @@ void wait_recurso(pcb*, char*);
 
 void fopen_recurso(pcb*, char*);
 
-void wait_recurso_generico(pcb*, char*, t_dictionary*);
+void wait_recurso_generico(pcb*, char*, t_dictionary*, char*);
 
 void signal_recurso(pcb*, char*);
 
 void fclose_recurso(pcb*, char*);
 
-void signal_recurso_generico(pcb*, char*, t_dictionary*);
+void signal_recurso_generico(pcb*, char*, t_dictionary*, char*);
+
+bool archivo_esta_abierto(char*);
 
 void fseek_archivo(pcb*, char*, int);
+
+void esperar_ftruncate();
 
 void solicitar_creacion_segmento(int, int, int);
 

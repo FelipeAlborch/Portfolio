@@ -481,33 +481,24 @@ void ejecutar(pcb* proceso_a_ejecutar)
             {
                 // PEDIR AL FS
                 // archivo = obtener_archivo_de_fs();
+                t_paquete* paquete_a_fs = crear_paquete_operacion(CREAR_ARCHIVO);
+                agregar_a_paquete(paquete_a_fs, nombre_recurso, strlen(nombre_recurso)+1);
+                enviar_paquete(paquete_a_fs, socketFS);
+                
+                int rta1;
+                int rta2;
+                recv(socketFS, &rta1, sizeof(int), MSG_WAITALL );
+                recv(socketFS, &rta2, sizeof(int), MSG_WAITALL );
+                
 
                 // SI NO EXISTE, CREARLO
                 t_recurso* archivo = crear_recurso(nombre_recurso, 1);
+                archivo->posicion = 0;
 
                 dictionary_put(tabla_global_archivos_abiertos, nombre_recurso, archivo);
             }
 
             fopen_recurso(proceso_a_ejecutar, nombre_recurso);
-
-            if(!resultado_recurso)
-            {   
-                log_warning(logger_planificador_extra, "Error al abrir el archivo. Terminando proceso");
-                proceso_en_ejecucion = desalojar_proceso_en_exec();
-                
-                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO SE PUDO ABRIR EL ARCHIVO >", proceso_en_ejecucion->pid);
-                
-                terminar_proceso(proceso_en_ejecucion);
-
-                resultado_recurso = true;
-
-                liberar_contexto_ejecucion(contexto_de_fopen);
-                list_destroy_and_destroy_elements(lista_recepcion_valores,free);
-                list_destroy_and_destroy_elements(lista_contexto_fopen,free);
-                //list_destroy(lista_recepcion_valores);
-                //list_destroy(lista_contexto_fopen);
-                return;
-            }
 
             liberar_contexto_ejecucion(contexto_de_fopen);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
@@ -545,27 +536,13 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             fclose_recurso(proceso_a_ejecutar, nombre_recurso);
 
-            if(!resultado_recurso)
-            {   
-                log_warning(logger_planificador_extra, "Error al cerrar el archivo. Terminando proceso");
-                proceso_en_ejecucion = desalojar_proceso_en_exec();
-                
-                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO SE PUDO CERRAR CORRECTAMENTE EL ARCHIVO >", proceso_en_ejecucion->pid);
-                
-                terminar_proceso(proceso_en_ejecucion);
-
-                resultado_recurso = true;
-
-                liberar_contexto_ejecucion(contexto_de_fclose);
-                list_destroy_and_destroy_elements(lista_recepcion_valores,free);
-                list_destroy_and_destroy_elements(lista_contexto_fclose,free);
-                //list_destroy(lista_recepcion_valores);
-                //list_destroy(lista_contexto_fclose);
-                return;
+            
+            if(!archivo_esta_abierto(nombre_recurso))
+            {
+                // REMOVER DE LA TABLA DE ARCHIVOS ABIERTOS
+                t_recurso* archivo = dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
+                free(archivo);
             }
-
-            // REMOVER DE LA TABLA DE ARCHIVOS ABIERTOS
-            dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
 
             liberar_contexto_ejecucion(contexto_de_fclose);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
@@ -604,36 +581,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             fseek_archivo(proceso_a_ejecutar, nombre_recurso, posicion);
 
-            if(!resultado_recurso)
-            {   
-                log_warning(logger_planificador_extra, "Error al cerrar el archivo. Terminando proceso");
-                proceso_en_ejecucion = desalojar_proceso_en_exec();
-                
-                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO SE PUDO OPERAR SOBRE EL ARCHIVO >", proceso_en_ejecucion->pid);
-                
-                terminar_proceso(proceso_en_ejecucion);
-
-                resultado_recurso = true;
-
-                liberar_contexto_ejecucion(contexto_de_fseek);
-                list_destroy_and_destroy_elements(lista_recepcion_valores, free);
-                list_destroy_and_destroy_elements(lista_contexto_fseek, free);
-                //list_destroy(lista_recepcion_valores);
-                //list_destroy(lista_contexto_fseek);
-                return;
-            }
-
             liberar_contexto_ejecucion(contexto_de_fseek);
             list_destroy_and_destroy_elements(lista_recepcion_valores, free);
             list_destroy_and_destroy_elements(lista_contexto_fseek, free);
             //list_destroy(lista_recepcion_valores);
             //list_destroy(lista_contexto_fseek);
-            
-            if(proceso_bloqueado_por_recurso)
-            {
-                proceso_bloqueado_por_recurso = false;
-                return;
-            }
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
             
@@ -643,8 +595,35 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             // case F_READ:
             // case F_WRITE:
-            // case F_TRUNCATE:
+            case F_TRUNCATE:
+                lista_recepcion_valores = _recibir_paquete(socketCPU);
+                nombre_recurso = list_get(lista_recepcion_valores, 0);
+                int tamanio = *(int*) list_get(lista_recepcion_valores, 1);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_TRUNCATE: %s, tamanio: %d", nombre_recurso, tamanio);
 
+                int operacion_ftruncate = recibir_operacion(socketCPU);
+                t_list* lista_contexto_truncate = _recibir_paquete(socketCPU);
+                pcb* contexto_de_ftruncate = recibir_contexto_ejecucion(lista_contexto_truncate);
+
+                log_info(logger_planificador_extra, "Contexto recibido por F_TRUNCATE");
+
+                actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_ftruncate);
+
+                loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
+                t_paquete* paquete_ftruncate = crear_paquete_operacion(TRUNCAR_ARCHIVO);
+                agregar_a_paquete(paquete_ftruncate, nombre_recurso, strlen(nombre_recurso)+1);
+                agregar_a_paquete(paquete_ftruncate, &tamanio, sizeof(int));
+                enviar_paquete(paquete_ftruncate, socketFS);
+
+                pthread_t* hilo_ftruncate;
+                pthread_create(&hilo_ftruncate, NULL, esperar_ftruncate, NULL);
+                pthread_detach(hilo_ftruncate);
+
+
+
+
+    
         case DESCONEXION:
             log_info(logger_planificador_obligatorio, "CPU Desconectado");
         break;

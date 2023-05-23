@@ -79,6 +79,12 @@ typedef struct{
 
 }t_proceso;
 
+typedef enum{
+	CREAR_ARCHIVO,
+	TRUNCAR_ARCHIVO,
+	LEER_ARCHIVO,
+	ESCRIBIR_ARCHIVO
+}msj_fs;
 
 /**
 * @NAME: iniciar_logger_modulo
