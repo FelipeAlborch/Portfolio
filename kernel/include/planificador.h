@@ -3,9 +3,10 @@
 
 #include <utils/conexion.h>
 #include <commons/collections/queue.h>
-//#include <kernelConfig.h>
+#include <kernelConfig.h>
 
 #include <kernelUtils.h>
+#include <kernelArchivos.h>
 
 //extern int socket_cpu_planificador;
 //extern int socket_memoria_planificador;
@@ -15,7 +16,10 @@
 extern int pid_global;
 
 // Cola de planificacion new global.
-extern t_queue* cola_new;
+//extern t_queue* cola_new;
+
+// Tabla de manejo de archivos abiertos.
+extern t_dictionary* tabla_global_archivos_abiertos;
 
 /*****************************************************************************
  *              FUNCIONES PARA LAS ESTRUCTURAS DE PLANIFICACION
@@ -40,51 +44,7 @@ void* planificador_corto_plazo_hrrn();
 
 void ejecutar(pcb*);
 
-void* esperar_io(pcb*);
 
-void terminar_proceso(pcb*);
-
-void wait_recurso(pcb*, char*);
-
-void signal_recurso(pcb*, char*);
-
-/*****************************************************************************
- *              FUNCIONES PARA MOVER PROCESOS POR LAS COALS
-******************************************************************************/
-
-void agregar_proceso_new(pcb*);
-
-void agregar_proceso_ready(pcb*);
-
-void agregar_proceso_exec(pcb*);
-
-void agregar_proceso_terminated(pcb*);
-
-void agregar_proceso_block(pcb*);
-
-pcb* obtener_proceso_new();
-
-pcb* obtener_proceso_ready();
-
-pcb* obtener_proceso_block();
-
-pcb* desalojar_proceso_en_exec();
-
-
-
-void loguear_cola_de_procesos(t_queue*);
-
-void* queue_peek_at(t_queue*, int);
-
-void loguear_procesos_en_cola(t_queue*);
-
-void loguear_procesos_en_lista(t_list*);
-
-
-
-void startSigHandlers();
-
-void sigHandler_sigint(int);
 
 
 #endif

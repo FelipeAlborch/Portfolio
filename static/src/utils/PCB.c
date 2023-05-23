@@ -28,6 +28,7 @@ pcb* crear_pcb(t_list* lista_de_instrucciones, int p_id, int estimado_rafaga)
     proceso->lista_de_instrucciones = list_duplicate(lista_de_instrucciones);
     proceso->tabla_de_segmentos = list_create();
     proceso->tabla_archivos_abiertos = list_create();
+    proceso->recursos_asignados = list_create();
 
     // Los t_temporal se crean cuando llegan a ready o a exec.
 
@@ -135,6 +136,7 @@ void liberar_pcb(pcb* un_pcb)
     list_destroy_and_destroy_elements(un_pcb->lista_de_instrucciones, (void*)liberar_instruccion);
     //list_destroy_and_destroy_elements(un_pcb->tabla_de_segmentos, (void*)liberar_segmento);
     //list_destroy_and_destroy_elements(un_pcb->tabla_archivos_abiertos, (void*)liberar_archivo);
+    list_destroy(un_pcb->recursos_asignados);
 
     //temporal_destroy(un_pcb->llegada_ready);      Estos temporals despues se destruyen
     //temporal_destroy(un_pcb->tiempo_ejecucion);
@@ -452,4 +454,45 @@ void liberar_contexto_ejecucion(pcb* un_contexto)
     //free(un_contexto->RDX);
     list_destroy_and_destroy_elements(un_contexto->lista_de_instrucciones, (void*)liberar_instruccion);
     free(un_contexto);
+}
+
+
+
+
+
+t_list* deserializar_tabla_segmentos(t_list* lista_con_valores)
+{
+	int cantidad_segmentos = *(int*) list_get(lista_con_valores, 0);
+
+	t_list* tabla_de_segmentos = list_create();
+	int base = 0;
+
+	for(int i = 0; i < cantidad_segmentos; i++)
+	{
+		base = 2 * i;
+		t_segmento* segmento = malloc(sizeof(t_segmento));
+		segmento->base = *(int*) list_get(lista_con_valores, base + 1);
+		segmento->size = *(int*) list_get(lista_con_valores, base + 2);
+		list_add(tabla_de_segmentos, segmento);
+	}
+
+	return tabla_de_segmentos;
+}
+
+void serializar_tabla_segmentos(t_paquete* paquete, t_list* tabla_segmentos)
+{
+    int cantidad_segmentos = list_size(tabla_segmentos);
+    agregar_a_paquete(paquete, &cantidad_segmentos, sizeof(int));       // Si el paquete se recibiera como lista, la cantidad de segmentos, estaria en la pos 0
+
+    for(int i = 0; i < cantidad_segmentos; i++)
+    {
+        t_segmento* segmento = list_get(tabla_segmentos, 0);
+        agregar_a_paquete(paquete, &(segmento->base), sizeof(int));
+        agregar_a_paquete(paquete, &(segmento->size), sizeof(int));
+    }
+}
+
+void liberar_segmento(t_segmento* segmento)
+{
+    free(segmento);
 }

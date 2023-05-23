@@ -1,52 +1,11 @@
 #include <planificador.h>
 
-// Estos sockets ya no los necesitamos porque puse unos globales en un archivo previo que se incluye aca, y se incializan en el main.
-//int socket_cpu_planificador;
-//int socket_memoria_planificador;
-//int socket_fs_planificador;
-
-// LOGGER PARA EL PLANIFICADOR
-t_log* logger_planificador_obligatorio;
-t_log* logger_planificador_extra;
-
-
 // variable global para el process id
 int pid_global = 0;
-
-// Colas de planificacion
-t_queue* cola_new;
-t_queue* cola_ready_fifo;
-t_queue* cola_exec;
-t_queue* cola_terminated;
-
-// Lista para procesos en ready por HRRN. tiene que ser una lista asi la puedo filtrar por Response Ration
-t_list* lista_ready_hrrn;
-
-// Cola blockeo va a haber varias, TO-DO: posiblemente un hilo que haga el IO por proceso.
-
-// Semaforos mutex para las colas de los procesos.
-pthread_mutex_t mutex_new;
-pthread_mutex_t mutex_ready;
-pthread_mutex_t mutex_exec;
-pthread_mutex_t mutex_terminated;
-
-// Semaforos para activar los hilos de planificacion.
-sem_t activar_largo_plazo;
-sem_t activar_corto_plazo;
-
-// Un semaforo para saber si hay un proceso ejecutando en el cpu o no.
-sem_t sem_hay_en_running;
-
-// Semaforo para la mutliprogramacion.
-sem_t grado_multiprogramacion;
 
 // Hilos de planificacion.
 pthread_t hilo_largo_plazo;
 pthread_t hilo_corto_plazo;
-
-bool es_fifo = 0;
-bool resultado_recurso = true;
-bool proceso_bloqueado_por_wait = false;
 
 
 void inicializar_estructuras_planificacion() {
@@ -150,6 +109,12 @@ void* planificador_largo_plazo() {
         log_info(logger_planificador_extra, "El grado de multiprogramacion permite agregar un proceso a ready");
 
         pcb* proceso = obtener_proceso_new();
+
+        log_info(logger_planificador_extra, "Esperando tabla de segmentos para el nuevo proceso");
+        esperar_tabla_segmentos(proceso);
+
+        leer_segmentos(proceso);
+        
         agregar_proceso_ready(proceso);
     }
 }
@@ -202,7 +167,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
     pcb* contexto_recibido;
     t_list* lista_recepcion_valores;
     pcb* proceso_en_ejecucion;
-    char* recurso;
+    char* nombre_recurso;
 
     recibirOperacion:
     int operacion_de_cpu = recibir_operacion(socketCPU);
@@ -279,8 +244,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
         case WAIT:
             lista_recepcion_valores = _recibir_paquete(socketCPU);
-            recurso = list_get(lista_recepcion_valores, 0);
-            log_info(logger_planificador_extra,"Recurso recibido para realizar WAIT: %s", recurso);
+            nombre_recurso = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Recurso recibido para realizar WAIT: %s", nombre_recurso);
 
             int operacion_wait = recibir_operacion(socketCPU);
             t_list* lista_contexto_wait = _recibir_paquete(socketCPU);
@@ -292,7 +257,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
-            wait_recurso(proceso_a_ejecutar, recurso);
+            wait_recurso(proceso_a_ejecutar, nombre_recurso);
 
 
             if(!resultado_recurso)
@@ -316,9 +281,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
             list_destroy(lista_recepcion_valores);
             list_destroy(lista_contexto_wait);
             
-            if(proceso_bloqueado_por_wait)
+            if(proceso_bloqueado_por_recurso)
             {
-                proceso_bloqueado_por_wait = false;
+                proceso_bloqueado_por_recurso = false;
                 return;
             }
 
@@ -330,8 +295,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
         case SIGNAL:
             lista_recepcion_valores = _recibir_paquete(socketCPU);
-            recurso = list_get(lista_recepcion_valores, 0);
-            log_info(logger_planificador_extra,"Recurso recibido para realizar SIGNAL: %s", recurso);
+            nombre_recurso = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Recurso recibido para realizar SIGNAL: %s", nombre_recurso);
             
             int operacion_signal = recibir_operacion(socketCPU);
             t_list* lista_contexto_signal = _recibir_paquete(socketCPU);
@@ -343,7 +308,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
-            signal_recurso(proceso_a_ejecutar, recurso);
+            signal_recurso(proceso_a_ejecutar, nombre_recurso);
 
             if(!resultado_recurso)
             {   
@@ -386,26 +351,28 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             log_info(logger_kernel_util_obligatorio, "PID: < %d > - Crear Segmento - Id: < %d > - Tamaño:< %d >", proceso_a_ejecutar->pid, nro_segmento_crear, tam_segmento);
             
-            log_warning(logger_kernel_util_extra, "CREATE_SEGMENT TODAVIA NO IMPLMENETADO");
+            //log_warning(logger_kernel_util_extra, "CREATE_SEGMENT TODAVIA NO IMPLMENETADO");
             
             //crear_segmento:
             //solicitar_creacion_segmento(nro_segmento_crear, tam_segmento, proceso_a_ejecutar->pid);
 
             //int rta_crecion_memoria;
             //recv(socketMemoria, &rta_crecion_memoria, sizeof(int), MSG_WAITALL);
-            /*
-            int rta_crecion_memoria = recibir_operacion(socketMemoria);
+            
+            /*int rta_crecion_memoria = recibir_operacion(socketMemoria);
             switch(rta_crecion_memoria)
             {
                 case CREATE_SEGMENT_SUCCESS:
                     log_info(logger_planificador_extra, "CREATE_SEGMENT realizado con exito");
                     
-                    t_list* valores_tabla_actualizada = _recibir_paquete(socketMemoria);
-                    t_list* tabla_actualizada = armar_tabla_segmentos(valores_tabla_actualizada);
-                    list_destroy_and_destroy_elements(proceso_a_ejecutar->tabla_de_segmentos, (void*) destruir_segmento);
-                    proceso_a_ejecutar->tabla_archivos_abiertos = list_duplicate(tabla_actualizada);
+                    t_list* valor_de_base = _recibir_paquete(socketMemoria);
+                    int base = *(int*) list_get(valor_de_base, 0);
+                    t_segmento* segmento_a_actualizar = list_get(proceso_a_ejecutar->tabla_de_segmentos, nro_segmento_crear);
+                    segmento_a_actualizar->base = base;
 
-                    list_destroy(valores_tabla_actualizada);
+                    printf("El segmento: %d quedo con la base en: %d\n", nro_segmento_crear, segmento_a_actualizar->base);
+
+                    list_destroy(valor_de_base);
                 break;
 
                 case OUT_OF_MEMORY:
@@ -421,13 +388,10 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 case INICIO_COMPACTAR:
                     
-                    pthread_mutex_lock(&op_entre_mem_y_fs);
-                    
                     enviar_operacion(socketMemoria, INICIO_COMPACTAR);
-                    rta_memoria = recibir_operacion(socketMemoria);
-                    t_list* valores_de_todos_segmentos = _recibir_paquete();
-                    t_dictionary* nuevas_tablas = armar_nuevas_tablas(valores_de_todos_segmentos);
-                    actualizar_tablas_segmentos(nuevas_tablas);
+                    int rta_memoria = recibir_operacion(socketMemoria);
+                    t_list* valores_de_todos_segmentos = _recibir_paquete(socketMemoria);
+                    actualizar_tablas_segmentos(valores_de_todos_segmentos);
 
                     list_destroy(valores_de_todos_segmentos);
 
@@ -485,6 +449,179 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
         break;
 
+        case F_OPEN: 
+            // RECIBIR PARAMETRO(S) DE CPU
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
+            nombre_recurso = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_OPEN: %s", nombre_recurso);
+
+            int operacion_fopen = recibir_operacion(socketCPU);
+            t_list* lista_contexto_fopen = _recibir_paquete(socketCPU);
+            pcb* contexto_de_fopen = recibir_contexto_ejecucion(lista_contexto_fopen);
+
+            log_info(logger_planificador_extra, "Contexto recibido por F_OPEN");
+
+            actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fopen);
+
+            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
+            // BUSCAR EN TABLA DE ARCHIVOS ABIERTOS
+            if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_recurso))
+            {
+                // PEDIR AL FS
+                // archivo = obtener_archivo_de_fs();
+
+                // SI NO EXISTE, CREARLO
+                t_recurso* archivo = crear_recurso(nombre_recurso, 1);
+
+                dictionary_put(tabla_global_archivos_abiertos, nombre_recurso, archivo);
+            }
+
+            fopen_recurso(proceso_a_ejecutar, nombre_recurso);
+
+            if(!resultado_recurso)
+            {   
+                log_warning(logger_planificador_extra, "Error al abrir el archivo. Terminando proceso");
+                proceso_en_ejecucion = desalojar_proceso_en_exec();
+                
+                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO SE PUDO ABRIR EL ARCHIVO >", proceso_en_ejecucion->pid);
+                
+                terminar_proceso(proceso_en_ejecucion);
+
+                resultado_recurso = true;
+
+                liberar_contexto_ejecucion(contexto_de_fopen);
+                list_destroy(lista_recepcion_valores);
+                list_destroy(lista_contexto_fopen);
+                return;
+            }
+
+            liberar_contexto_ejecucion(contexto_de_fopen);
+            list_destroy(lista_recepcion_valores);
+            list_destroy(lista_contexto_fopen);
+            
+            if(proceso_bloqueado_por_recurso)
+            {
+                proceso_bloqueado_por_recurso = false;
+                return;
+            }
+
+            enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
+            
+            goto recibirOperacion;
+
+        break;
+
+        case F_CLOSE: 
+            // RECIBIR PARAMETRO(S) DE CPU
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
+            nombre_recurso = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_CLOSE: %s", nombre_recurso);
+
+            int operacion_fclose = recibir_operacion(socketCPU);
+            t_list* lista_contexto_fclose = _recibir_paquete(socketCPU);
+            pcb* contexto_de_fclose = recibir_contexto_ejecucion(lista_contexto_fclose);
+
+            log_info(logger_planificador_extra, "Contexto recibido por F_CLOSE");
+
+            actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fclose);
+
+            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
+            fclose_recurso(proceso_a_ejecutar, nombre_recurso);
+
+            if(!resultado_recurso)
+            {   
+                log_warning(logger_planificador_extra, "Error al cerrar el archivo. Terminando proceso");
+                proceso_en_ejecucion = desalojar_proceso_en_exec();
+                
+                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO SE PUDO CERRAR CORRECTAMENTE EL ARCHIVO >", proceso_en_ejecucion->pid);
+                
+                terminar_proceso(proceso_en_ejecucion);
+
+                resultado_recurso = true;
+
+                liberar_contexto_ejecucion(contexto_de_fclose);
+                list_destroy(lista_recepcion_valores);
+                list_destroy(lista_contexto_fclose);
+                return;
+            }
+
+            // REMOVER DE LA TABLA DE ARCHIVOS ABIERTOS
+            dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
+
+            liberar_contexto_ejecucion(contexto_de_fclose);
+            list_destroy(lista_recepcion_valores);
+            list_destroy(lista_contexto_fclose);
+            
+            if(proceso_bloqueado_por_recurso)
+            {
+                proceso_bloqueado_por_recurso = false;
+                return;
+            }
+
+            enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
+            
+            goto recibirOperacion;
+
+        break;
+
+        case F_SEEK: 
+            // RECIBIR PARAMETRO(S) DE CPU
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
+            nombre_recurso = list_get(lista_recepcion_valores, 0);
+            int posicion = *(int*) list_get(lista_recepcion_valores, 1);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_SEEK: %s, posicion: %d", nombre_recurso, posicion);
+
+            int operacion_fseek = recibir_operacion(socketCPU);
+            t_list* lista_contexto_fseek = _recibir_paquete(socketCPU);
+            pcb* contexto_de_fseek = recibir_contexto_ejecucion(lista_contexto_fseek);
+
+            log_info(logger_planificador_extra, "Contexto recibido por F_SEEK");
+
+            actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fseek);
+
+            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
+            fseek_archivo(proceso_a_ejecutar, nombre_recurso, posicion);
+
+            if(!resultado_recurso)
+            {   
+                log_warning(logger_planificador_extra, "Error al cerrar el archivo. Terminando proceso");
+                proceso_en_ejecucion = desalojar_proceso_en_exec();
+                
+                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO SE PUDO OPERAR SOBRE EL ARCHIVO >", proceso_en_ejecucion->pid);
+                
+                terminar_proceso(proceso_en_ejecucion);
+
+                resultado_recurso = true;
+
+                liberar_contexto_ejecucion(contexto_de_fseek);
+                list_destroy(lista_recepcion_valores);
+                list_destroy(lista_contexto_fseek);
+                return;
+            }
+
+            liberar_contexto_ejecucion(contexto_de_fseek);
+            list_destroy(lista_recepcion_valores);
+            list_destroy(lista_contexto_fseek);
+            
+            if(proceso_bloqueado_por_recurso)
+            {
+                proceso_bloqueado_por_recurso = false;
+                return;
+            }
+
+            enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
+            
+            goto recibirOperacion;
+
+        break;
+
+            // case F_READ:
+            // case F_WRITE:
+            // case F_TRUNCATE:
+
         case DESCONEXION:
             log_info(logger_planificador_obligatorio, "CPU Desconectado");
         break;
@@ -495,255 +632,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
     }
 }
 
-void* esperar_io(pcb* un_pcb)
-{
-    log_info(logger_planificador_obligatorio, "PID: < %d > Ejecuta IO < %d >.", un_pcb->pid, un_pcb->tiempo_io);
-    sleep(un_pcb->tiempo_io);
-    log_info(logger_planificador_extra, "Tiempo de io del proceso < %d > esperado correctamente", un_pcb->pid);
-    agregar_proceso_ready(un_pcb);
-}
-
-void terminar_proceso(pcb* un_pcb)
-{
-    char* lugar_en_diccionario = string_from_format("%d", un_pcb->pid);
-    int socket_a_consola = dictionary_get(diccionario_de_consolas, lugar_en_diccionario);
-    t_paquete* paquete_a_consola = crear_paquete_operacion(EXIT);
-    enviar_paquete(paquete_a_consola, socket_a_consola);  
-    eliminar_paquete(paquete_a_consola); 
-    agregar_proceso_terminated(un_pcb);
-    //liberar_pcb(un_pcb);
-}
-
-
-void wait_recurso(pcb* un_pcb, char* un_recurso)
-{
-    recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
-    if(recurso == NULL)
-    {
-        //avisar_memoria(FIN_PROCESO);
-        resultado_recurso = false;
-        return;
-    } 
-
-    recurso->instancias--;
-    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Wait: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
-
-    if(recurso->instancias < 0)
-    {
-        pcb* proceso_en_ejecucion = desalojar_proceso_en_exec();
-        proceso_en_ejecucion->estado = BLOCKED;
-        proceso_bloqueado_por_wait = true;
-
-        if(!es_fifo)
-        {
-            proceso_en_ejecucion->estimado_prox_rafaga = estimar_proxima_rafaga(proceso_en_ejecucion);
-            temporal_destroy(proceso_en_ejecucion->tiempo_ejecucion);
-        }
-        
-        pthread_mutex_lock(&(recurso->mutex_cola));
-        
-        queue_push(recurso->cola_bloqueados, proceso_en_ejecucion);
-
-        pthread_mutex_unlock(&(recurso->mutex_cola));
-
-        log_info(logger_kernel_util_obligatorio, "PID: < %d > - Bloqueado por: < %s >", proceso_en_ejecucion->pid, recurso->nombre);
-        
-    }
-
-    return;
-}
-
-void signal_recurso(pcb* un_pcb, char* un_recurso)
-{
-    recurso* recurso = dictionary_get(diccionario_recursos, un_recurso);
-    if(recurso == NULL)
-    {
-        //avisar_memoria(FIN_PROCESO);
-        resultado_recurso = false;
-        return;
-    } 
-
-    recurso->instancias++;
-    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Signal: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
-    
-    if(!queue_is_empty(recurso->cola_bloqueados))
-    {
-        pthread_mutex_lock(&(recurso->mutex_cola));
-
-        pcb* proceso_bloqueado = queue_pop(recurso->cola_bloqueados);
-        log_info(logger_kernel_util_obligatorio, "PID: < %d > - Desbloqueado por: < %s >", proceso_bloqueado->pid, recurso->nombre);
-
-        pthread_mutex_unlock(&(recurso->mutex_cola));
-
-        agregar_proceso_ready(proceso_bloqueado);
-    }
-
-    return;
-}
-
-void agregar_proceso_new(pcb* un_pcb)
-{
-    pthread_mutex_lock(&mutex_new);
-
-    queue_push(cola_new, un_pcb);
-    log_info(logger_planificador_obligatorio, "El proceso < %d > se movio a NEW", un_pcb->pid);
-
-    pthread_mutex_unlock(&mutex_new);
-    sem_post(&activar_largo_plazo);
-}
-
-void agregar_proceso_ready(pcb* un_pcb)
-{
-    un_pcb->estado = READY;
-    if(es_fifo)
-    {
-        pthread_mutex_lock(&mutex_ready);
-
-        queue_push(cola_ready_fifo, un_pcb);
-        log_info(logger_planificador_obligatorio, "El proceso < %d > se movio a READY", un_pcb->pid);
-        log_info(logger_planificador_obligatorio, "Cola READY < %s >:", configuracionKernel.ALGORITMO_PLANIFICACION);
-        loguear_procesos_en_cola(cola_ready_fifo);
-
-        pthread_mutex_unlock(&mutex_ready);
-        sem_post(&activar_corto_plazo);
-    }else
-    {
-        pthread_mutex_lock(&mutex_ready);
-
-        list_add(lista_ready_hrrn, un_pcb);
-        un_pcb->llegada_ready = temporal_create();
-        log_info(logger_planificador_obligatorio, "El proceso < %d > se movio a READY", un_pcb->pid);
-        log_info(logger_planificador_obligatorio, "Cola READY < %s >:", configuracionKernel.ALGORITMO_PLANIFICACION);
-        loguear_procesos_en_lista(lista_ready_hrrn);
-
-        pthread_mutex_unlock(&mutex_ready);
-        sem_post(&activar_corto_plazo);
-    }
-}
-
-void agregar_proceso_exec(pcb* un_pcb)
-{
-    pthread_mutex_lock(&mutex_exec);
-
-
-    un_pcb->estado = RUNNING;
-    queue_push(cola_exec, un_pcb);
-    log_info(logger_planificador_obligatorio, "El proceso < %d > se movio a EXEC", un_pcb->pid);
-
-    pthread_mutex_unlock(&mutex_exec);
-}
-
-void agregar_proceso_terminated(pcb* un_pcb)
-{
-    pthread_mutex_lock(&mutex_terminated);
-
-
-    un_pcb->estado = TERMINATED;
-    queue_push(cola_terminated, un_pcb);
-    log_info(logger_planificador_obligatorio, "El proceso < %d > se movio a TERMINATED", un_pcb->pid);
-
-    pthread_mutex_unlock(&mutex_terminated);
-    sem_post(&grado_multiprogramacion);
-}
-
-void agregar_proceso_block(pcb* un_pcb)
-{
-    // TO-DO: Implementar el bloqueo de procesos.
-}
-
-pcb* obtener_proceso_new()
-{
-    pcb* proceso_new;
-
-    pthread_mutex_lock(&mutex_new);
-
-    proceso_new = queue_pop(cola_new);
-    log_info(logger_planificador_obligatorio, "El proceso: < %d > salio de NEW", proceso_new->pid);
-
-    pthread_mutex_unlock(&mutex_new);
-
-    return proceso_new;
-}
-
-pcb* obtener_proceso_ready()
-{
-    pcb* proceso_ready;
-
-    pthread_mutex_lock(&mutex_ready);
-
-    proceso_ready = queue_pop(cola_ready_fifo);
-    log_info(logger_planificador_obligatorio, "El proceso: < %d > salio de READY", proceso_ready->pid);
-
-    pthread_mutex_unlock(&mutex_ready);
-
-    return proceso_ready;
-}
-
-
-pcb* obtener_proceso_block()
-{
-    // TO-DO: Implementar el bloqueo de procesos.
-}
-
-pcb* desalojar_proceso_en_exec()
-{
-    pthread_mutex_lock(&mutex_exec);
-
-    pcb* proceso_desalojado = queue_pop(cola_exec);
-    log_info(logger_planificador_obligatorio, "El proceso: < %d > salio de EXEC", proceso_desalojado->pid);
-
-    pthread_mutex_unlock(&mutex_exec);
-    sem_post(&sem_hay_en_running);
-
-    return proceso_desalojado;
-}
 
 
 
-void loguear_cola_de_procesos(t_queue* cola_de_procesos)
-{
-    for(int i = 0; i < queue_size(cola_de_procesos); i++)
-    {
-        pcb* un_proceso = (pcb*)queue_peek_at(cola_de_procesos,i);
-        loguear_pcb(un_proceso, logger_planificador_extra);
-    }
-}
 
-void* queue_peek_at(t_queue* cola, int i)
-{
-    return list_get(cola->elements, i);
-}
-
-void loguear_procesos_en_cola(t_queue* cola_de_procesos)
-{
-    for(int i = 0; i < queue_size(cola_de_procesos); i++)
-    {
-        pcb* un_proceso = (pcb*)queue_peek_at(cola_de_procesos,i);
-        log_info(logger_planificador_obligatorio, "Proceso: < %d >", un_proceso->pid);
-    }
-}
-
-void loguear_procesos_en_lista(t_list* lista_de_procesos)
-{
-    for(int i = 0; i < list_size(lista_de_procesos); i++)
-    {
-        pcb* un_proceso = list_get(lista_de_procesos,i);
-        log_info(logger_planificador_obligatorio, "Proceso: < %d >", un_proceso->pid);
-    }
-}
-
-void startSigHandlers(void) {
-	signal(SIGINT, sigHandler_sigint);
-}
-
-void sigHandler_sigint(int signo) {
-	log_warning(logger_kernel_util_extra, "Tiraste un CTRL+C, macho, abortaste el proceso.");
-	
-	destruir_estructuras_planificacion();
-    close(socketCPU);
-    //close(socketFS);
-    //close(socketMemoria);
-	printf("-------------------FINAL POR CTRL+C-------------------");
-
-	exit(-1);
-}

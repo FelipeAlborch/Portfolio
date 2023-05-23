@@ -10,52 +10,41 @@
 #define WORST_FIT 3
 #define TAM_CABECERA sizeof(t_segmento)
 #define TAM_PAQ sizeof(t_paquete)
+#define LIBRE true
+#define OCUPADO false
 
 extern t_log* mlogger;
+extern t_log* klogger;
 extern t_log* loggerMemoria;
 extern int clientes[4];
 extern int conexion;
-extern int running;
+extern int running_k;
 extern int server_m;
 extern t_config* memoriaConfig;
 extern pthread_t hilo_cpu;
 extern pthread_t hilo_kernel;
 extern pthread_t hilo_fs;
 extern pthread_t hiloConexion;
-
 extern void* memoria;
 
-extern t_list* tabla_segmentos; //listado de t_tabla_seg de todos los procesos
-/*typedef struct
-{
-	bool libre;     //libre --> 1 ocupado -->0
-	void* inicio_segmento;
-	int tamanio_segmento;
-	int id_segmento;
-	int id_proceso;
+//extern t_tabla_segmentos* tabla_segmentos; //listado de t_segmentos de todos los procesos
+extern t_list* huecos_libres; //listado de t_hueco_libre
+extern t_list* tabla_segmentos_gral; //listado de t_segmentos de todos los procesos
+/*
+typedef struct {
+   // int id_seg;
     int base;
-    int direcion_fisica;
-    pthread_mutex_t* mutex_segmento;
-
-}t_segmento;*/
-
-typedef struct {
-    int id_seg;
     int size;
-    int libre;
+   // int libre;
 }t_segmento;
-
-typedef struct {
-    void* inicio;
-    int size;
-} t_hueco_libre;
-
+*/
 
 typedef struct 
 {   
+    int index;
     int pid;
     int direcion_fisica;
-    t_list* tabla_segmentos;
+    t_segmento* segmento;
 }t_tabla_segmentos;
 
 
@@ -89,12 +78,12 @@ typedef struct{
     char* puerto;
     char* algoritmo;
     char* ip; 
-    int cant_seg;
+    int cant_seg; // cantidad de segmentos por proceso
     int retardo;
     int compactacion;
     int tam_memo;
     int tam_seg_0;
-    int tam_maximo_seg;
+    int cant_seg_max;
     int bytes_libres;
     int cpu;    // para guardar la conexion
     int fs;     // para guardar la conexion
@@ -107,20 +96,34 @@ void mostrar_valores_de_configuracion_memoria();
 
 // ID --> para el id del segmento y para la direc fisica
 void loggear(int code, int pid, void* algo, int id, int size, float base);
-
+void respuestas(int cliente, int code,void* algo);
 
 void crear_estructuras();
-void liberar_proceso(int pid); 
+
 void* leer_dato(int pid, int direccion, int size);
 void escribir_dato(int pid, int direccion, int size, void* valor);
-void crear_segmento(int pid, int size);
 void eliminar_segmento(int pid, int direccion);
+
 void compactar();
+void actualizar_memoria(int size, int indice, int estado);
+
 void crear_segmento_(int pid, int size);
-void* crear_proceso(t_paquete* paquete);
+void modificar_tabla_segmentos(t_tabla_segmentos* tabla,int pid, int dir, int index,int base, int size);
+void modificar_segmento(t_segmento* segmento, int base, int size);
+void eliminar_segmento_por_id(int id_seg, t_list* segmentos);
+void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos);
+int buscar_en_tabla_index(int pid);
+void imprimir_tabla(t_list* lista);
+void imprimir_tabla_gral();
+
+void ejecutar_kernel_test();
+void crear_proceso(int paquete);
+void eliminar_proceso(int pid);
+void liberar_proceso(int pid);
 
 t_tabla_segmentos* crear_tabla_segmentos(int pid, int cant_seg, int tam_seg);
 t_tabla_segmentos* buscar_en_tabla(int pid);
 t_segmento* buscar_segmento(int id_seg, t_list* segmentos);
-
+t_segmento* crear_segmento(int pid, int size);
+t_list* crear_tabla_proceso(int pid);
 #endif
