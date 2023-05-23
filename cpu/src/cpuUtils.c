@@ -76,6 +76,14 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         ejecutar_f_read_o_f_write(pcb, lineaInstruccion, socketKernel, F_WRITE);
         break;
 
+      case MOV_IN:
+        ejecutar_mov_in(pcb, lineaInstruccion, socketMemoria);
+        break;
+
+      case MOV_OUT:
+        ejecutar_mov_out(pcb, lineaInstruccion, socketMemoria);
+        break;
+
       case YIELD:
         ejecutar_yield(pcb, socketKernel);
         break;
@@ -85,6 +93,7 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
 
       default:
+        log_info(logger, "Lei una instruccion desconocida...");
         break;
     }
 
@@ -360,22 +369,76 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
 void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
-  t_paquete *paquete = crear_paquete_operacion(MOV_IN);
+  t_paquete *paquete = crear_paquete_operacion(MOV_IN_INSTRUCTION);
   int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb);
+  t_list *listaPlana;
 
   agregar_a_paquete(paquete, &DF, sizeof(int));
   enviar_paquete(paquete, socketMemoria);
 
-  /*switch (recibir_operacion(socketMemoria))
+  // Esperando respuesta de memoria...
+  switch (recibir_operacion(socketMemoria))
   {
-  case  constant-expression :
+  case MOV_IN_SUCCES:
+    listaPlana = _recibir_paquete(socketMemoria);
+    char *contenidoMemoria = string_duplicate(list_get(listaPlana, 0));
+    log_info(logger, "Valor obtenido de Memoira es [%s]", contenidoMemoria);
+
+    strcpy(instruccion->parametros[1], contenidoMemoria);
+    ejecutar_set(pcb, instruccion);
     break;
   
   default:
+    log_info(logger, "Ocurrio un error en la lectura de Memoria..");
     break;
-  } */
+  }
+
+  list_destroy_and_destroy_elements(listaPlana, &free);
+  log_destroy(logger);
+}
+
+void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+  t_paquete *paquete = crear_paquete_operacion(MOV_OUT_INSTRUCTION);
+  int DF = obtener_direccion_fisica(instruccion->parametros[0], pcb);
+  t_list *listaPlana;
+
+  char* valorACopiar = string_duplicate(obtener_valor_registro(instruccion, pcb));
+
+  agregar_a_paquete(paquete, &DF, sizeof(int));
+  agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar) + 1);
+  enviar_paquete(paquete, socketMemoria);
 
   log_destroy(logger);
+}
+
+char* obtener_valor_registro(LineaInstruccion *instruccion, pcb *pcb)
+{
+  if(!strcmp(instruccion->parametros[0], "AX"))
+    return pcb->AX;
+  else if(!strcmp(instruccion->parametros[0], "BX"))
+    return pcb->BX;  
+  else if(!strcmp(instruccion->parametros[0], "CX"))
+    return pcb->CX;
+  else if(!strcmp(instruccion->parametros[0], "DX"))
+    return pcb->DX;
+  if(!strcmp(instruccion->parametros[0], "EAX"))
+    return pcb->EAX;
+  else if(!strcmp(instruccion->parametros[0], "EBX"))
+    return pcb->EBX;  
+  else if(!strcmp(instruccion->parametros[0], "ECX"))
+    return pcb->ECX;
+  else if(!strcmp(instruccion->parametros[0], "EDX"))
+    return pcb->EDX;
+  if(!strcmp(instruccion->parametros[0], "RAX"))
+    return pcb->RAX;
+  else if(!strcmp(instruccion->parametros[0], "RBX"))
+    return pcb->RBX;  
+  else if(!strcmp(instruccion->parametros[0], "RCX"))
+    return pcb->RCX;
+  else if(!strcmp(instruccion->parametros[0], "RDX"))
+    return pcb->RDX;
 }
 
 void ejecutar_yield(pcb *pcb, int socketKernel)

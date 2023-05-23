@@ -6,6 +6,7 @@
 void ejecutar_lista_instrucciones_del_pcb(pcb*, int, int);
 Instruccion obtener_tipo_instruccion(char*);
 bool es_instruccion_de_corte(Instruccion);
+char* obtener_valor_registro(LineaInstruccion*, pcb*);
 
 // Funciones que ejecutan instrucciones
 
@@ -21,6 +22,8 @@ void abrir_o_cerrar_archivo(pcb*, LineaInstruccion*, int, int);
 void ejecutar_f_seek(pcb*, LineaInstruccion*, int);
 void ejecutar_f_truncate(pcb*, LineaInstruccion*, int);
 void ejecutar_f_read_o_f_write(pcb*, LineaInstruccion*, int, int);
+void ejecutar_mov_out(pcb*, LineaInstruccion*, int);
+void ejecutar_mov_in(pcb*, LineaInstruccion*, int);
 
 //
 
