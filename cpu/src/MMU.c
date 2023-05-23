@@ -1,6 +1,6 @@
 #include <MMU.h>
 
-int obtener_direccion_fisica(int direccionLogica, pcb *pcb)
+int obtener_direccion_fisica(int direccionLogica, pcb *pcb, int cantBytes)
 {
     Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
 
@@ -12,6 +12,9 @@ int obtener_direccion_fisica(int direccionLogica, pcb *pcb)
 
     int desplazamientoSegmento = obtener_desplazamiento_del_segmento(direccionLogica);
     log_info(logger, "Desplazamiento del segmento [%d]: [%d]", numeroSegmento, desplazamientoSegmento);
+
+    if(segmento->size < desplazamientoSegmento + cantBytes)
+      return -1;
 
     int DF = desplazamientoSegmento + segmento->base;
     log_destroy(logger);

@@ -1,5 +1,7 @@
 #include <cpuUtils.h>
 
+bool haySegmentationFault = false;
+
 void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socketMemoria)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
@@ -345,6 +347,13 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
   int cantBytes = atoi(instruccion->parametros[2]);
   int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb);
 
+  if(DF == -1)
+  {
+    haySegmentationFault = true;
+    enviar_contexto_ejecucion(pcb, socketKernel, SEG_FAULT);
+    return;
+  }
+
   if(operacion == F_READ)
   {
     log_info(logger, "Solicitandole al Kernel que lea del archivo [%s], [%d] bytes, en la DF [%d]...", 
@@ -536,6 +545,10 @@ bool es_instruccion_de_corte(Instruccion instruccion)
 {
   switch (instruccion)
   {
+  case MOV_IN:
+    return true;
+  case MOV_OUT:
+    return true;
   case F_WRITE:
     return true; 
   case F_TRUNCATE:
