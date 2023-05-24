@@ -5,13 +5,14 @@
 #include <utils/conexion.h>
 #include <ipc.h>
 
-#define FIRST_FIT 1
-#define BEST_FIT 2
-#define WORST_FIT 3
+#define FIRST_FIT 500
+#define BEST_FIT 502
+#define WORST_FIT 503
 #define TAM_CABECERA sizeof(t_segmento)
 #define TAM_PAQ sizeof(t_paquete)
 #define LIBRE true
-#define OCUPADO false
+#define OCUPADO 100
+//#define 
 
 extern t_log* mlogger;
 extern t_log* klogger;
@@ -30,14 +31,13 @@ extern void* memoria;
 //extern t_tabla_segmentos* tabla_segmentos; //listado de t_segmentos de todos los procesos
 extern t_list* huecos_libres; //listado de t_hueco_libre
 extern t_list* tabla_segmentos_gral; //listado de t_segmentos de todos los procesos
-/*
+
 typedef struct {
-   // int id_seg;
-    int base;
-    int size;
-   // int libre;
-}t_segmento;
-*/
+    int inicio;
+    int tamanio;
+    int estado;
+}t_hueco_libre;
+
 
 typedef struct 
 {   
@@ -76,8 +76,9 @@ void ejecutar_fs();
 
 typedef struct{
     char* puerto;
+    char* ip;
     char* algoritmo;
-    char* ip; 
+    int algoritmo_int; 
     int cant_seg; // cantidad de segmentos por proceso
     int retardo;
     int compactacion;
@@ -93,7 +94,7 @@ typedef struct{
 extern config_de_memoria config_memo;
 void obtener_valores_de_configuracion_memoria(t_config*);
 void mostrar_valores_de_configuracion_memoria();
-
+void algoritmos();
 // ID --> para el id del segmento y para la direc fisica
 void loggear(int code, int pid, void* algo, int id, int size, float base);
 void respuestas(int cliente, int code,void* algo);
@@ -121,7 +122,13 @@ void crear_proceso(int paquete);
 void eliminar_proceso(int pid);
 void liberar_proceso(int pid);
 
-t_tabla_segmentos* crear_tabla_segmentos(int pid, int cant_seg, int tam_seg);
+int buscar_hueco_libre(int size);
+int first_fit(int size);
+int best_fit(int size);
+int worst_fit(int size);
+
+t_hueco_libre* crear_hueco_libre(int inicio, int tam,int estado);
+t_tabla_segmentos* crear_tabla_segmentos(int pid, int index, int base, int tam_seg);
 t_tabla_segmentos* buscar_en_tabla(int pid);
 t_segmento* buscar_segmento(int id_seg, t_list* segmentos);
 t_segmento* crear_segmento(int pid, int size);

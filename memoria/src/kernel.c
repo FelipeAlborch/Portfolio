@@ -119,10 +119,20 @@ void create_segment(int pid,int tam,int id){
         log_error(klogger,"No hay memoria suficiente para crear el segmento");
         loggear(OUT_OF_MEMORY,pid,NULL,tam,0,0);
         return;
-    }else
-    {
-        /* code */
     }
+    int indice =buscar_hueco_libre(tam);
+    if(indice==-2){
+        respuestas(config_memo.kernel,INICIO_COMPACTAR,NULL);
+        log_warning(klogger,"No hay hueco para crear el segmento, hay que compactar");
+        compactar();
+        
+        return;
+    }else{
+        
+        respuestas(config_memo.kernel,CREATE_SEGMENT,NULL);
+        log_trace(klogger,"Se creo el segmento %d",id);
+        loggear(CREATE_SEGMENT,pid,NULL,tam,0,0);
+    }   
     
     
     crear_segmento(pid,tam);

@@ -17,18 +17,19 @@ log_info(logger_ram_hq,"Creando estructuras administrativas para esquema de memo
 */
 
 void inicializar_segmentos(){
-    t_tabla_segmentos* tabla = crear_tabla_segmentos(0,0,0);
+    t_tabla_segmentos* tabla = crear_tabla_segmentos(0,0,0,config_memo.tam_seg_0);
     tabla_segmentos_gral = list_create();
     int j = 0;
-    for (size_t i = 0; i < config_memo.cant_seg_max; i++)
+    list_add_in_index(tabla_segmentos_gral,0,tabla);
+    for (size_t i = 1; i < config_memo.cant_seg_max; i++)
     {
         modificar_tabla_segmentos(tabla,j,-1,i,-1,0);
         list_add_in_index(tabla_segmentos_gral,i,tabla);
        // printf("%d- pid: %d  base: %d  size %d\n",i, tabla->pid, tabla->segmento->base, tabla->segmento->size);
         j--;
     }
-    modificar_tabla_segmentos(tabla,-1,0,0,0,config_memo.tam_seg_0);
-    list_replace(tabla_segmentos_gral,0,tabla);
+   // modificar_tabla_segmentos(tabla,-1,0,0,0,config_memo.tam_seg_0);
+    //list_replace(tabla_segmentos_gral,0,tabla);
     
     free(tabla->segmento);
     free(tabla);
@@ -50,17 +51,13 @@ t_segmento* crear_segmento(int base, int size){
 }
 void crear_estructuras(){
     huecos_libres = list_create();
-    t_segmento* segmento = crear_segmento(0,config_memo.tam_seg_0);
-    
-    for (size_t i = 0; i < config_memo.cant_seg_max; i++)
-    {
-        list_add_in_index(huecos_libres,i,LIBRE);
-    }
-    list_add_in_index(huecos_libres,0,OCUPADO);
+    t_hueco_libre* hueco = crear_hueco_libre(0,config_memo.tam_seg_0,OCUPADO);
+    list_add_in_index(huecos_libres,0,hueco);
+    list_add_in_index(huecos_libres,1,crear_hueco_libre(config_memo.tam_seg_0+1,config_memo.bytes_libres,LIBRE));
 
     inicializar_segmentos();
     
-    free(segmento);
+    free(hueco);
 }
 
 
@@ -89,18 +86,21 @@ void eliminar_segmento(int pid, int direccion){
     free(tabla->segmento);
     free(tabla);
 }
-void compactar(){}
+void compactar(){
+    recibir_operacion(config_memo.kernel);
+    loggear(INICIO_COMPACTAR,0,NULL,0,0,0);
+}
 void crear_segmento_(int pid, int size){}
 
 
-t_tabla_segmentos* crear_tabla_segmentos(int pid, int dir, int index){
+t_tabla_segmentos* crear_tabla_segmentos(int pid, int index, int base, int size){
 	t_tabla_segmentos* tabla_seg = malloc(sizeof(t_tabla_segmentos));
-    
+    int dir= base + size;
     
     tabla_seg->pid = pid;
     tabla_seg->direcion_fisica=dir;
     tabla_seg->index=index;
-    tabla_seg->segmento = crear_segmento(0,config_memo.tam_seg_0); 
+    tabla_seg->segmento = crear_segmento(base,size); 
 
     return tabla_seg;
 }
@@ -140,6 +140,29 @@ void liberar_proceso(int pid) {
     
 }
 
+int buscar_hueco_libre(int size){
+   int index = -2;
+   switch (config_memo.algoritmo_int)
+   {
+    case FIRST_FIT:
+    index = first_fit(size);
+    break;
+    case BEST_FIT:
+    index = best_fit(size);
+    case WORST_FIT:
+    index = worst_fit(size);
+   default:
+    break;
+   }
+}
+t_hueco_libre* crear_hueco_libre(int inicio, int tam, int estado){
+    t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
+    hueco->inicio = inicio;
+    hueco->tamanio = tam;
+    hueco->estado = estado;
+
+    return hueco;
+}
 void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos){
     list_remove_by_condition(segmentos, (void*) free);
     free(segmento);

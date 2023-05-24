@@ -143,6 +143,7 @@ void obtener_valores_de_configuracion_memoria(t_config* memoriaConfig){
     config_memo.cant_seg_max = config_memo.tam_memo / config_memo.tam_seg_0;
     config_memo.ip = string_duplicate("127.0.0.1");
     config_memo.bytes_libres=config_memo.tam_memo;
+    algoritmos();
 }
 
 void mostrar_valores_de_configuracion_memoria (){
@@ -152,7 +153,7 @@ void mostrar_valores_de_configuracion_memoria (){
     printf("cant_seg = %d\n" , config_memo.cant_seg);
     printf("retardo = %d\n" , config_memo.retardo);
     printf("compactacion = %d\n", config_memo.compactacion);
-    printf("algoritmo = %s\n" , config_memo.algoritmo);
+    printf("algoritmo = %s, %d\n" , config_memo.algoritmo, config_memo.algoritmo_int);
     printf("Tamaño maximo = %d\n" , config_memo.cant_seg_max);
 
 }
@@ -253,4 +254,63 @@ void respuestas(int cliente, int code,void* algo){
   agregar_a_paquete(paquete,algo,sizeof(algo)+1);
   enviar_paquete(paquete,cliente);
   eliminar_paquete(paquete);
+}
+
+void algoritmos(){
+  if(strcmp(config_memo.algoritmo,"FF")==0){
+    config_memo.algoritmo_int=FIRST_FIT;
+  }
+  else if(strcmp(config_memo.algoritmo,"BF")==0){
+    config_memo.algoritmo_int=BEST_FIT;
+  }
+  else if(strcmp(config_memo.algoritmo,"WF")==0){
+    config_memo.algoritmo_int=WORST_FIT;
+  }
+  else{
+    log_error(loggerMemoria,"No se reconoce el algoritmo de asignación");
+  }
+}
+
+int first_fit(int tam){
+
+  for (int i = 0; i < list_size(huecos_libres); i++) {
+        t_hueco_libre* hueco = list_get(huecos_libres, i);
+        if (hueco->tamanio >= size && hueco->estado == LIBRE) {
+            return i;
+        }
+    }
+
+    return -2;
+}
+int best_fit(int tam){
+  int index = -2;
+    int min = config_memo.tam_memo + 1;
+
+    for (int i = 0; i < list_size(huecos_libres); i++) {
+        t_hueco_libre* hueco = list_get(huecos_libres, i);
+        if (hueco->tamanio >= size && hueco->estado == LIBRE) {
+            if (hueco->tamanio < min) {
+                min = hueco->tamanio;
+                index = i;
+            }
+        }
+    }
+
+    return index;
+}
+int worst_fit(int tam){
+  int index = -2;
+    int max = -1;
+
+    for (int i = 0; i < list_size(huecos_libres); i++) {
+        t_hueco_libre* hueco = list_get(huecos_libres, i);
+        if (hueco->tamanio >= size && hueco->estado == LIBRE) {
+            if (hueco->tamanio > max) {
+                max = hueco->tamanio;
+                index = i;
+            }
+        }
+    }
+
+    return index;
 }
