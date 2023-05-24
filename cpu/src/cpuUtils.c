@@ -78,12 +78,12 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         ejecutar_f_read_o_f_write(pcb, lineaInstruccion, socketKernel, F_WRITE);
         break;
 
-      case MOV_IN:
-        ejecutar_mov_in(pcb, lineaInstruccion, socketMemoria);
+      case MOV_IN_INSTRUCTION:
+        ejecutar_mov_in(pcb, lineaInstruccion, socketMemoria, socketKernel);
         break;
 
-      case MOV_OUT:
-        ejecutar_mov_out(pcb, lineaInstruccion, socketMemoria);
+      case MOV_OUT_INSTRUCTION:
+        ejecutar_mov_out(pcb, lineaInstruccion, socketMemoria, socketKernel);
         break;
 
       case YIELD:
@@ -345,11 +345,12 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   t_paquete *paquete = crear_paquete_operacion(operacion);
   int cantBytes = atoi(instruccion->parametros[2]);
-  int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb);
+  int DF = obtener_direccion_fisica(atoi(instruccion->parametros[1]), pcb, cantBytes);
 
   if(DF == -1)
   {
     haySegmentationFault = true;
+    log_warning(logger, "Termiando el proceso, hay SEGMENTATION FAULT...");
     enviar_contexto_ejecucion(pcb, socketKernel, SEG_FAULT);
     return;
   }
@@ -375,12 +376,20 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
   log_destroy(logger);
 }
 
-void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria)
+void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   t_paquete *paquete = crear_paquete_operacion(MOV_IN_INSTRUCTION);
-  int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb);
+  int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb, cantidad_bytes_registro(instruccion->parametros[0]));
   t_list *listaPlana;
+
+  if(DF == -1)
+  {
+    haySegmentationFault = true;
+    log_warning(logger, "Termiando el proceso, hay SEGMENTATION FAULT...");
+    enviar_contexto_ejecucion(pcb, socketKernel, SEG_FAULT);
+    return;
+  }
 
   agregar_a_paquete(paquete, &DF, sizeof(int));
   enviar_paquete(paquete, socketMemoria);
@@ -406,12 +415,19 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria)
   log_destroy(logger);
 }
 
-void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria)
+void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   t_paquete *paquete = crear_paquete_operacion(MOV_OUT_INSTRUCTION);
-  int DF = obtener_direccion_fisica(instruccion->parametros[0], pcb);
-  t_list *listaPlana;
+  int DF = obtener_direccion_fisica(instruccion->parametros[0], pcb, cantidad_bytes_registro(instruccion->parametros[1]));
+
+  if(DF == -1)
+  {
+    haySegmentationFault = true;
+    log_warning(logger, "Termiando el proceso, hay SEGMENTATION FAULT...");
+    enviar_contexto_ejecucion(pcb, socketKernel, SEG_FAULT);
+    return;
+  }
 
   char* valorACopiar = string_duplicate(obtener_valor_registro(instruccion, pcb));
 
@@ -448,6 +464,16 @@ char* obtener_valor_registro(LineaInstruccion *instruccion, pcb *pcb)
     return pcb->RCX;
   else if(!strcmp(instruccion->parametros[0], "RDX"))
     return pcb->RDX;
+}
+
+int cantidad_bytes_registro(char* unRegistro)
+{
+  if(strlen(unRegistro) == 2)
+    return 4;
+  else if(strlen(unRegistro) == 3 && unRegistro[0] == 'E')
+    return 8;
+  else 
+    return 16;
 }
 
 void ejecutar_yield(pcb *pcb, int socketKernel)
