@@ -271,7 +271,7 @@ void algoritmos(){
   }
 }
 
-int first_fit(int tam){
+int first_fit(int size){
 
   for (int i = 0; i < list_size(huecos_libres); i++) {
         t_hueco_libre* hueco = list_get(huecos_libres, i);
@@ -282,7 +282,7 @@ int first_fit(int tam){
 
     return -2;
 }
-int best_fit(int tam){
+int best_fit(int size){
   int index = -2;
     int min = config_memo.tam_memo + 1;
 
@@ -298,7 +298,7 @@ int best_fit(int tam){
 
     return index;
 }
-int worst_fit(int tam){
+int worst_fit(int size){
   int index = -2;
     int max = -1;
 
