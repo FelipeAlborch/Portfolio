@@ -133,12 +133,11 @@ void create_segment(int pid,int tam,int id){
         return;
     }else{
         
-        respuestas(config_memo.kernel,CREATE_SEGMENT,NULL);
+        modificar_hueco(indice,-1,tam,OCUPADO);
+        respuestas(config_memo.kernel,CREATE_SEGMENT,base_hueco(indice));
+        modificar_tabla_proceso(pid,id,base_hueco(indice),tam);
         log_trace(klogger,"Se creo el segmento %d",id);
-        loggear(CREATE_SEGMENT,pid,NULL,tam,0,0);
+        loggear(CREATE_SEGMENT,pid,NULL,id,tam,base_hueco(indice));
     }   
     
-    modificar_hueco(indice,-1,tam,OCUPADO);
-    
-    loggear(CREATE_SEGMENT,pid,NULL,tam,0,0);
 }

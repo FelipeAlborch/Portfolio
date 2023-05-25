@@ -96,7 +96,7 @@ void obtener_valores_de_configuracion_memoria(t_config*);
 void mostrar_valores_de_configuracion_memoria();
 void algoritmos();
 // ID --> para el id del segmento y para la direc fisica
-void loggear(int code, int pid, void* algo, int id, int size, float base);
+void loggear(int code, int pid, void* algo, int id, int size, int base);
 void respuestas(int cliente, int code,void* algo);
 
 void crear_estructuras();
@@ -133,6 +133,7 @@ void liberar_hueco(int index);
 void modificar_hueco(int index, int inicio, int tam, int estado);
 int buscar_hueco_libre(int size);
 int buscar_hueco_base(int base);
+int base_hueco(int index);
 t_hueco_libre* crear_hueco_libre(int inicio, int tam,int estado);
 
 int first_fit(int size);

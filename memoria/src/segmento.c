@@ -254,6 +254,7 @@ void modificar_hueco(int index, int inicio, int tam, int estado){
             
         }
         free(hueco);
+        
         actualizar_memoria(tam,OCUPADO);
         return;
     }
@@ -295,4 +296,8 @@ int buscar_hueco_base(int base){
         }
     }
     return M_ERROR;
+}
+int base_hueco(int index){
+    t_hueco_libre* hueco = list_get(huecos_libres,index);
+    return hueco->inicio;
 }

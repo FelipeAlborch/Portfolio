@@ -208,15 +208,15 @@ void mostrar_valores_de_configuracion_memoria (){
     
   }
 
-  void loggear(int code, int pid, void* algo, int id, int size, float base){
+  void loggear(int code, int pid, void* algo, int id, int size, int base){
     
     switch (code)
     {
       case CREATE_SEGMENT:
-        log_trace(loggerMemoria,"PID: %d - Crear Segmento: %d - Base: %f - TAMAÑO: %d",pid,id,base,size);
+        log_trace(loggerMemoria,"PID: %d - Crear Segmento: %d - Base: %d - TAMAÑO: %d",pid,id,base,size);
         break;
       case DELETE_SEGMENT:
-        log_trace(loggerMemoria,"PID: %d - Eliminar Segmento: %d - Base: %f - TAMAÑO: %d",pid,id,base,size);
+        log_trace(loggerMemoria,"PID: %d - Eliminar Segmento: %d - Base: %d - TAMAÑO: %d",pid,id,base,size);
         break;
       case INICIO_COMPACTAR:
         log_trace(loggerMemoria,"Solicitud de Compactación");
@@ -224,7 +224,7 @@ void mostrar_valores_de_configuracion_memoria (){
 
       case FIN_COMPACTAR:
             /*Por cada segmento de cada proceso se deberá imprimir una línea con el siguiente formato:*/
-        log_trace(loggerMemoria,"PID: %d - Segmento: %d - Base: %f - Tamaño %d",pid);
+        log_trace(loggerMemoria,"PID: %d - Segmento: %d - Base: %d - Tamaño %d",pid);
         break;
 
       case M_READ:
