@@ -256,6 +256,16 @@ void respuestas(int cliente, int code,void* algo){
   eliminar_paquete(paquete);
 }
 
+void actualizar_memoria(int size, int estado){
+    
+    if(estado == LIBRE){
+        config_memo.bytes_libres=config_memo.bytes_libres+size;
+    }else{
+        config_memo.bytes_libres=config_memo.bytes_libres-size;
+    }
+}
+
+
 void algoritmos(){
   if(strcmp(config_memo.algoritmo,"FF")==0){
     config_memo.algoritmo_int=FIRST_FIT;

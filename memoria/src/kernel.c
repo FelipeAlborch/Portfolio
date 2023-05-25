@@ -50,9 +50,14 @@ void ejecutar_kernel(){
             int id=*(int*)list_get(lista,0);    // Cambie los indices
             pid=*(int*)list_get(lista,2);
             int tam=*(int*)list_get(lista,1);
-            
+            create_segment(pid,tam,id);
             break;
-          //case
+          case DELETE_SEGMENT:
+            lista = _recibir_paquete(config_memo.kernel);    // Agregue esta linea
+            id=*(int*)list_get(lista,0);    // Cambie los indices
+            pid=*(int*)list_get(lista,1);
+            eliminar_segmento(pid, id);
+            break;
            
           default:
             break;
@@ -71,12 +76,11 @@ void crear_proceso(int pid){
     t_list* listaS=crear_tabla_proceso(pid);
     loggear(INICIO_PROCESO,pid,NULL,0,0,0);
     
-    //t_paquete* paquete = malloc(TAM_PAQ);
+
     t_paquete* paquete = crear_paquete_operacion(INICIO_PROCESO);
     serializar_tabla_segmentos(paquete,listaS);
     enviar_paquete(paquete,config_memo.kernel);
     
-    //respuestas(config_memo.kernel,INICIO_PROCESO,paquete);
     
     eliminar_paquete(paquete);
     //list_destroy(listaS);
@@ -86,7 +90,7 @@ void eliminar_proceso(int pid){
     int indice= buscar_en_tabla_index(pid);
     t_paquete* paquete = malloc(TAM_PAQ);
 
-    if(indice==-1){
+    if(indice== M_ERROR){
         log_error(klogger,"No se encontro el proceso %d",pid);
         respuestas(config_memo.kernel,FIN_PROCESO,paquete);
         return;
@@ -134,7 +138,7 @@ void create_segment(int pid,int tam,int id){
         loggear(CREATE_SEGMENT,pid,NULL,tam,0,0);
     }   
     
+    modificar_hueco(indice,-1,tam,OCUPADO);
     
-    crear_segmento(pid,tam);
     loggear(CREATE_SEGMENT,pid,NULL,tam,0,0);
 }

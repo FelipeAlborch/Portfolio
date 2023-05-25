@@ -12,7 +12,7 @@
 #define TAM_PAQ sizeof(t_paquete)
 #define LIBRE true
 #define OCUPADO 100
-//#define 
+#define M_ERROR -100
 
 extern t_log* mlogger;
 extern t_log* klogger;
@@ -41,7 +41,7 @@ typedef struct {
 
 typedef struct 
 {   
-    int index;
+    int index; // id del segmento de la tabla de segmentos
     int pid;
     int direcion_fisica;
     t_segmento* segmento;
@@ -103,34 +103,47 @@ void crear_estructuras();
 
 void* leer_dato(int pid, int direccion, int size);
 void escribir_dato(int pid, int direccion, int size, void* valor);
+
 void eliminar_segmento(int pid, int direccion);
+void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos);
+
+
 
 void compactar();
-void actualizar_memoria(int size, int indice, int estado);
+void actualizar_memoria(int size, int estado);
 
-void crear_segmento_(int pid, int size);
+
+void modificar_tabla_proceso(int pid, int index, int base, int size);
 void modificar_tabla_segmentos(t_tabla_segmentos* tabla,int pid, int dir, int index,int base, int size);
 void modificar_segmento(t_segmento* segmento, int base, int size);
-void eliminar_segmento_por_id(int id_seg, t_list* segmentos);
-void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos);
-int buscar_en_tabla_index(int pid);
+
+
 void imprimir_tabla(t_list* lista);
 void imprimir_tabla_gral();
+
 
 void ejecutar_kernel_test();
 void crear_proceso(int paquete);
 void eliminar_proceso(int pid);
 void liberar_proceso(int pid);
+int buscar_en_tabla_index(int pid);
+t_list* crear_tabla_proceso(int pid);
 
+void liberar_hueco(int index);
+void modificar_hueco(int index, int inicio, int tam, int estado);
 int buscar_hueco_libre(int size);
+int buscar_hueco_base(int base);
+t_hueco_libre* crear_hueco_libre(int inicio, int tam,int estado);
+
 int first_fit(int size);
 int best_fit(int size);
 int worst_fit(int size);
 
-t_hueco_libre* crear_hueco_libre(int inicio, int tam,int estado);
+void create_segment(int pid,int tam,int id);
+int buscar_en_tabla_id(int pid, int id);
 t_tabla_segmentos* crear_tabla_segmentos(int pid, int index, int base, int tam_seg);
-t_tabla_segmentos* buscar_en_tabla(int pid);
+
 t_segmento* buscar_segmento(int id_seg, t_list* segmentos);
 t_segmento* crear_segmento(int pid, int size);
-t_list* crear_tabla_proceso(int pid);
+
 #endif
