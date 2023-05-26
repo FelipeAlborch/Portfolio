@@ -463,8 +463,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
         case F_OPEN: 
             // RECIBIR PARAMETRO(S) DE CPU
             lista_recepcion_valores = _recibir_paquete(socketCPU);
-            nombre_recurso = list_get(lista_recepcion_valores, 0);
-            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_OPEN: %s", nombre_recurso);
+            nombre_archivo = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_OPEN: %s", nombre_archivo);
 
             int operacion_fopen = recibir_operacion(socketCPU);
             t_list* lista_contexto_fopen = _recibir_paquete(socketCPU);
@@ -477,12 +477,12 @@ void ejecutar(pcb* proceso_a_ejecutar)
             loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
             // BUSCAR EN TABLA DE ARCHIVOS ABIERTOS
-            if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_recurso))
+            if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_archivo))
             {
                 // PEDIR AL FS
                 // archivo = obtener_archivo_de_fs();
                 t_paquete* paquete_a_fs = crear_paquete_operacion(CREAR_ARCHIVO);
-                agregar_a_paquete(paquete_a_fs, nombre_recurso, strlen(nombre_recurso)+1);
+                agregar_a_paquete(paquete_a_fs, nombre_archivo, strlen(nombre_archivo)+1);
                 enviar_paquete(paquete_a_fs, socketFS);
                 
                 int rta1;
@@ -492,13 +492,13 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 
 
                 // SI NO EXISTE, CREARLO
-                t_recurso* archivo = crear_recurso(nombre_recurso, 1);
+                t_recurso* archivo = crear_recurso(nombre_archivo, 1);
                 archivo->posicion = 0;
 
-                dictionary_put(tabla_global_archivos_abiertos, nombre_recurso, archivo);
+                dictionary_put(tabla_global_archivos_abiertos, nombre_archivo, archivo);
             }
 
-            fopen_recurso(proceso_a_ejecutar, nombre_recurso);
+            fopen_recurso(proceso_a_ejecutar, nombre_archivo);
 
             liberar_contexto_ejecucion(contexto_de_fopen);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
@@ -521,8 +521,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
         case F_CLOSE: 
             // RECIBIR PARAMETRO(S) DE CPU
             lista_recepcion_valores = _recibir_paquete(socketCPU);
-            nombre_recurso = list_get(lista_recepcion_valores, 0);
-            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_CLOSE: %s", nombre_recurso);
+            nombre_archivo = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_CLOSE: %s", nombre_archivo);
 
             int operacion_fclose = recibir_operacion(socketCPU);
             t_list* lista_contexto_fclose = _recibir_paquete(socketCPU);
@@ -534,13 +534,13 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
-            fclose_recurso(proceso_a_ejecutar, nombre_recurso);
+            fclose_recurso(proceso_a_ejecutar, nombre_archivo);
 
             
-            if(!archivo_esta_abierto(nombre_recurso))
+            if(!archivo_esta_abierto(nombre_archivo))
             {
                 // REMOVER DE LA TABLA DE ARCHIVOS ABIERTOS
-                t_recurso* archivo = dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
+                t_recurso* archivo = dictionary_remove(tabla_global_archivos_abiertos, nombre_archivo);
                 free(archivo);
             }
 
@@ -565,9 +565,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
         case F_SEEK: 
             // RECIBIR PARAMETRO(S) DE CPU
             lista_recepcion_valores = _recibir_paquete(socketCPU);
-            nombre_recurso = list_get(lista_recepcion_valores, 0);
+            nombre_archivo = list_get(lista_recepcion_valores, 0);
             int posicion = *(int*) list_get(lista_recepcion_valores, 1);
-            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_SEEK: %s, posicion: %d", nombre_recurso, posicion);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_SEEK: %s, posicion: %d", nombre_archivo, posicion);
 
             int operacion_fseek = recibir_operacion(socketCPU);
             t_list* lista_contexto_fseek = _recibir_paquete(socketCPU);
@@ -579,7 +579,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
-            fseek_archivo(proceso_a_ejecutar, nombre_recurso, posicion);
+            fseek_archivo(proceso_a_ejecutar, nombre_archivo, posicion);
 
             liberar_contexto_ejecucion(contexto_de_fseek);
             list_destroy_and_destroy_elements(lista_recepcion_valores, free);
@@ -592,14 +592,41 @@ void ejecutar(pcb* proceso_a_ejecutar)
             goto recibirOperacion;
 
         break;
+            case F_READ:
+                lista_recepcion_valores = _recibir_paquete(socketCPU);
+                nombre_archivo = list_get(lista_recepcion_valores, 0);
+                int direccion_fisica = *(int*) list_get(lista_recepcion_valores, 1);
+                int tamanio = *(int*) list_get(lista_recepcion_valores, 2);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d", nombre_archivo, direccion_fisica, tamanio);
 
-            // case F_READ:
+                int operacion_fread = recibir_operacion(socketCPU);
+                t_list* lista_contexto_fread = _recibir_paquete(socketCPU);
+                pcb* contexto_de_fread = recibir_contexto_ejecucion(lista_contexto_fread);
+
+                log_info(logger_planificador_extra, "Contexto recibido por F_READ");
+
+                actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fread);
+
+                loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
+                t_paquete* paquete_fread = crear_paquete_operacion(LEER_ARCHIVO);
+                agregar_a_paquete(paquete_fread, nombre_archivo, strlen(nombre_archivo)+1);
+                agregar_a_paquete(paquete_fread, &direccion_fisica, sizeof(int));
+                agregar_a_paquete(paquete_fread, &tamanio, sizeof(int));
+                enviar_paquete(paquete_fread, socketFS);
+
+                pthread_t* hilo_fread;
+                pthread_create(&hilo_fread, NULL, esperar_listo_de_fs, NULL);
+                pthread_detach(hilo_fread);
+
+                goto recibirOperacion;
+
             // case F_WRITE:
             case F_TRUNCATE:
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
-                nombre_recurso = list_get(lista_recepcion_valores, 0);
+                nombre_archivo = list_get(lista_recepcion_valores, 0);
                 int tamanio = *(int*) list_get(lista_recepcion_valores, 1);
-                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_TRUNCATE: %s, tamanio: %d", nombre_recurso, tamanio);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_TRUNCATE: %s, tamanio: %d", nombre_archivo, tamanio);
 
                 int operacion_ftruncate = recibir_operacion(socketCPU);
                 t_list* lista_contexto_truncate = _recibir_paquete(socketCPU);
@@ -612,17 +639,15 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 t_paquete* paquete_ftruncate = crear_paquete_operacion(TRUNCAR_ARCHIVO);
-                agregar_a_paquete(paquete_ftruncate, nombre_recurso, strlen(nombre_recurso)+1);
+                agregar_a_paquete(paquete_ftruncate, nombre_archivo, strlen(nombre_archivo)+1);
                 agregar_a_paquete(paquete_ftruncate, &tamanio, sizeof(int));
                 enviar_paquete(paquete_ftruncate, socketFS);
 
                 pthread_t* hilo_ftruncate;
-                pthread_create(&hilo_ftruncate, NULL, esperar_ftruncate, NULL);
+                pthread_create(&hilo_ftruncate, NULL, esperar_listo_de_fs, NULL);
                 pthread_detach(hilo_ftruncate);
 
-
-
-
+                goto recibirOperacion;
     
         case DESCONEXION:
             log_info(logger_planificador_obligatorio, "CPU Desconectado");

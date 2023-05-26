@@ -352,7 +352,7 @@ void fseek_archivo(pcb* un_pcb, char* un_recurso, int posicion) {
     archivo->posicion = posicion;
 }
 
-void esperar_ftruncate()
+void esperar_listo_de_fs()
 {
     pcb* proceso_desalojado = desalojar_proceso_en_exec();
     if(!es_fifo)
@@ -369,8 +369,6 @@ void esperar_ftruncate()
     recv(socketFS, &rtafs, sizeof(int), MSG_WAITALL);
     
     agregar_proceso_ready(proceso_desalojado);
-
-
 }
 
 void solicitar_creacion_segmento(int nro_segmento, int tam_segmento, int pid_proceso)

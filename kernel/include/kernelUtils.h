@@ -115,7 +115,7 @@ bool archivo_esta_abierto(char*);
 
 void fseek_archivo(pcb*, char*, int);
 
-void esperar_ftruncate();
+void esperar_listo_de_fs();
 
 void solicitar_creacion_segmento(int, int, int);
 
