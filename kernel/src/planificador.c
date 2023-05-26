@@ -429,19 +429,23 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             log_info(logger_kernel_util_obligatorio, "PID: < %d > - Eliminar Segmento - Id: < %d >", proceso_a_ejecutar->pid, nro_segmento_eliminar);
 
-            log_warning(logger_kernel_util_extra, "DELETE_SEGMENT TODAVIA NO IMPLMENETADO");
+            //log_warning(logger_kernel_util_extra, "DELETE_SEGMENT TODAVIA NO IMPLMENETADO");
 
-            // soliciar_eliminacion_segmento(nro_segmento_eliminar, proceso_a_ejecutar->pid);
-            /*
+            solicitar_eliminacion_segmento(nro_segmento_eliminar, proceso_a_ejecutar->pid);
+            
+            log_info(logger_kernel_util_extra, "ESPERANDO TABLA ACTUALIZADA");
+
             int rta_eliminacion_memoria = recibir_operacion(socketMemoria);
 
             log_info(logger_planificador_extra, "DELETE_SEGMENT realizado con exito");
                     
-            t_list* valores_tras_eliminacion = _recibir_paquete(socketMemoria);
-            t_list* tabla_tras_eliminacion = armar_tabla_segmentos(valores_tras_eliminacion);
-            list_destroy_and_destroy_elements(proceso_a_ejecutar->tabla_de_segmentos, (void*) destruir_segmento);
-            proceso_a_ejecutar->tabla_archivos_abiertos = list_duplicate(tabla_tras_eliminacion);
-            */
+            //t_list* valores_tras_eliminacion = _recibir_paquete(socketMemoria);
+            //t_list* tabla_tras_eliminacion = deserializar_tabla_segmentos(valores_tras_eliminacion);
+            //list_destroy_and_destroy_elements(proceso_a_ejecutar->tabla_de_segmentos,free);
+            //proceso_a_ejecutar->tabla_de_segmentos = list_duplicate(tabla_tras_eliminacion);
+
+            leer_segmentos(proceso_a_ejecutar);
+            
 
             //list_destroy(valores_tras_eliminacion);
             list_destroy(lista_recepcion_valores);
