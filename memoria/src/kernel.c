@@ -132,12 +132,16 @@ void create_segment(int pid,int tam,int id){
         
         return;
     }else{
-        
         modificar_hueco(indice,-1,tam,OCUPADO);
-        respuestas(config_memo.kernel,CREATE_SEGMENT,base_hueco(indice));
+        //respuestas(config_memo.kernel,CREATE_SEGMENT,base);
+        t_paquete* paquete = crear_paquete_operacion(CREATE_SEGMENT);
+        int base = base_hueco(indice);
+        agregar_a_paquete(paquete, &base, sizeof(int));
+        enviar_paquete(paquete, config_memo.kernel);
+        eliminar_paquete(paquete);
         modificar_tabla_proceso(pid,id,base_hueco(indice),tam);
         log_trace(klogger,"Se creo el segmento %d",id);
-        loggear(CREATE_SEGMENT,pid,NULL,id,tam,base_hueco(indice));
+        loggear(CREATE_SEGMENT,pid,NULL,id,tam,base/*base_hueco(indice)*/);
     }   
     
 }
