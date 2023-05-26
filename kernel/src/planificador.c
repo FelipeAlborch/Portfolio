@@ -592,6 +592,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             goto recibirOperacion;
 
         break;
+
             case F_READ:
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
                 nombre_archivo = list_get(lista_recepcion_valores, 0);
@@ -621,7 +622,39 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 goto recibirOperacion;
 
-            // case F_WRITE:
+            break;
+
+            case F_WRITE:
+                lista_recepcion_valores = _recibir_paquete(socketCPU);
+                nombre_archivo = list_get(lista_recepcion_valores, 0);
+                int direccion_fisica = *(int*) list_get(lista_recepcion_valores, 1);
+                int tamanio = *(int*) list_get(lista_recepcion_valores, 2);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d", nombre_archivo, direccion_fisica, tamanio);
+
+                int operacion_fwrite = recibir_operacion(socketCPU);
+                t_list* lista_contexto_fwrite = _recibir_paquete(socketCPU);
+                pcb* contexto_de_fwrite = recibir_contexto_ejecucion(lista_contexto_fwrite);
+
+                log_info(logger_planificador_extra, "Contexto recibido por F_READ");
+
+                actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fwrite);
+
+                loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
+                t_paquete* paquete_fwrite = crear_paquete_operacion(ESCRIBIR_ARCHIVO);
+                agregar_a_paquete(paquete_fwrite, nombre_archivo, strlen(nombre_archivo)+1);
+                agregar_a_paquete(paquete_fwrite, &direccion_fisica, sizeof(int));
+                agregar_a_paquete(paquete_fwrite, &tamanio, sizeof(int));
+                enviar_paquete(paquete_fwrite, socketFS);
+
+                pthread_t* hilo_fwrite;
+                pthread_create(&hilo_fwrite, NULL, esperar_listo_de_fs, NULL);
+                pthread_detach(hilo_fwrite);
+
+                goto recibirOperacion;
+
+            break;
+
             case F_TRUNCATE:
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
                 nombre_archivo = list_get(lista_recepcion_valores, 0);
