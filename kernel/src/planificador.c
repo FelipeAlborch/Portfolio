@@ -167,9 +167,10 @@ void ejecutar(pcb* proceso_a_ejecutar)
     t_list* lista_recepcion_valores;
     pcb* proceso_en_ejecucion;
     char* nombre_recurso;
+    int operacion_de_cpu = recibir_operacion(socketCPU);
+    int tamanio, direccion_fisica;
 
     recibirOperacion:
-    int operacion_de_cpu = recibir_operacion(socketCPU);
 
     switch(operacion_de_cpu)
     {
@@ -463,8 +464,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
         case F_OPEN: 
             // RECIBIR PARAMETRO(S) DE CPU
             lista_recepcion_valores = _recibir_paquete(socketCPU);
-            nombre_archivo = list_get(lista_recepcion_valores, 0);
-            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_OPEN: %s", nombre_archivo);
+            nombre_recurso = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_OPEN: %s", nombre_recurso);
 
             int operacion_fopen = recibir_operacion(socketCPU);
             t_list* lista_contexto_fopen = _recibir_paquete(socketCPU);
@@ -477,12 +478,12 @@ void ejecutar(pcb* proceso_a_ejecutar)
             loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
             // BUSCAR EN TABLA DE ARCHIVOS ABIERTOS
-            if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_archivo))
+            if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_recurso))
             {
                 // PEDIR AL FS
                 // archivo = obtener_archivo_de_fs();
                 t_paquete* paquete_a_fs = crear_paquete_operacion(CREAR_ARCHIVO);
-                agregar_a_paquete(paquete_a_fs, nombre_archivo, strlen(nombre_archivo)+1);
+                agregar_a_paquete(paquete_a_fs, nombre_recurso, strlen(nombre_recurso)+1);
                 enviar_paquete(paquete_a_fs, socketFS);
                 
                 int rta1;
@@ -492,13 +493,13 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 
 
                 // SI NO EXISTE, CREARLO
-                t_recurso* archivo = crear_recurso(nombre_archivo, 1);
+                t_recurso* archivo = crear_recurso(nombre_recurso, 1);
                 archivo->posicion = 0;
 
-                dictionary_put(tabla_global_archivos_abiertos, nombre_archivo, archivo);
+                dictionary_put(tabla_global_archivos_abiertos, nombre_recurso, archivo);
             }
 
-            fopen_recurso(proceso_a_ejecutar, nombre_archivo);
+            fopen_recurso(proceso_a_ejecutar, nombre_recurso);
 
             liberar_contexto_ejecucion(contexto_de_fopen);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
@@ -521,8 +522,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
         case F_CLOSE: 
             // RECIBIR PARAMETRO(S) DE CPU
             lista_recepcion_valores = _recibir_paquete(socketCPU);
-            nombre_archivo = list_get(lista_recepcion_valores, 0);
-            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_CLOSE: %s", nombre_archivo);
+            nombre_recurso = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_CLOSE: %s", nombre_recurso);
 
             int operacion_fclose = recibir_operacion(socketCPU);
             t_list* lista_contexto_fclose = _recibir_paquete(socketCPU);
@@ -534,13 +535,13 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
-            fclose_recurso(proceso_a_ejecutar, nombre_archivo);
+            fclose_recurso(proceso_a_ejecutar, nombre_recurso);
 
             
-            if(!archivo_esta_abierto(nombre_archivo))
+            if(!archivo_esta_abierto(nombre_recurso))
             {
                 // REMOVER DE LA TABLA DE ARCHIVOS ABIERTOS
-                t_recurso* archivo = dictionary_remove(tabla_global_archivos_abiertos, nombre_archivo);
+                t_recurso* archivo = dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
                 free(archivo);
             }
 
@@ -565,9 +566,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
         case F_SEEK: 
             // RECIBIR PARAMETRO(S) DE CPU
             lista_recepcion_valores = _recibir_paquete(socketCPU);
-            nombre_archivo = list_get(lista_recepcion_valores, 0);
+            nombre_recurso = list_get(lista_recepcion_valores, 0);
             int posicion = *(int*) list_get(lista_recepcion_valores, 1);
-            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_SEEK: %s, posicion: %d", nombre_archivo, posicion);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_SEEK: %s, posicion: %d", nombre_recurso, posicion);
 
             int operacion_fseek = recibir_operacion(socketCPU);
             t_list* lista_contexto_fseek = _recibir_paquete(socketCPU);
@@ -579,7 +580,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
-            fseek_archivo(proceso_a_ejecutar, nombre_archivo, posicion);
+            fseek_archivo(proceso_a_ejecutar, nombre_recurso, posicion);
 
             liberar_contexto_ejecucion(contexto_de_fseek);
             list_destroy_and_destroy_elements(lista_recepcion_valores, free);
@@ -595,10 +596,10 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             case F_READ:
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
-                nombre_archivo = list_get(lista_recepcion_valores, 0);
-                int direccion_fisica = *(int*) list_get(lista_recepcion_valores, 1);
-                int tamanio = *(int*) list_get(lista_recepcion_valores, 2);
-                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d", nombre_archivo, direccion_fisica, tamanio);
+                nombre_recurso = list_get(lista_recepcion_valores, 0);
+                direccion_fisica = *(int*) list_get(lista_recepcion_valores, 1);
+                tamanio = *(int*) list_get(lista_recepcion_valores, 2);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
 
                 int operacion_fread = recibir_operacion(socketCPU);
                 t_list* lista_contexto_fread = _recibir_paquete(socketCPU);
@@ -611,7 +612,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 t_paquete* paquete_fread = crear_paquete_operacion(LEER_ARCHIVO);
-                agregar_a_paquete(paquete_fread, nombre_archivo, strlen(nombre_archivo)+1);
+                agregar_a_paquete(paquete_fread, nombre_recurso, strlen(nombre_recurso)+1);
                 agregar_a_paquete(paquete_fread, &direccion_fisica, sizeof(int));
                 agregar_a_paquete(paquete_fread, &tamanio, sizeof(int));
                 enviar_paquete(paquete_fread, socketFS);
@@ -626,10 +627,10 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             case F_WRITE:
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
-                nombre_archivo = list_get(lista_recepcion_valores, 0);
-                int direccion_fisica = *(int*) list_get(lista_recepcion_valores, 1);
-                int tamanio = *(int*) list_get(lista_recepcion_valores, 2);
-                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d", nombre_archivo, direccion_fisica, tamanio);
+                nombre_recurso = list_get(lista_recepcion_valores, 0);
+                direccion_fisica = *(int*) list_get(lista_recepcion_valores, 1);
+                tamanio = *(int*) list_get(lista_recepcion_valores, 2);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
 
                 int operacion_fwrite = recibir_operacion(socketCPU);
                 t_list* lista_contexto_fwrite = _recibir_paquete(socketCPU);
@@ -642,7 +643,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 t_paquete* paquete_fwrite = crear_paquete_operacion(ESCRIBIR_ARCHIVO);
-                agregar_a_paquete(paquete_fwrite, nombre_archivo, strlen(nombre_archivo)+1);
+                agregar_a_paquete(paquete_fwrite, nombre_recurso, strlen(nombre_recurso)+1);
                 agregar_a_paquete(paquete_fwrite, &direccion_fisica, sizeof(int));
                 agregar_a_paquete(paquete_fwrite, &tamanio, sizeof(int));
                 enviar_paquete(paquete_fwrite, socketFS);
@@ -657,9 +658,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             case F_TRUNCATE:
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
-                nombre_archivo = list_get(lista_recepcion_valores, 0);
-                int tamanio = *(int*) list_get(lista_recepcion_valores, 1);
-                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_TRUNCATE: %s, tamanio: %d", nombre_archivo, tamanio);
+                nombre_recurso = list_get(lista_recepcion_valores, 0);
+                tamanio = *(int*) list_get(lista_recepcion_valores, 1);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_TRUNCATE: %s, tamanio: %d", nombre_recurso, tamanio);
 
                 int operacion_ftruncate = recibir_operacion(socketCPU);
                 t_list* lista_contexto_truncate = _recibir_paquete(socketCPU);
@@ -672,7 +673,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 t_paquete* paquete_ftruncate = crear_paquete_operacion(TRUNCAR_ARCHIVO);
-                agregar_a_paquete(paquete_ftruncate, nombre_archivo, strlen(nombre_archivo)+1);
+                agregar_a_paquete(paquete_ftruncate, nombre_recurso, strlen(nombre_recurso)+1);
                 agregar_a_paquete(paquete_ftruncate, &tamanio, sizeof(int));
                 enviar_paquete(paquete_ftruncate, socketFS);
 
