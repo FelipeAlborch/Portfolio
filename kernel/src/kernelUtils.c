@@ -315,26 +315,28 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
 }
 
 
-// HAY QUE PROBAR QUE FUNCIONE
 bool archivo_esta_abierto(char* archivo)
 {
-    int cant_procesos = dictionary_size(tabla_de_procesos);
-    //bool esta_abierto;
+    // contador de procesos que tienen el archivo abierto
+    int contador = 0;
 
-    for(int i = 0; i < cant_procesos; i++)
-    {   
-        pcb* proceso = tabla_de_procesos->elements[i]->data;
-        
-        for(int j = 0; j < list_size(proceso->recursos_asignados); j++)
-        {
-            t_recurso* recurso = list_get(proceso->recursos_asignados, j);
-            if(!string_equals_ignore_case(recurso->nombre, archivo))
-            {
-                return true;
-            }
-        }
+    // devuelve true si el nombre del recurso matchea con el del archivo
+    void _recurso_es_el_archivo(t_recurso* recurso) {
+        return string_equals_ignore_case(recurso->nombre, archivo);
     }
-    return false;
+
+    // suma 1 a contador si el pcb tiene el archivo abierto
+    void _pcb_tiene_el_archivo(char* ___, pcb* iteration) {
+        int recursos_asignados = list_size(iteration->recursos_asignados);
+
+        bool found = list_any_satisfy(iteration->recursos_asignados, (void*) _recurso_es_el_archivo);
+        if(found)
+            contador++;   
+    }
+
+    dictionary_iterator(tabla_de_procesos, (void*) _pcb_tiene_el_archivo);
+
+    return contador != 0;
 }
 
 
