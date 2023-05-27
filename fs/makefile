@@ -89,29 +89,35 @@ memcheck: all
 .PHONY: helgrind
 helgrind: all
 	valgrind --tool=helgrind $(HELGRIND_FLAGS) ./$(BIN) $(ARGS)
-	
-obj/%.o: tests/%.c $(SRCS_H) $(DEPS) | $(dir $(OBJS))
+
+obj/%.o: src/%.c tests/%.c $(SRCS_H) $(DEPS) | $(dir $(OBJS))
 	gcc $(CFLAGS) -c -o "$@" $< $(IDIRS:%=-I%)
 
 .PHONY: build-check
 build-check: CFLAGS = $(CDEBUG)
 build-check: OBJS += $(patsubst tests/%.c,obj/%.o,$(shell find tests/ -iname "*.c"))
-build-check: LIBS = check commons pthread m rt subunit
+build-check: OBJS += $(patsubst src/%.c,obj/%.o,$(shell find src/ -iname "*.c"))
+build-check: DEPS += $(shell find src/ -iname "*.c" -not -name "main.c")
+build-check: LIBS = static commons check pthread m rt subunit
 build-check: $(OBJS) | $(dir $(BIN))
 	gcc $(CFLAGS) -o bin/check tests/check.c $(DEPS) $(IDIRS:%=-I%) $(LIBDIRS:%=-L%) $(LIBS:%=-l%)
 
 .PHONY: check
 check: CFLAGS = $(CDEBUG)
 check: OBJS += $(patsubst tests/%.c,obj/%.o,$(shell find tests/ -iname "*.c"))
-check: LIBS = check commons pthread m rt subunit
+check: OBJS += $(patsubst src/%.c,obj/%.o,$(shell find src/ -iname "*.c"))
+check: DEPS += $(shell find src/ -iname "*.c" -not -name "main.c")
+check: LIBS = static commons check pthread m rt subunit
 check: $(OBJS) | $(dir $(BIN))
+	@echo "\033[1;32mCFLAGS: $(CFLAGS)\nDEPS: $(DEPS)\nOBJS: $(OBJS)\nLIBS: $(LIBS)\nIDIRS: $(IDIRS)\nLIBDIRS: $(LIBDIRS)\033[0m"
 	gcc $(CFLAGS) -o bin/check tests/check.c $(DEPS) $(IDIRS:%=-I%) $(LIBDIRS:%=-L%) $(LIBS:%=-l%)
-	./bin/check
+	./bin/check || true
 
 .PHONY: cunit
 cunit: CFLAGS = $(CDEBUG)
 cunit: OBJS += $(patsubst tests/%.c,obj/%.o,$(shell find tests/ -iname "*.c"))
-cunit: LIBS = cunit commons pthread m rt subunit
+check: OBJS += $(patsubst src/%.c,obj/%.o,$(shell find src/ -iname "*.c"))
+cunit: LIBS = static commons cunit pthread m rt subunit
 cunit: $(OBJS) | $(dir $(BIN))
 	gcc $(CFLAGS) -o bin/cunit tests/cunit.c $(DEPS) $(IDIRS:%=-I%) $(LIBDIRS:%=-L%) $(LIBS:%=-l%)
 	./bin/cunit

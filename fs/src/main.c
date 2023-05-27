@@ -5,7 +5,13 @@
 #include <config.h>
 #include <pthread.h>
 
-void *kernel_handler(void *socket_fd);
+char *BLOCK_STORE_FILE = "blocks.txt";
+const int BLOCK_SIZE = 64;
+const int BLOCK_COUNT = 65536;
+
+FCB_table fcb_table;
+
+void * kernel_handler(void *socket_fd);
 
 int 
 main(int argc, char *argv[])
@@ -21,6 +27,8 @@ main(int argc, char *argv[])
     print_cwd();
 
     config_print_fs(config);
+
+    status = fcb_table_init(&fcb_table, BLOCK_STORE_FILE, BLOCK_SIZE, BLOCK_COUNT);
 
     mem_socket = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
 
@@ -66,6 +74,11 @@ void *kernel_handler(void *arg)
         read_socket(kr_socket, buf, sizeof(buf));
 
         log_info(log, "Unknown data from kernel:%s\n", mem_hexstring(buf, sizeof(buf)));
+
+        // TODO: recibir paquetes de kernel
+        // dispatchear instrucciones kernel
+        // segun la instruccion crear thread
+        // para manejar memoria y responder al kernel
 
         conn_close(kr_socket);
 

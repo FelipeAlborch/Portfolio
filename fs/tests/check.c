@@ -1,6 +1,7 @@
 #include <check.h>
 #include "check-tlv.c"
 #include "check-ipc.c"
+#include "check-utils.c"
 
 Suite *test_suite(void)
 {
@@ -20,6 +21,7 @@ int main(void)
     srunner_set_fork_status(sr, CK_NOFORK);
     srunner_add_suite(sr, tlv_test_suite());
     srunner_add_suite(sr, ipc_test_suite());
+    srunner_add_suite(sr, utils_test_suite());
     printf("\033[1;35m");
     srunner_run_all(sr, CK_VERBOSE);
     // srunner_run_all(sr, CK_NORMAL);
