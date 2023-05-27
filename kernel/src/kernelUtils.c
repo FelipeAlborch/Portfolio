@@ -352,7 +352,7 @@ void fseek_archivo(pcb* un_pcb, char* un_recurso, int posicion) {
     archivo->posicion = posicion;
 }
 
-void esperar_listo_de_fs()
+void esperar_listo_de_fs(char* nombre_recurso)
 {
     pcb* proceso_desalojado = desalojar_proceso_en_exec();
     if(!es_fifo)
@@ -360,6 +360,9 @@ void esperar_listo_de_fs()
         proceso_desalojado->estimado_prox_rafaga = estimar_proxima_rafaga(proceso_desalojado);
         temporal_destroy(proceso_desalojado->tiempo_ejecucion);
     }
+    proceso_desalojado->estado = BLOCKED;
+
+    log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_desalojado->pid, nombre_recurso);    
 
     int rtafs;
     
