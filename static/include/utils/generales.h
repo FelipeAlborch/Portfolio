@@ -60,8 +60,8 @@ typedef enum
 	OUT_OF_MEMORY,
 	TABLAS_PROCESOS,
 	MOV_OUT,	//se escribe el valor del registro en memoria
-	MOV_IN		//se lee el valor del registro en memoria
-	
+	MOV_IN,		//se lee el valor del registro en memoria
+	CREATE_SEGMENT_SUCCESS
 }msj_memoria;
 
 typedef enum

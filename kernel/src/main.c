@@ -1,9 +1,7 @@
 #include <main.h>
 
-
 int main(int argc, char *argv[]) {
 
-    //Logger* loggerKernel = iniciar_logger_modulo(KERNEL_LOGGER);
     //startSigHandlers();
 
     Config* kernelConfig = config_create(argv[1]);
@@ -15,9 +13,10 @@ int main(int argc, char *argv[]) {
     socketCPU = conectar_con_cpu(configuracionKernel);
     socketFS = conectar_con_filesystem(configuracionKernel);
 
+    iniciar_tabla_de_procesos();
     inicializar_estructuras_planificacion();
     iniciar_planificadores();
-    
+    inicializar_archivos_kernel();
 
     int socketServicioConsolas = iniciar_servidor_para_consolas(configuracionKernel);
 

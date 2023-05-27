@@ -55,6 +55,7 @@ typedef struct pcb
     t_list* lista_de_instrucciones;
     t_list* tabla_de_segmentos;
     t_list* tabla_archivos_abiertos;
+    t_list* recursos_asignados;
 
     t_temporal* llegada_ready;
     t_temporal* tiempo_ejecucion;
@@ -67,6 +68,14 @@ typedef struct LineaInstruccion
   char *identificador;
   char *parametros[3];
 } LineaInstruccion;
+
+
+typedef struct {
+   // int id_seg;
+    int base;
+    int size;
+   // int libre;
+}t_segmento;
 
 /**
 * @NAME: crear_pcb
@@ -141,5 +150,12 @@ void liberar_contexto_ejecucion(pcb*);
  *     (nota: liberar la memoria luego de usarlo)
  */
 char* valor_del_registro_como_string(void* registro, size_t tamano);
+
+
+t_list* deserializar_tabla_segmentos(t_list*);
+
+void serializar_tabla_segmentos(t_paquete*, t_list*);
+
+void liberar_segmento(t_segmento*);
 
 #endif

@@ -8,8 +8,8 @@ t_log* flogger;
 t_log* loggerMemoria;
 int conexion;
 int running_cpu;
-int running_k;
 int running_fs;
+//int running_k;
 int server_m;
 int clientes[4];
 t_config* memoriaConfig;
@@ -33,6 +33,8 @@ void sigHandler_sigint(int signo) {
 
 void terminar_programa(t_log* milogger, t_config* memoria){
     /*LEAKS*/
+  free(memoria->path);
+
 	liberar_memoria();
 	liberar_listas();
 	liberar_conexion_memoria();
@@ -49,7 +51,8 @@ void liberar_memoria(){
     log_destroy(klogger);
 };
 void liberar_listas(){
-    /* TO DO */
+    list_destroy_and_destroy_elements(tabla_segmentos_gral,free);
+    list_clean_and_destroy_elements(huecos_libres,free);
 };
 void liberar_conexion_memoria(){
     liberar_conexion(server_m);
@@ -68,12 +71,10 @@ void inicializar_memoria(){
 
     inicializar_configuracion();
     inicializar_logs();
-    inicializar_segmentos();
+    crear_estructuras();   
     conectar();
 };
-void inicializar_segmentos(){
-    /* TO DO */
-};	
+	
 
 void inicializar_logs(){
     loggerMemoria = log_create("logs/memoria.log","Memoria",true,LOG_LEVEL_TRACE);
@@ -97,22 +98,7 @@ void conectar_cpu(){
     running_cpu=true;
     ejecutar_cpu();
 }
-void conectar_kernel(){
-    config_memo.kernel=esperar_cliente(server_m);
-    t_paquete* paquete; // =malloc(TAM_PAQ);
-    paquete = recibir_paquete(config_memo.kernel);
-    if(paquete->codigo_operacion != KERNEL){
-      log_error(klogger,"Vos no sos el kernel. Se cancela la conexión %d",paquete->codigo_operacion);
-      eliminar_paquete(paquete);
-      pthread_detach(hilo_kernel);
-			pthread_exit(&hilo_kernel);
-    }
-    log_info(klogger,"Se conectó el kernel: %d \n",config_memo.kernel);
-		
-    eliminar_paquete(paquete);
-    running_k=true;
-    ejecutar_kernel();
-}
+
 void conectar_fs(){
   config_memo.fs=esperar_cliente(server_m);
     t_paquete* paquete;// =malloc(TAM_PAQ);
@@ -126,7 +112,7 @@ void conectar_fs(){
     log_info(flogger,"Se conectó el FileSystem: %d \n",config_memo.fs);
 		
     eliminar_paquete(paquete);
-    running_k=true;
+    running_fs=true;
     ejecutar_fs();
 }
 void conectar(){
@@ -154,7 +140,7 @@ void obtener_valores_de_configuracion_memoria(t_config* memoriaConfig){
     config_memo.retardo = config_get_int_value(memoriaConfig,"RETARDO_MEMORIA");
     config_memo.compactacion = config_get_int_value(memoriaConfig,"RETARDO_COMPACTACION");
     config_memo.algoritmo = config_get_string_value(memoriaConfig,"ALGORITMO_ASIGNACION");
-    config_memo.tam_maximo_seg = config_memo.tam_memo / config_memo.cant_seg;
+    config_memo.cant_seg_max = config_memo.tam_memo / config_memo.tam_seg_0;
     config_memo.ip = string_duplicate("127.0.0.1");
     config_memo.bytes_libres=config_memo.tam_memo;
 }
@@ -167,40 +153,12 @@ void mostrar_valores_de_configuracion_memoria (){
     printf("retardo = %d\n" , config_memo.retardo);
     printf("compactacion = %d\n", config_memo.compactacion);
     printf("algoritmo = %s\n" , config_memo.algoritmo);
-    printf("Tamaño maximo = %d\n" , config_memo.tam_maximo_seg);
+    printf("Tamaño maximo = %d\n" , config_memo.cant_seg_max);
 
 }
 
 
-  void ejecutar_kernel(){
-    int conectar=config_memo.kernel;
-    log_trace(mlogger, "Por ejecutar las tareas del kernel");
-
-    t_paquete* paquete; // =malloc(size_of(t_paquete));
-    while (running_k)
-    {
-    
-      paquete=recibir_paquete(conectar);
-      switch (paquete->codigo_operacion)
-      {
-          case INICIO_PROCESO:
-            crear_proceso(paquete);
-            respuestas(config_memo.kernel,INICIO_PROCESO,paquete);
-            break;
-          case FIN_PROCESO:
-            
-            break;
-          
-          default:
-            break;
-      }
-      eliminar_paquete(paquete);
-      running_k=false;
-      log_trace(klogger,"ejecute kernel");
-  }
-  eliminar_paquete(paquete);
-  log_info(klogger,"Terminando de ejecutar las tareas del kernel");
-}
+  
   void ejecutar_cpu(){
     int conectar=config_memo.cpu;
     log_trace(clogger, "Por ejecutar las tareas del CPU");
@@ -283,20 +241,16 @@ void mostrar_valores_de_configuracion_memoria (){
       case FIN_PROCESO:
         log_trace(loggerMemoria,"Eliminación de Proceso PID: %d",pid);
         break;
-
+      
       default:
+        log_error(loggerMemoria,"Error en la operación, código de error: %d",code);
         break;
     }
   }
-void* crear_proceso(t_paquete* paquete){
-  int pid=paquete->buffer->stream;
-  
-  return NULL;
-}
-void respuestas(int cliente, int code,t_paquete* paquete){
-  
-  paquete->codigo_operacion=code;
+
+void respuestas(int cliente, int code,void* algo){
+  t_paquete* paquete=crear_paquete_operacion(code);
+  agregar_a_paquete(paquete,algo,sizeof(algo)+1);
   enviar_paquete(paquete,cliente);
   eliminar_paquete(paquete);
 }
-

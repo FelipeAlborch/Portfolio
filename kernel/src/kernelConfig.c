@@ -2,6 +2,7 @@
 
 config_de_kernel configuracionKernel;
 t_dictionary* diccionario_recursos;
+t_dictionary* tabla_de_procesos;
 
 config_de_kernel obtener_valores_de_configuracion_kernel(Config* kernelConfig){
     configuracionKernel.IP_MEMORIA = config_get_string_value(kernelConfig,"IP_MEMORIA");
@@ -40,6 +41,39 @@ void mostrar_valores_de_configuracion_kernel(config_de_kernel configuracion_kern
     //}
 }
 
+void iniciar_tabla_de_procesos()
+{
+    tabla_de_procesos = dictionary_create();
+}
+
+void agregar_proceso_a_tabla(pcb* un_pcb)
+{
+    char* key = string_from_format("%d", un_pcb->pid);
+    dictionary_put(tabla_de_procesos, key, un_pcb);
+}
+
+void leer_tabla_procesos()
+{
+    for(int i = 0; i < dictionary_size; i++)
+    {
+        char* key = string_from_format("%d", i+1);
+        pcb* pcb = dictionary_get(tabla_de_procesos, key);
+        printf("Proceso: %d\n", pcb->pid);
+        free(key);
+    }
+}
+
+void destruir_tabla_de_procesos()
+{
+    for(int i = 0; i < dictionary_size; i++)
+    {
+        char* key = string_from_format("%d", i+1);
+        dictionary_remove_and_destroy(tabla_de_procesos, key, liberar_pcb);
+        free(key);
+    }
+    dictionary_destroy(tabla_de_procesos);
+}
+
 void crear_diccionario_recursos()
 {
     diccionario_recursos = dictionary_create();
@@ -48,7 +82,7 @@ void crear_diccionario_recursos()
     {
         char* key = configuracionKernel.RECURSOS[i];
         int instancias = atoi(configuracionKernel.INSTANCIAS_RECURSOS[i]);
-        recurso* nuevo_recurso = crear_recurso(key, instancias);
+        t_recurso* nuevo_recurso = crear_recurso(key, instancias);
         dictionary_put(diccionario_recursos,key, nuevo_recurso);
     }
 }
@@ -58,7 +92,7 @@ void leer_diccionario_recursos()
     for(int i = 0; i < dictionary_size(diccionario_recursos); i++)
     {   
         char* key = configuracionKernel.RECURSOS[i];
-        recurso* un_recurso = dictionary_get(diccionario_recursos, (void*) key);
+        t_recurso* un_recurso = dictionary_get(diccionario_recursos, (void*) key);
         
         printf("Recurso: %s, ",un_recurso->nombre);
         printf("Instancias: %d \n",un_recurso->instancias);
@@ -67,9 +101,9 @@ void leer_diccionario_recursos()
     }
 }
 
-recurso* crear_recurso(char* nombre, int instancias)
+t_recurso* crear_recurso(char* nombre, int instancias)
 {
-    recurso* nuevo_recurso = malloc(sizeof(recurso));
+    t_recurso* nuevo_recurso = malloc(sizeof(t_recurso));
     
     nuevo_recurso->nombre = (char*) malloc(strlen(nombre) + 1);
     strcpy(nuevo_recurso->nombre, nombre);
@@ -84,7 +118,7 @@ recurso* crear_recurso(char* nombre, int instancias)
 }
 
 
-void liberar_recurso(recurso* un_recurso)
+void liberar_recurso(t_recurso* un_recurso)
 {
     free(un_recurso->nombre);
     queue_destroy_and_destroy_elements(un_recurso->cola_bloqueados, (void*)liberar_pcb);
