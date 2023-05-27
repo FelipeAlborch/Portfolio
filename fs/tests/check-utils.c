@@ -17,12 +17,11 @@ START_TEST(test_fcb_table_init)
 
     // check max bit
     int bitmap_max_bit = bitarray_get_max_bit(fcb_table.bitmap);
-    ck_assert_int_eq(bitmap_max_bit, fcb_table.bit_count);
+    ck_assert_int_eq(bitmap_max_bit, fcb_table.block_count);
 
     // check memory allocation initialized with 0
-    char *zero = malloc(fcb_table.bit_count);
-    memset(zero, 0, fcb_table.bit_count);
-    int bitmap_zeroed = memcmp(fcb_table.bitmap->bitarray, zero, bitmap_max_bit);
+    char *zeroes = calloc(fcb_table.block_count, 1);
+    int bitmap_zeroed = memcmp(fcb_table.bitmap->bitarray, zeroes, bitmap_max_bit);
     ck_assert(bitmap_zeroed == 0);
 
     // unallocate the memory

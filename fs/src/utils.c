@@ -11,8 +11,8 @@ void print_cwd() {
     fcb_table->block_size = block_size;
     fcb_table->block_count = block_count;
     fcb_table->index = dictionary_create();
-    void* bits = calloc(fcb_table->bit_count, 1);
-    fcb_table->bitmap = bitarray_create_with_mode(bits, fcb_table->byte_count, MSB_FIRST);
+    char* zeroes = calloc(fcb_table->block_count, 1);
+    fcb_table->bitmap = bitarray_create_with_mode(zeroes, fcb_table->block_count, MSB_FIRST);
     error = mmap_file_sync(block_store_file, fcb_table->bit_count, &fcb_table->block_store);
     if (error == -1) { 
         perror("mmap_file_sync");
@@ -79,7 +79,13 @@ int fcb_realloc(FCB *fcb, FCB_table *fcb_table, int new_size) {
 }
 
 int fcb_dealloc(FCB *fcb, FCB_table *fcb_table) {
-    // TODO: dealloc
+    // dealloc block store
+    memset(fcb->direct_ptr, 0, fcb->file_size);
+
+    // dealloc block bitmap
+    int block_bitmap_start = (fcb->direct_ptr - fcb_table->block_store) / fcb_table->block_size;
+    int block_bitmap_end = block_bitmap_start + (fcb->file_size + fcb_table->block_size - 1) / fcb_table->block_size;
+    memset(fcb_table->bitmap->bitarray + block_bitmap_start, 0, block_bitmap_end - block_bitmap_start);
     return 0;
 }
 
