@@ -1,7 +1,4 @@
 {
-    // Utilizar IntelliSense para aprender acerca de los posibles atributos.
-    // Mantenga el puntero para ver las descripciones de los existentes atributos
-    // Para más información, visite: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -9,7 +6,9 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/check",
-            "args": ["-s"],
+            "args": [
+                "-s"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -26,13 +25,9 @@
                     "text": "-gdb-set disassembly-flavor intel",
                     "ignoreFailures": true
                 },
-                // {
-                //   "description": "Set gdb working directory",
-                //   "text": "set working-directory ${workspaceFolder}"
-                // },
                 {
-                  "description": "Load check library symbols",
-                  "text": "sharedlibrary libcheck"
+                    "description": "Load check library symbols",
+                    "text": "sharedlibrary libcheck"
                 }
             ],
             "preLaunchTask": "make-build-check"
@@ -42,7 +37,9 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/${workspaceFolderBasename}.out",
-            "args": ["fs.config"],
+            "args": [
+                "fs.config"
+            ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -56,6 +53,30 @@
                 }
             ],
             "preLaunchTask": "make-all"
-        }
+        },
+        // {
+        //     "name": "(gdb) Launch",
+        //     "type": "cppdbg",
+        //     "request": "launch",
+        //     "program": "enter program name, for example ${workspaceFolder}/a.out",
+        //     "args": [],
+        //     "stopAtEntry": false,
+        //     "cwd": "${fileDirname}",
+        //     "environment": [],
+        //     "externalConsole": false,
+        //     "MIMode": "gdb",
+        //     "setupCommands": [
+        //         {
+        //             "description": "Enable pretty-printing for gdb",
+        //             "text": "-enable-pretty-printing",
+        //             "ignoreFailures": true
+        //         },
+        //         {
+        //             "description": "Set Disassembly Flavor to Intel",
+        //             "text": "-gdb-set disassembly-flavor intel",
+        //             "ignoreFailures": true
+        //         }
+        //     ]
+        // }
     ]
 }
