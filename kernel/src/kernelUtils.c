@@ -17,6 +17,8 @@ int socketFS;
 bool resultado_recurso = true;
 bool proceso_bloqueado_por_recurso = false;
 
+pthread_mutex_t mutex_fs;
+
 
 /*****************************************************************************
  *              FUNCIONES UTILES PARA ADMINISTRATIVAS
@@ -370,6 +372,8 @@ void esperar_listo_de_fs(char* nombre_recurso)
     *   ESTO PUEDE GENERAR QUILOMBO
     */
     recv(socketFS, &rtafs, sizeof(int), MSG_WAITALL);
+
+    ptrhead_mutex_unlock(&mutex_fs);    // Se desbloquea el socket
     
     agregar_proceso_ready(proceso_desalojado);
 }

@@ -19,6 +19,8 @@ extern int socketFS;
 extern bool resultado_recurso;
 extern bool proceso_bloqueado_por_recurso;
 
+extern pthread_mutex_t mutex_fs;
+
 
 /*****************************************************************************
  *              FUNCIONES UTILES PARA ADMINISTRATIVAS

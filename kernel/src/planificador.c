@@ -615,6 +615,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_a_paquete(paquete_fread, nombre_recurso, strlen(nombre_recurso)+1);
                 agregar_a_paquete(paquete_fread, &direccion_fisica, sizeof(int));
                 agregar_a_paquete(paquete_fread, &tamanio, sizeof(int));
+                
+                ptrhead_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
+
                 enviar_paquete(paquete_fread, socketFS);
 
                 pthread_t* hilo_fread;
@@ -646,6 +649,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_a_paquete(paquete_fwrite, nombre_recurso, strlen(nombre_recurso)+1);
                 agregar_a_paquete(paquete_fwrite, &direccion_fisica, sizeof(int));
                 agregar_a_paquete(paquete_fwrite, &tamanio, sizeof(int));
+                
+                ptrhead_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
+                
                 enviar_paquete(paquete_fwrite, socketFS);
 
                 pthread_t* hilo_fwrite;
@@ -675,6 +681,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 t_paquete* paquete_ftruncate = crear_paquete_operacion(TRUNCAR_ARCHIVO);
                 agregar_a_paquete(paquete_ftruncate, nombre_recurso, strlen(nombre_recurso)+1);
                 agregar_a_paquete(paquete_ftruncate, &tamanio, sizeof(int));
+                
+                ptrhead_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
+                
                 enviar_paquete(paquete_ftruncate, socketFS);
 
                 pthread_t* hilo_ftruncate;
