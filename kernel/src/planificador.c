@@ -167,11 +167,12 @@ void ejecutar(pcb* proceso_a_ejecutar)
     t_list* lista_recepcion_valores;
     pcb* proceso_en_ejecucion;
     char* nombre_recurso;
-    int operacion_de_cpu = recibir_operacion(socketCPU);
+    int operacion_de_cpu;
     int tamanio, direccion_fisica;
 
     recibirOperacion:
-
+    
+    operacion_de_cpu = recibir_operacion(socketCPU);
     switch(operacion_de_cpu)
     {
         case YIELD:
