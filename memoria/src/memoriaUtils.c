@@ -34,7 +34,7 @@ void sigHandler_sigint(int signo) {
 void terminar_programa(t_log* milogger, t_config* memoria){
     /*LEAKS*/
   free(memoria->path);
-
+  
 	liberar_memoria();
 	liberar_listas();
 	liberar_conexion_memoria();
@@ -45,6 +45,7 @@ void terminar_programa(t_log* milogger, t_config* memoria){
 	printf("----------FIN------------\n");
 };
 void liberar_memoria(){
+    free(memoria);
     log_destroy(mlogger);
     log_destroy(clogger);
     log_destroy(flogger);

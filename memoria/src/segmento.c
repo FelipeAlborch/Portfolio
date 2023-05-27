@@ -17,6 +17,7 @@ log_info(logger_ram_hq,"Creando estructuras administrativas para esquema de memo
 */
 
 void crear_estructuras(){
+    memoria=malloc(config_memo.tam_memo);
     huecos_libres = list_create();
     int cero= config_memo.tam_seg_0;
     t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
