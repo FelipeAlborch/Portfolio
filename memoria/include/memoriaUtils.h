@@ -128,6 +128,7 @@ void eliminar_proceso(int pid);
 void liberar_proceso(int pid);
 int buscar_en_tabla_index(int pid);
 t_list* crear_tabla_proceso(int pid);
+t_list* tabla_proceso(int pid);
 
 void liberar_hueco(int index);
 void modificar_hueco(int index, int inicio, int tam, int estado);

@@ -88,17 +88,22 @@ void crear_proceso(int pid){
 
 void eliminar_proceso(int pid){
     int indice= buscar_en_tabla_index(pid);
-    t_paquete* paquete = malloc(TAM_PAQ);
+    
 
     if(indice== M_ERROR){
         log_error(klogger,"No se encontro el proceso %d",pid);
+        t_paquete* paquete = crear_paquete_operacion(FIN_PROCESO);
         respuestas(config_memo.kernel,FIN_PROCESO,paquete);
+        eliminar_paquete(paquete);
         return;
     }
     liberar_proceso(pid);
     log_trace(klogger,"Se elimino el proceso %d",pid);
     
-    respuestas(config_memo.kernel,FIN_PROCESO,paquete);
+    t_paquete* paquete = crear_paquete_operacion(FIN_PROCESO);
+    
+    enviar_paquete(paquete,config_memo.kernel);
+    
     eliminar_paquete(paquete);
     loggear(FIN_PROCESO,pid,NULL,0,0,0);
 }
@@ -119,7 +124,7 @@ void ejecutar_kernel_test(){
 void create_segment(int pid,int tam,int id){
     if (config_memo.bytes_libres<tam)
     {
-        respuestas(config_memo.kernel,OUT_OF_MEMORY,NULL);
+        respuestas(config_memo.kernel,OUT_OF_MEMORY,M_ERROR);
         log_error(klogger,"No hay memoria suficiente para crear el segmento");
         loggear(OUT_OF_MEMORY,pid,NULL,tam,0,0);
         return;
@@ -133,15 +138,17 @@ void create_segment(int pid,int tam,int id){
         return;
     }else{
         modificar_hueco(indice,-1,tam,OCUPADO);
-        //respuestas(config_memo.kernel,CREATE_SEGMENT,base);
-        t_paquete* paquete = crear_paquete_operacion(CREATE_SEGMENT);
+        
+        //t_paquete* paquete = crear_paquete_operacion(CREATE_SEGMENT);
         int base = base_hueco(indice);
-        agregar_a_paquete(paquete, &base, sizeof(int));
-        enviar_paquete(paquete, config_memo.kernel);
-        eliminar_paquete(paquete);
-        modificar_tabla_proceso(pid,id,base_hueco(indice),tam);
+        //agregar_a_paquete(paquete, &base, sizeof(int));
+        //enviar_paquete(paquete, config_memo.kernel);
+        //eliminar_paquete(paquete);
+        
+        modificar_tabla_proceso(pid,id,base,tam);
+        respuestas(config_memo.kernel,CREATE_SEGMENT,base);
         log_trace(klogger,"Se creo el segmento %d",id);
-        loggear(CREATE_SEGMENT,pid,NULL,id,tam,base/*base_hueco(indice)*/);
+        loggear(CREATE_SEGMENT,pid,NULL,id,tam,base);
     }   
     
 }

@@ -18,10 +18,13 @@ log_info(logger_ram_hq,"Creando estructuras administrativas para esquema de memo
 
 void crear_estructuras(){
     huecos_libres = list_create();
-    t_hueco_libre* hueco = crear_hueco_libre(0,config_memo.tam_seg_0,OCUPADO);
-    list_add_in_index(huecos_libres,0,hueco);
-    list_add_in_index(huecos_libres,1,crear_hueco_libre(config_memo.tam_seg_0+1,config_memo.bytes_libres,LIBRE));
-
+    int cero= config_memo.tam_seg_0;
+    t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
+    hueco->estado = LIBRE;
+    hueco->inicio = 0;
+    hueco->tamanio = config_memo.tam_memo;    
+    list_add(huecos_libres,hueco);
+    modificar_hueco(0,0,cero,OCUPADO);
     inicializar_segmentos();
     
     free(hueco);
@@ -29,18 +32,10 @@ void crear_estructuras(){
 void inicializar_segmentos(){
     t_tabla_segmentos* tabla = crear_tabla_segmentos(0,0,0,config_memo.tam_seg_0);
     tabla_segmentos_gral = list_create();
-    int j = 0;
+    
+    tabla->segmento->size = config_memo.tam_seg_0;
     list_add_in_index(tabla_segmentos_gral,0,tabla);
-    /*for (size_t i = 1; i < config_memo.cant_seg_max; i++)
-    {
-        modificar_tabla_segmentos(tabla,j,-1,i,-1,0);
-        list_add_in_index(tabla_segmentos_gral,i,tabla);
-       // printf("%d- pid: %d  base: %d  size %d\n",i, tabla->pid, tabla->segmento->base, tabla->segmento->size);
-        j--;
-    }
-   // modificar_tabla_segmentos(tabla,-1,0,0,0,config_memo.tam_seg_0);
-    //list_replace(tabla_segmentos_gral,0,tabla);
-    */
+    
     free(tabla->segmento);
     free(tabla);
 }
@@ -73,14 +68,22 @@ void escribir_dato(int pid, int direccion, int size, void* valor){
 void eliminar_segmento(int pid, int id){
     int indice = buscar_en_tabla_id(pid,id);
     t_tabla_segmentos* tabla = list_get(tabla_segmentos_gral,indice);
-
+    
     int base = buscar_hueco_base(tabla->segmento->base);
     modificar_hueco(base,tabla->segmento->base,tabla->segmento->size,LIBRE);
     modificar_tabla_segmentos(tabla,pid,-1,id,-1,-1);
 
     list_replace(tabla_segmentos_gral,indice,tabla);    
-    
+    t_list* nueva = tabla_proceso(pid);
 
+    if (list_size(nueva) > 1)
+    {
+        t_paquete* paquete = crear_paquete_operacion(DELETE_SEGMENT);
+        serializar_tabla_segmentos(paquete, nueva);
+        enviar_paquete(paquete,config_memo.kernel);
+        eliminar_paquete(paquete);
+    }
+    list_destroy(nueva);
     free(tabla->segmento);
     free(tabla);
 }
@@ -186,11 +189,14 @@ void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos){
 
 t_list* crear_tabla_proceso(int pid){
     t_list* lista=list_create();
-    t_tabla_segmentos* tabla_seg = crear_tabla_segmentos(pid,0,0,config_memo.tam_seg_0);
-    t_segmento* segmento = crear_segmento(0,config_memo.tam_seg_0);
-    list_add_in_index(lista,0,segmento);
-    list_add(tabla_segmentos_gral,tabla_seg);
-    for (size_t i = 1; i < config_memo.cant_seg; i++)
+    int cero = config_memo.tam_seg_0;
+    t_tabla_segmentos* tabla_seg = crear_tabla_segmentos(pid,0,0,cero);
+    
+    t_segmento* segmento = crear_segmento(0,0);
+    
+    int indice =list_size(tabla_segmentos_gral);
+   // list_add(tabla_segmentos_gral,tabla_seg);
+    for (size_t i = 0; i < config_memo.cant_seg; i++)
     {
         segmento->base=0;
         segmento->size=0;
@@ -198,7 +204,11 @@ t_list* crear_tabla_proceso(int pid){
         list_add_in_index(lista,i,segmento);
         list_add(tabla_segmentos_gral,tabla_seg);
     }
-
+    segmento->base=0;
+    segmento->size=cero;
+    modificar_tabla_segmentos(tabla_seg,pid,cero,0,0,cero);
+    list_replace(lista,0,segmento);
+    list_replace(tabla_segmentos_gral,indice + 1,tabla_seg);
     imprimir_tabla(lista);
     free(tabla_seg->segmento);
     free(tabla_seg);
@@ -301,3 +311,13 @@ int base_hueco(int index){
     t_hueco_libre* hueco = list_get(huecos_libres,index);
     return hueco->inicio;
 }
+t_list* tabla_proceso(int pid){
+    t_list* listar=list_create();
+    for (int i = 0; i < list_size(tabla_segmentos_gral); i++) {
+        t_tabla_segmentos* tabla = list_get(tabla_segmentos_gral, i);
+        if (tabla->pid == pid) {
+            list_add(listar,tabla->segmento);
+        }
+    }
+    return listar;
+}   

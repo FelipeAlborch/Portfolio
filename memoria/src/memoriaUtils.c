@@ -251,7 +251,7 @@ void mostrar_valores_de_configuracion_memoria (){
 
 void respuestas(int cliente, int code,void* algo){
   t_paquete* paquete=crear_paquete_operacion(code);
-  agregar_a_paquete(paquete,algo,sizeof(algo)+1);
+  agregar_a_paquete(paquete,&algo,sizeof(algo)+1);
   enviar_paquete(paquete,cliente);
   eliminar_paquete(paquete);
 }
