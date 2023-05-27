@@ -373,7 +373,7 @@ void esperar_listo_de_fs(char* nombre_recurso)
     */
     recv(socketFS, &rtafs, sizeof(int), MSG_WAITALL);
 
-    ptrhead_mutex_unlock(&mutex_fs);    // Se desbloquea el socket
+    pthread_mutex_unlock(&mutex_fs);    // Se desbloquea el socket
     
     agregar_proceso_ready(proceso_desalojado);
 }

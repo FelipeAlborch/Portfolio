@@ -616,7 +616,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_a_paquete(paquete_fread, &direccion_fisica, sizeof(int));
                 agregar_a_paquete(paquete_fread, &tamanio, sizeof(int));
                 
-                ptrhead_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
+                pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
 
                 enviar_paquete(paquete_fread, socketFS);
 
@@ -650,7 +650,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_a_paquete(paquete_fwrite, &direccion_fisica, sizeof(int));
                 agregar_a_paquete(paquete_fwrite, &tamanio, sizeof(int));
                 
-                ptrhead_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
+                pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 
                 enviar_paquete(paquete_fwrite, socketFS);
 
@@ -682,7 +682,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_a_paquete(paquete_ftruncate, nombre_recurso, strlen(nombre_recurso)+1);
                 agregar_a_paquete(paquete_ftruncate, &tamanio, sizeof(int));
                 
-                ptrhead_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
+                pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 
                 enviar_paquete(paquete_ftruncate, socketFS);
 
