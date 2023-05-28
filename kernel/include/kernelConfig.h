@@ -28,10 +28,12 @@ typedef struct{
     int instancias;
     t_queue* cola_bloqueados;
     pthread_mutex_t mutex_cola;
-}recurso;
+    int posicion;
+}t_recurso;
 
 extern config_de_kernel configuracionKernel;
 extern t_dictionary* diccionario_recursos;
+extern t_dictionary* tabla_de_procesos;
 
 
 /**
@@ -52,12 +54,20 @@ config_de_kernel obtener_valores_de_configuracion_kernel(t_config*);
 */
 void mostrar_valores_de_configuracion_kernel(config_de_kernel);
 
+void iniciar_tabla_de_procesos();
+
+void agregar_proceso_a_tabla(pcb*);
+
+void leer_tabla_procesos();
+
+void destruir_tabla_de_procesos();
+
 void crear_diccionario_recursos();
 
 void leer_diccionario_recursos();
 
-recurso* crear_recurso(char*, int);
+t_recurso* crear_recurso(char*, int);
 
-void liberar_recurso(recurso*);
+void liberar_recurso(t_recurso*);
 
 #endif
