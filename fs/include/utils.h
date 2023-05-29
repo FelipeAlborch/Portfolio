@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -17,14 +18,12 @@
 typedef struct FCB {
     char *file_name;
     int file_size;
-    char *direct_ptr;
-    char *indirect_ptr;
+    char *dptr;
+    t_list *iptr;
 } FCB;
 
 typedef struct FCB_table {
     char *block_store;
-    int bit_count;
-    int byte_count;
     int block_size;
     int block_count;
     t_bitarray *bitmap;
@@ -37,6 +36,22 @@ typedef struct FCB_table {
 void print_cwd();
 
 /**
+ * data_byte_count - devuelve la cantidad de bytes que ocupa el almacenamiento de datos.
+ * 
+ * @param fcb_table: tabla de control de archivos
+ * @return cantidad de bytes que ocupa el almacenamiento de datos
+ */
+int data_byte_count(FCB_table *fcb_table);
+
+/**
+ * bitmap_byte_count - devuelve la cantidad de bytes que ocupa el bitmap.
+ * 
+ * @param fcb_table: tabla de control de archivos
+ * @return cantidad de bytes que ocupa el bitmap
+ */
+int bitmap_byte_count(FCB_table *fcb_table);
+
+/**
  * fcb_table_init - inicializa campos de tabla de control de archivos.
  * 
  * @param fcb_table: tabla de control de archivos
@@ -45,7 +60,7 @@ void print_cwd();
  * @param block_count: cantidad de bloques
  * @return 0 si se creó correctamente, -1 si ocurrió un error
  */
- int fcb_table_init(FCB_table *fcb_table, char *block_store_file, int block_size, int block_count);
+ int fcb_table_init(FCB_table *fcb_table, char *bitmap_file, char *store_file, int block_size, int block_count);
 
 /**
  * mmap_file - mapea un archivo en memoria.
@@ -73,57 +88,80 @@ int mmap_file_sync(char *file_name, int length, char **file_pointer);
 // int f_open(global_table* global_table, process_table* process_table, char* file_name, int flags, mode_t mode);
 
 /**
- * f_close - quita la entrada correspondiente al archivo recibido por parámetro
- * de la tabla de archivos abiertos del proceso
+ * f_create - crea un archivo en la tabla global de archivos abiertos y en la tabla de archivos abiertos del proceso
  *
  * @param global_table: tabla global de archivos abiertos
  * @param process_table: tabla de archivos abiertos del proceso
- * @param fd: descriptor de archivo
- * @return 0 si se cerró el archivo correctamente, -1 si ocurrió un error
+ * @param file_name: nombre del archivo
+ * @return descriptor de archivo si se creó correctamente, -1 si ocurrió un error
  */
-// int f_close(global_table* global_table, process_table* process_table, int fd);
+FCB *fcb_create(char *file_name);
 
 /**
- * f_read - lee datos de un archivo
+ * f_destroy - destruye un archivo de la tabla global de archivos abiertos y de la tabla de archivos abiertos del proceso
  *
+ * @param global_table: tabla global de archivos abiertos
  * @param process_table: tabla de archivos abiertos del proceso
- * @param fd: descriptor de archivo
- * @param buffer: buffer donde se almacenarán los datos leídos
- * @param count: cantidad de bytes a leer
- * @return cantidad de bytes leídos, -1 si ocurrió un error
+ * @param file_name: nombre del archivo
+ * @return 0 si se destruyó correctamente, -1 si ocurrió un error
  */
-// int f_seek(process_table* process_table, int fd, off_t offset, int whence);
+int fcb_destroy(FCB *fcb);
 
 /**
- * f_truncate - solicita al módulo File System que actualice el tamaño del archivo al nuevo tamaño pasado por parámetro
- *
- * @param process_table: tabla de archivos abiertos del proceso
- * @param fd: descriptor de archivo
- * @param length: nuevo tamaño del archivo
- * @return 0 si la operación se realizó correctamente, -1 si ocurrió un error
+ * fcb_table_destroy - libera memoria de tabla de control de archivos.
+ * 
+ * @param fcb_table: tabla de control de archivos
+ * @return 0 si se creó correctamente, -1 si ocurrió un error
  */
-// int f_truncate(process_table* process_table, int fd, off_t length);
+int fcb_table_destroy(FCB_table *fcb_table);
 
 /**
- * f_read - solicita al módulo File System que lea desde el archivo y guarde los datos leídos en el buffer pasado por parámetro
+ * fcb_realloc - redimensiona un archivo de la tabla global de archivos abiertos y de la tabla de archivos abiertos del proceso
  *
- * @param process_table: tabla de archivos abiertos del proceso
- * @param fd: descriptor de archivo
- * @param buffer: buffer donde se guardarán los datos leídos
- * @param count: cantidad de bytes a leer
- * @return la cantidad de bytes leídos si la operación se realizó correctamente, -1 si ocurrió un error
+ * @param new_size: nuevo tamaño del archivo
+ * @param fcb: archivo a redimensionar
+ * @param fcb_table: tabla de archivos abiertos del proceso
+ * @return 0 si se redimensionó correctamente, -1 si ocurrió un error
  */
-// int f_read(process_table* process_table, int fd, void* buffer, size_t count);
+int fcb_realloc(int new_size, FCB *fcb, FCB_table *fcb_table);
 
 /**
- * f_write - solicita al módulo File System que escriba en el archivo los datos pasados por parámetro
+ * fcb_dealloc - libera los bloques de un archivo de la tabla global de archivos abiertos y de la tabla de archivos abiertos del proceso
  *
- * @param process_table: tabla de archivos abiertos del proceso
- * @param fd: descriptor de archivo
- * @param buffer: buffer con los datos a escribir
- * @param count: cantidad de bytes a escribir
- * @return la cantidad de bytes escritos si la operación se realizó correctamente, -1 si ocurrió un error
+ * @param fcb: archivo a liberar
+ * @param fcb_table: tabla de archivos abiertos del proceso
+ * @return 0 si se liberó correctamente, -1 si ocurrió un error
  */
-// int f_write(process_table* process_table, int fd, const void* buffer, size_t count);
+int fcb_dealloc(FCB *fcb, FCB_table *fcb_table);
+
+/**
+ * fcb_table_add - agrega un archivo a la tabla de archivos abiertos del proceso
+ *
+ * @param fcb: archivo a agregar
+ * @param fcb_table: tabla de archivos abiertos del proceso
+ * @return 0 si se agregó correctamente, -1 si ocurrió un error
+ */
+int fcb_table_add(FCB *fcb, FCB_table *fcb_table);
+
+/**
+ * fcb_table_remove - quita un archivo de la tabla de archivos abiertos del proceso
+ *
+ * @param file_name: nombre del archivo a quitar
+ * @param fcb_table: tabla de archivos abiertos del proceso
+ * @return 0 si se quitó correctamente, -1 si ocurrió un error
+ */
+int fcb_table_remove(char *file_name, FCB_table *fcb_table);
+
+// int f_create(...);
+
+// int f_close(...);
+
+// int f_seek(...);
+
+// int f_truncate(...);
+
+// int f_read(...);
+
+// int f_write(...);
 
 #endif

@@ -4,30 +4,100 @@
 const int BLOCK_SIZE = 64;
 const int BLOCK_COUNT = 65536;
 
+START_TEST(test_files_and_memory)
+{
+    int block_size = 10;
+    int block_count = 600;
+    char *bitmap_file = "bitmap.bin";
+    char *data_file = "data.txt";
+
+    FCB_table fcb_table;
+    int data_size = block_size * block_count;
+    int status = fcb_table_init(&fcb_table, bitmap_file, data_file, block_size, block_count);
+    ck_assert(status == 0);
+
+    // check max bit
+    int bitmap_max_bit = bitarray_get_max_bit(fcb_table.bitmap);
+    ck_assert_int_eq(bitmap_max_bit, bitmap_byte_count(&fcb_table) * 8);
+
+    // check memory allocation initialized with 0
+    char *zeroes = calloc(bitmap_max_bit, 1);
+    int bitmap_zeroed = memcmp(fcb_table.bitmap->bitarray, zeroes, bitmap_max_bit);
+    ck_assert(bitmap_zeroed != 0);
+
+    bitarray_set_bit(fcb_table.bitmap, 5);
+    bitarray_clean_bit(fcb_table.bitmap, 39);
+    bitarray_set_bit(fcb_table.bitmap, 45);
+    bitarray_clean_bit(fcb_table.bitmap, 33);
+    bitarray_set_bit(fcb_table.bitmap, 19);
+    bitarray_clean_bit(fcb_table.bitmap, 19);
+    bitarray_set_bit(fcb_table.bitmap, 20);
+    bitarray_set_bit(fcb_table.bitmap, 3);
+
+    // srand(time(NULL));
+    // while (true)
+    // {
+    //     for (int i = 0; i < bitmap_max_bit; i += (rand() % 10)) {
+    //         if (bitarray_test_bit(fcb_table.bitmap, i)) {
+    //             bitarray_clean_bit(fcb_table.bitmap, i);
+    //         }
+    //         else {
+    //             bitarray_set_bit(fcb_table.bitmap, i);
+    //         }
+    //         usleep(50000);
+    //     }
+    // }
+
+    // unallocate the memory
+    if (fcb_table.block_store != MAP_FAILED) {
+        munmap(fcb_table.block_store, data_size);
+    }
+    // delete created files
+    // if (access(bitmap_file, F_OK) != -1) remove(bitmap_file);
+    // if (access(block_file, F_OK) != -1) remove(block_file);
+
+    ck_assert(true);
+}
+END_TEST
+
 START_TEST(test_fcb_table_init)
 {
+    // setup
+    int block_size = 108;
+    int block_count = 10;
+    char *bitmap_file = "test-bitmap.bin";
+    char *block_file = "test-data.txt";
     FCB_table fcb_table;
-    int size = BLOCK_SIZE * BLOCK_COUNT;
-    int status = fcb_table_init(&fcb_table, "test-file.txt", BLOCK_SIZE, BLOCK_COUNT);
+    int data_size = block_size * block_count;
+    int status = fcb_table_init(&fcb_table, bitmap_file, block_file, block_size, block_count);
+
+    // check members
     ck_assert_int_eq(status, 0);
     ck_assert_ptr_ne(fcb_table.index, NULL);
     ck_assert_ptr_ne(fcb_table.bitmap, NULL);
-    ck_assert_int_eq(fcb_table.bit_count, size);
+    ck_assert_int_eq(data_byte_count(&fcb_table), data_size);
+    ck_assert_int_eq(bitmap_byte_count(&fcb_table), (block_count + 7) / 8);
     ck_assert_ptr_ne(fcb_table.block_store, MAP_FAILED);
 
     // check max bit
     int bitmap_max_bit = bitarray_get_max_bit(fcb_table.bitmap);
-    ck_assert_int_eq(bitmap_max_bit, fcb_table.block_count);
+    ck_assert_int_eq(bitmap_max_bit, bitmap_byte_count(&fcb_table) * 8);
 
-    // check memory allocation initialized with 0
-    char *zeroes = calloc(fcb_table.block_count, 1);
+    // get bitma_file size in bits
+
+
+    // check memory allocation is initialized with 0
+    char *zeroes = calloc(bitmap_max_bit, 1);
     int bitmap_zeroed = memcmp(fcb_table.bitmap->bitarray, zeroes, bitmap_max_bit);
     ck_assert(bitmap_zeroed == 0);
 
     // unallocate the memory
     if (fcb_table.block_store != MAP_FAILED) {
-        munmap(fcb_table.block_store, size);
+        munmap(fcb_table.block_store, data_size);
     }
+    // delete created files
+    if (access(bitmap_file, F_OK) != -1) remove(bitmap_file);
+    if (access(block_file, F_OK) != -1) remove(block_file);
 }
 END_TEST
 
@@ -75,6 +145,7 @@ Suite *utils_test_suite(void)
     TCase *tc = tcase_create(__FILE__);
     tcase_add_test(tc, test_mmap_file_sync);
     tcase_add_test(tc, test_fcb_table_init);
+    tcase_add_test(tc, test_files_and_memory);
     // tcase_add_unchecked_fixture(tc, utils_unchecked_setup, utils_unchecked_teardown);
     suite_add_tcase(s, tc);
 

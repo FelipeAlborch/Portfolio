@@ -5,7 +5,8 @@
 #include <config.h>
 #include <pthread.h>
 
-char *BLOCK_STORE_FILE = "blocks.txt";
+char *BITMAP_FILE = "bitmap.bin";
+char *STORE_FILE = "blocks.txt";
 const int BLOCK_SIZE = 64;
 const int BLOCK_COUNT = 65536;
 
@@ -28,7 +29,7 @@ main(int argc, char *argv[])
 
     config_print_fs(config);
 
-    status = fcb_table_init(&fcb_table, BLOCK_STORE_FILE, BLOCK_SIZE, BLOCK_COUNT);
+    status = fcb_table_init(&fcb_table, BITMAP_FILE, STORE_FILE, BLOCK_SIZE, BLOCK_COUNT);
 
     mem_socket = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
 
