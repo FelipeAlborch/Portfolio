@@ -13,7 +13,7 @@ void conectar_kernel(){
     }
     log_info(klogger,"Se conectó el kernel: %d \n",config_memo.kernel);
 		
-    eliminar_paquete(paquete);
+    //eliminar_paquete(paquete);
     running_k=true;
     ejecutar_kernel();        //DESCOMENTAR ESTA LINEA PARA EJECUTAR EL KERNEL
     //ejecutar_kernel_test();     //COMENTAR ESTA LINEA PARA EJECUTAR EL KERNEL
@@ -22,11 +22,11 @@ void ejecutar_kernel(){
     int conectar=config_memo.kernel;
     log_trace(mlogger, "Por ejecutar las tareas del kernel");
 
-    t_paquete* paquete; // =malloc(size_of(t_paquete));
-    t_list* lista;
+   
+    t_list* lista = list_create();
     int pid = -1;
-    while (running_k)
-    {
+    int run = 5;
+    while (run > 0) {
     
         //lista=_recibir_paquete(conectar);
         //int codigo=*(int*)list_get(lista,0);
@@ -62,12 +62,15 @@ void ejecutar_kernel(){
           default:
             break;
       }
-      list_destroy_and_destroy_elements(lista, free);
+      run--;
+      
       //running_k=false;    // Por que pones esto en fales?, hace que salga del while, y no se quede esperando a la proxima tarea del kernel
       log_trace(klogger,"ejecute kernel");
   }
+  list_destroy(lista);
   //eliminar_paquete(paquete);  // Este free esta tirando seg fault porque la funcion _recibir_paquete(socket) no recibe realmente un t_paquete, sino que enlista los valores que haya en el buffer del socket
   log_info(klogger,"Terminando de ejecutar las tareas del kernel");
+  imprimir_tabla_gral();
 }
 
 
@@ -122,15 +125,18 @@ void ejecutar_kernel_test(){
     
 }
 void create_segment(int pid,int tam,int id){
-    if (config_memo.bytes_libres<tam)
-    {
+    
+    int bytes=config_memo.bytes_libres;
+
+    log_debug(klogger,"Por crear el segmento %d del proceso %d de %d",id,pid,bytes);
+    if ( bytes < tam){
         respuestas(config_memo.kernel,OUT_OF_MEMORY,M_ERROR);
         log_error(klogger,"No hay memoria suficiente para crear el segmento");
         loggear(OUT_OF_MEMORY,pid,NULL,tam,0,0);
         return;
     }
     int indice =buscar_hueco_libre(tam);
-    if(indice==-2){
+    if(indice == -2){
         respuestas(config_memo.kernel,INICIO_COMPACTAR,NULL);
         log_warning(klogger,"No hay hueco para crear el segmento, hay que compactar");
         compactar();

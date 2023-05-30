@@ -283,15 +283,15 @@ void algoritmos(){
 }
 
 int first_fit(int size){
-
+  int index = -2; 
   for (int i = 0; i < list_size(huecos_libres); i++) {
         t_hueco_libre* hueco = list_get(huecos_libres, i);
         if (hueco->tamanio >= size && hueco->estado == LIBRE) {
-            return i;
+            index = i;
+            return index;
         }
     }
-
-    return -2;
+    
 }
 int best_fit(int size){
   int index = -2;

@@ -9,10 +9,10 @@ int main(int argc, char *argv[]) {
   inicializar_memoria();
   log_info(loggerMemoria, "Esto es la memoria D:");  
 
-  pthread_create(&hilo_fs, NULL, (void *)conectar_fs, NULL);
+/*   pthread_create(&hilo_fs, NULL, (void *)conectar_fs, NULL);
   pthread_join(hilo_fs,NULL);
   pthread_create(&hilo_cpu, NULL, (void *)conectar_cpu, NULL);
-  pthread_join(hilo_cpu,NULL);
+  pthread_join(hilo_cpu,NULL); */
   pthread_create(&hilo_kernel, NULL, (void *)conectar_kernel, NULL);
   pthread_join(hilo_kernel,NULL);
 

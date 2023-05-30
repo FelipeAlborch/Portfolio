@@ -14,10 +14,15 @@ int main(int argc, char** argv) {
    // conectar_con_memoria();
 
     proceso(INICIO_PROCESO, 121);
-	
 	respuesta_m();
-	proceso(INICIO_PROCESO, 122);
 
+	proceso(INICIO_PROCESO, 122);
+	respuesta_m();
+
+	segmento(CREATE_SEGMENT, 121, 1, 10);
+	respuesta_m();
+	
+	segmento(CREATE_SEGMENT, 121, 3, 120);
 	respuesta_m();
 	/* proceso( FIN_PROCESO, 121);
 	respuesta_m();
@@ -57,6 +62,17 @@ void proceso(int cod, int pid) {
     enviar_paquete(paquete_a_memoria, socketMemoria);
     eliminar_paquete(paquete_a_memoria);
     printf( "inicio proceso \n");
+}
+void segmento(int cod, int pid, int id, int tam) {
+
+    t_paquete* paquete_a_memoria = crear_paquete_operacion(cod);
+	agregar_a_paquete(paquete_a_memoria, &id, sizeof(int));
+	agregar_a_paquete(paquete_a_memoria, &tam, sizeof(int));
+	agregar_a_paquete(paquete_a_memoria, &pid, sizeof(int));
+	
+    enviar_paquete(paquete_a_memoria, socketMemoria);
+    eliminar_paquete(paquete_a_memoria);
+    printf( "inicio segmento \n");
 }
 void respuesta_m(){
 	t_list* segmentos_recibidos;
