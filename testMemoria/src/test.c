@@ -30,9 +30,11 @@ int main(int argc, char** argv) {
 	printf( "fin segmento \n");
 	segmento(DELETE_SEGMENT, 121, 1, 20);
 	respuesta_m();
-	/* proceso( FIN_PROCESO, 121);
+	
+	printf( "fin proceso \n");
+	proceso( FIN_PROCESO, 121);
 	respuesta_m();
- */
+
     return 0;
 }
 void conectar_con_memoria(){  
@@ -67,7 +69,7 @@ void proceso(int cod, int pid) {
 	agregar_a_paquete(paquete_a_memoria, &pid, sizeof(int));
     enviar_paquete(paquete_a_memoria, socketMemoria);
     eliminar_paquete(paquete_a_memoria);
-    printf( "inicio proceso \n");
+   
 }
 void segmento(int cod, int pid, int id, int tam) {
 	
