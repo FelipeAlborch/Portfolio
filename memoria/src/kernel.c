@@ -23,7 +23,7 @@ void ejecutar_kernel(){
     log_trace(mlogger, "Por ejecutar las tareas del kernel");
 
    
-    t_list* lista = list_create();
+    t_list* lista;
     int pid = -1;
     int run = 5;
     while (run > 0) {
@@ -153,7 +153,8 @@ void create_segment(int pid,int tam,int id){
         
         modificar_tabla_proceso(pid,id,base,tam);
         respuestas(config_memo.kernel,CREATE_SEGMENT,base);
-        log_trace(klogger,"Se creo el segmento %d",id);
+        log_info(klogger,"Se creo el segmento %d",id);
+      
         loggear(CREATE_SEGMENT,pid,NULL,id,tam,base);
     }   
     

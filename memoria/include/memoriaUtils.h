@@ -142,7 +142,7 @@ int best_fit(int size);
 int worst_fit(int size);
 
 void create_segment(int pid,int tam,int id);
-int buscar_en_tabla_id(int pid, int id);
+void* buscar_en_tabla_id(int pid, int id);
 t_tabla_segmentos* crear_tabla_segmentos(int pid, int index, int base, int tam_seg);
 
 t_segmento* buscar_segmento(int id_seg, t_list* segmentos);

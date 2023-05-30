@@ -9,6 +9,8 @@ int main(int argc, char** argv) {
     
 	t_paquete* conectar= crear_paquete();
 	conectar->codigo_operacion = KERNEL;
+	/* conectar->buffer->stream = string_duplicate("hola");
+	conectar->buffer->size = strlen(conectar->buffer->stream) + 1; */
 	enviar_paquete(conectar, socketMemoria);
     log_info(logger, "Mensaje enviado!");
    // conectar_con_memoria();
@@ -82,7 +84,7 @@ void respuesta_m(){
 		case INICIO_PROCESO:
 			segmentos_recibidos = _recibir_paquete(socketMemoria);
 			tabla = deserializar_tabla_segmentos(segmentos_recibidos);
-			list_destroy_and_destroy_elements(segmentos_recibidos, free);
+			list_destroy_and_destroy_elements(segmentos_recibidos,(void*) free);
 			log_debug(logger, "Recibi la tabla de segmentos");
 			leer_segmentos(tabla);
 		break;
@@ -94,7 +96,7 @@ void respuesta_m(){
 			segmentos_recibidos = _recibir_paquete(socketMemoria);
 			tabla = deserializar_tabla_segmentos(segmentos_recibidos);
 			
-			list_destroy_and_destroy_elements(segmentos_recibidos, free);
+			list_destroy_and_destroy_elements(segmentos_recibidos,(void*) free);
 		break;
 		case OUT_OF_MEMORY:
 			log_error(logger, "No hay espacio en memoria, ok");
@@ -105,7 +107,7 @@ void respuesta_m(){
 		case DELETE_SEGMENT:
 			segmentos_recibidos = _recibir_paquete(socketMemoria);
 			tabla = deserializar_tabla_segmentos(segmentos_recibidos);
-			list_destroy_and_destroy_elements(segmentos_recibidos, free);
+			list_destroy_and_destroy_elements(segmentos_recibidos,(void*) free);
 			log_debug(logger, "Recibi la tabla de segmentos");
 		break;	
 		default:
@@ -121,5 +123,6 @@ void leer_segmentos(t_list* un_pcb)
     {
         t_segmento* segmento = list_get(un_pcb, i);
         printf("El segmento < %d > tiene un tamaño de: < %d > y su base es < %d >\n", i, segmento->size, segmento->base);
+		free(segmento);
     }
 }

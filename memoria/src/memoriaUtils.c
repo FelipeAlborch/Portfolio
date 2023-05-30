@@ -33,7 +33,7 @@ void sigHandler_sigint(int signo) {
 
 void terminar_programa(t_log* milogger, t_config* memoria){
     /*LEAKS*/
-  free(memoria->path);
+  
   
 	liberar_memoria();
 	liberar_listas();
@@ -42,6 +42,7 @@ void terminar_programa(t_log* milogger, t_config* memoria){
   log_destroy(milogger);
   liberar_t_config();
 	config_destroy(memoria);
+  free(memoria->path);
 	printf("----------FIN------------\n");
 };
 void liberar_memoria(){
@@ -52,8 +53,8 @@ void liberar_memoria(){
     log_destroy(klogger);
 };
 void liberar_listas(){
-    list_destroy_and_destroy_elements(tabla_segmentos_gral,free);
-    list_clean_and_destroy_elements(huecos_libres,free);
+    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)free);
+    list_clean_and_destroy_elements(huecos_libres,(void*)free);
 };
 void liberar_conexion_memoria(){
     liberar_conexion(server_m);

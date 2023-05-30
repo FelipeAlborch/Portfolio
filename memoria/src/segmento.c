@@ -25,7 +25,7 @@ void inicializar_segmentos(){
     tabla->segmento->size = config_memo.tam_seg_0;
     list_add_in_index(tabla_segmentos_gral,0,tabla);
     
-    free(tabla->segmento);
+    
     free(tabla);
 }
 void modificar_tabla_segmentos(t_tabla_segmentos* tabla,int pid, int dir, int id,int base, int size){
@@ -36,7 +36,7 @@ void modificar_tabla_segmentos(t_tabla_segmentos* tabla,int pid, int dir, int id
     tabla->segmento->size = size;
 }
 t_segmento* crear_segmento(int base, int size){
-    t_segmento* segmento = malloc(sizeof(TAM_CABECERA));
+    t_segmento* segmento = malloc(sizeof(t_segmento));
     
     segmento->base=base;
     segmento->size=size;
@@ -100,6 +100,7 @@ int buscar_en_tabla_index(int pid){
     for (int i = 0; i < list_size(tabla_segmentos_gral); i++) {
         t_tabla_segmentos* tabla = list_get(tabla_segmentos_gral, i);
         if (tabla->pid == pid) {
+            printf("El indice es: %d\n",i);
             return i;
         }
     }
@@ -137,15 +138,26 @@ void liberar_proceso(int pid) {
     list_iterator_destroy(iterator);
     
 }
-int buscar_en_tabla_id(int pid, int id){
-    for (int i = 0; i < list_size(tabla_segmentos_gral); i++) {
-        t_tabla_segmentos* tabla = list_get(tabla_segmentos_gral, i);
-        if (tabla->pid == pid && tabla->index == id) {
-            return i;
+void* buscar_en_tabla_id(int pid, int id){
+     
+    t_tabla_segmentos* tabla1;
+    
+    bool _buscar_en_tabla (t_tabla_segmentos* tabla) {
+        if(tabla->pid == pid && tabla->index == id){
+            return true;
+        }else{
+            return false;
         }
+        
     }
-
-    return M_ERROR;
+    tabla1 = list_find(tabla_segmentos_gral, (void*) _buscar_en_tabla); 
+    if (tabla1 == NULL) {
+        log_error(mlogger,"No se encontro el segmento");
+        tabla1= crear_tabla_segmentos(M_ERROR,M_ERROR,M_ERROR,M_ERROR);
+        return tabla1;
+    
+    }
+    return tabla1;
 }
 int buscar_hueco_libre(int size){
    int index = -2;
@@ -178,7 +190,7 @@ void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos){
 
 
 t_list* crear_tabla_proceso(int pid){
-    t_list* lista=list_create();
+    t_list* lista = list_create();
     int cero = config_memo.tam_seg_0;
     t_tabla_segmentos* tabla_seg = crear_tabla_segmentos(pid,0,0,cero);
     
@@ -189,10 +201,10 @@ t_list* crear_tabla_proceso(int pid){
     
     list_add_in_index(lista,0,segmento); 
     int i = 1;
-    for (i; i < config_memo.cant_seg; ++i)
+    for (i; i < config_memo.cant_seg; i++)
     {
         segmento = crear_segmento(0,0);
-        modificar_tabla_segmentos(tabla_seg,pid,-1,i,-1,-1);
+        tabla_seg = crear_tabla_segmentos(pid,i,0,0);
         list_add_in_index(lista,i,segmento);
         list_add(tabla_segmentos_gral,tabla_seg);
     
@@ -247,14 +259,30 @@ void imprimir_tabla_gral(){
 }
 
 void modificar_tabla_proceso(int pid, int index, int base, int size){
-    for (int i = 0; i < list_size(tabla_segmentos_gral); i++) {
-        t_tabla_segmentos* tabla = list_get(tabla_segmentos_gral, i);
-        if (tabla->pid == pid && tabla->index == index) {
+   /* 
+    t_tabla_segmentos* tabla1 = crear_tabla_segmentos(pid,index,base,size);
+    log_debug(mlogger,"pid: %d, dir: %d, index: %d, base: %d, size: %d",tabla1->pid,tabla1->direcion_fisica,tabla1->index,tabla1->segmento->base,tabla1->segmento->size);
+     */
+    bool _buscar_en_tabla (t_tabla_segmentos* tabla) {
+        if (tabla->pid == pid && tabla->index == index){
+            tabla->direcion_fisica = base + size;
             tabla->segmento->base = base;
             tabla->segmento->size = size;
-            tabla->direcion_fisica = base + size;
+
+            return true;
+        }else{
+            return false;
         }
+        
     }
+    
+    //list_remove_and_destroy_by_condition(tabla_segmentos_gral, (void*) _buscar_en_tabla , tabla1);  // No se si esto esta bien, pero es lo que se me ocurrio. Si no funciona, lo podemos cambiar.
+    t_tabla_segmentos* tabla1 =list_find(tabla_segmentos_gral, (void*) _buscar_en_tabla);
+    tabla1 = buscar_en_tabla_id(pid,index);
+    log_warning(mlogger,"pid: %d, dir: %d, index: %d, base: %d, size: %d",tabla1->pid,tabla1->direcion_fisica,tabla1->index,tabla1->segmento->base,tabla1->segmento->size);
+    
+    free(tabla1->segmento);
+    free(tabla1);
 }
 void modificar_hueco(int index, int inicio, int tam, int estado){
 
