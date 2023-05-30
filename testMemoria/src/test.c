@@ -21,10 +21,14 @@ int main(int argc, char** argv) {
 	proceso(INICIO_PROCESO, 122);
 	respuesta_m();
 
+	printf( "inicio segmento \n");
 	segmento(CREATE_SEGMENT, 121, 1, 10);
 	respuesta_m();
 	
 	segmento(CREATE_SEGMENT, 121, 3, 120);
+	respuesta_m();
+	printf( "fin segmento \n");
+	segmento(DELETE_SEGMENT, 121, 1, 20);
 	respuesta_m();
 	/* proceso( FIN_PROCESO, 121);
 	respuesta_m();
@@ -66,15 +70,21 @@ void proceso(int cod, int pid) {
     printf( "inicio proceso \n");
 }
 void segmento(int cod, int pid, int id, int tam) {
+	
+	
 
     t_paquete* paquete_a_memoria = crear_paquete_operacion(cod);
 	agregar_a_paquete(paquete_a_memoria, &id, sizeof(int));
-	agregar_a_paquete(paquete_a_memoria, &tam, sizeof(int));
+	if (cod == CREATE_SEGMENT)
+	{
+		agregar_a_paquete(paquete_a_memoria, &tam, sizeof(int));
+	}
+	
 	agregar_a_paquete(paquete_a_memoria, &pid, sizeof(int));
 	
     enviar_paquete(paquete_a_memoria, socketMemoria);
     eliminar_paquete(paquete_a_memoria);
-    printf( "inicio segmento \n");
+    
 }
 void respuesta_m(){
 	t_list* segmentos_recibidos;
@@ -94,9 +104,9 @@ void respuesta_m(){
 		break;
 		case CREATE_SEGMENT:
 			segmentos_recibidos = _recibir_paquete(socketMemoria);
-			tabla = deserializar_tabla_segmentos(segmentos_recibidos);
+			int basae=*(int*)list_get(segmentos_recibidos,0);
+			log_debug(logger, "Recibi la base de segmentos, %d", basae);
 			
-			list_destroy_and_destroy_elements(segmentos_recibidos,(void*) free);
 		break;
 		case OUT_OF_MEMORY:
 			log_error(logger, "No hay espacio en memoria, ok");

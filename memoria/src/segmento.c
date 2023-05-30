@@ -55,14 +55,14 @@ void escribir_dato(int pid, int direccion, int size, void* valor){
 }
 
 void eliminar_segmento(int pid, int id){
-    int indice = buscar_en_tabla_id(pid,id);
-    t_tabla_segmentos* tabla = list_get(tabla_segmentos_gral,indice);
+    
+    t_tabla_segmentos* tabla = buscar_en_tabla_id(pid,id);
     
     int base = buscar_hueco_base(tabla->segmento->base);
     modificar_hueco(base,tabla->segmento->base,tabla->segmento->size,LIBRE);
     modificar_tabla_segmentos(tabla,pid,-1,id,-1,-1);
 
-    list_replace(tabla_segmentos_gral,indice,tabla);    
+    modificar_tabla_proceso(pid,id,0,0);  
     t_list* nueva = tabla_proceso(pid);
 
     if (list_size(nueva) > 1)
@@ -71,6 +71,7 @@ void eliminar_segmento(int pid, int id){
         serializar_tabla_segmentos(paquete, nueva);
         enviar_paquete(paquete,config_memo.kernel);
         eliminar_paquete(paquete);
+        imprimir_tabla(nueva);
     }
     list_destroy(nueva);
     free(tabla->segmento);

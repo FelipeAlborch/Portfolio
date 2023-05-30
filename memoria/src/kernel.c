@@ -56,6 +56,7 @@ void ejecutar_kernel(){
             lista = _recibir_paquete(config_memo.kernel);    // Agregue esta linea
             id=*(int*)list_get(lista,0);    // Cambie los indices
             pid=*(int*)list_get(lista,1);
+            printf("id: %d, pid: %d\n",id,pid);
             eliminar_segmento(pid, id);
             break;
            
