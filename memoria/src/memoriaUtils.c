@@ -3,11 +3,11 @@
 
 t_log* mlogger;
 t_log* klogger;
-t_log* clogger;
+extern t_log* clogger;
 t_log* flogger;
 t_log* loggerMemoria;
 int conexion;
-int running_cpu;
+extern int running_cpu;
 int running_fs;
 //int running_k;
 int server_m;
@@ -23,8 +23,7 @@ void startSigHandlers(void) {
 
 void sigHandler_sigint(int signo) {
 	log_warning(loggerMemoria, "Tiraste un CTRL+C, macho, abortaste el proceso.");
-	//metricas();
-	//log_debug(mlogger,"metricas");
+
 	terminar_programa(loggerMemoria);
 	printf("-------------------FINAL POR CTRL+C-------------------\n");
 
@@ -33,28 +32,30 @@ void sigHandler_sigint(int signo) {
 
 void terminar_programa(t_log* milogger){
     /*LEAKS*/
-  
-  
-	liberar_memoria();
-	liberar_listas();
+	log_destroy(milogger);
 	liberar_conexion_memoria();
+  
 	
-  log_destroy(milogger);
+  liberar_listas();
   liberar_t_config();
-	
-	printf("----------FIN------------\n");
+  liberar_memoria();
+
+  printf("----------FIN------------\n");
 };
 void liberar_memoria(){
     free(memoria);
-    log_destroy(mlogger);
+    log_debug(mlogger,"memoria liberada");  
     log_destroy(clogger);
     log_destroy(flogger);
     log_destroy(klogger);
+    log_debug(mlogger,"logs liberados");
+    log_destroy(mlogger);
 };
 void liberar_listas(){
-    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)liberar_t_segmento);
-    list_destroy_and_destroy_elements(huecos_libres,(void*)liberar_huecos);
+    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)free);
+    list_destroy_and_destroy_elements(huecos_libres,(void*)free);
     //list_destroy(huecos_libres);
+    log_debug(mlogger,"listas liberadas");
 };
 void liberar_huecos(t_hueco_libre* hueco){
     free(hueco->estado);
@@ -64,7 +65,7 @@ void liberar_huecos(t_hueco_libre* hueco){
 };
 void liberar_t_segmento(t_tabla_segmentos* segmento){
     free(segmento->segmento);
-    free(segmento);
+    //free(segmento);
 };  
 void liberar_conexion_memoria(){
     
@@ -72,13 +73,14 @@ void liberar_conexion_memoria(){
     liberar_conexion(config_memo.fs);
     liberar_conexion(config_memo.kernel); 
     liberar_conexion(server_m);
+
+    log_debug(mlogger,"conexiones liberadas");
 };
 void liberar_t_config(){
-  free(config_memo.algoritmo);
+  //free(config_memo.algoritmo);
   free(config_memo.ip);
-  free(config_memo.puerto);
-  
-  //free(memoriaConfig->path);
+  //free(config_memo.puerto);
+  log_debug(mlogger,"config liberada");
 };
 void inicializar_configuracion(){
     obtener_valores_de_configuracion_memoria(memoriaConfig);
@@ -94,7 +96,7 @@ void inicializar_memoria(){
     conectar();
     config_destroy(memoriaConfig);
 };
-	
+
 
 void inicializar_logs(){
     loggerMemoria = log_create("logs/memoria.log","Memoria",true,LOG_LEVEL_TRACE);
@@ -104,20 +106,7 @@ void inicializar_logs(){
     flogger = log_create("logs/file_system.log","Memoria -> FileSystem",true,LOG_LEVEL_TRACE);
 }
 // Lo del memoria conexion: 
-void conectar_cpu(){
-    config_memo.cpu=esperar_cliente(server_m);
-    t_paquete* paquete; // =malloc(sizeof(t_paquete));
-    paquete = recibir_paquete(config_memo.cpu);
-    if(paquete->codigo_operacion != CPU){
-      log_error(clogger,"Vos no sos el CPU. Se cancela la conexión");
-      pthread_detach(hilo_cpu);
-			pthread_exit(&hilo_cpu);
-    }
-    log_info(clogger,"Se conectó el CPU: %d \n",config_memo.cpu);
-		eliminar_paquete(paquete);
-    running_cpu=true;
-    ejecutar_cpu();
-}
+
 
 void conectar_fs(){
   config_memo.fs=esperar_cliente(server_m);
@@ -125,13 +114,13 @@ void conectar_fs(){
     paquete = recibir_paquete(config_memo.fs);
     if(paquete->codigo_operacion != FILE_SYSTEM){
       log_error(flogger,"Vos no sos el FS. Se cancela la conexión %d ",paquete->codigo_operacion);
-      eliminar_paquete(paquete);
+     // eliminar_paquete(paquete);
       pthread_detach(hilo_kernel);
 			pthread_exit(&hilo_kernel);
     }
     log_info(flogger,"Se conectó el FileSystem: %d \n",config_memo.fs);
 		
-    eliminar_paquete(paquete);
+    //eliminar_paquete(paquete);
     running_fs=true;
     ejecutar_fs();
 }
@@ -180,29 +169,7 @@ void mostrar_valores_de_configuracion_memoria (){
 
 
   
-  void ejecutar_cpu(){
-    int conectar=config_memo.cpu;
-    log_trace(clogger, "Por ejecutar las tareas del CPU");
-
-    //t_paquete* paquete_cpu =malloc(size_of(t_paquete));
-    while (running_cpu)
-    {
-      /*paquete_cpu=recibir_paquete(conectar);
-      switch (paquete_cpu->codigo_operacion)
-      {
-          case :
-            
-            break;
-          
-          default:
-            break;
-      }
-      eliminar_paquete(paquete_cpu);*/
-      running_cpu=false;
-    }
-    log_info(clogger,"Terminando de ejecutar las tareas del CPU");
-    
-  }
+  
   void ejecutar_fs(){
     int conectar=config_memo.fs;
     log_trace(flogger, "Por ejecutar las tareas del FileSystem");
@@ -222,8 +189,9 @@ void mostrar_valores_de_configuracion_memoria (){
             break;
       }
       eliminar_paquete(paquete_cpu);*/
-      running_fs=false;
+      
     }
+    running_fs=false;
     log_info(flogger,"Terminando de ejecutar las tareas del FileSystem");
     
   }

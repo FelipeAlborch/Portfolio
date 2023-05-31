@@ -26,7 +26,7 @@ void ejecutar_kernel(){
     t_list* lista;
     int pid = -1;
     int run = 6;
-    while (run > 0) {
+    while (running_k) {
     
         //lista=_recibir_paquete(conectar);
         //int codigo=*(int*)list_get(lista,0);
