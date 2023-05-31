@@ -24,18 +24,24 @@ void ejecutar_cpu(){
     //t_paquete* paquete_cpu =malloc(size_of(t_paquete));
     while (running_cpu)
     {
-      /*paquete_cpu=recibir_paquete(conectar);
-      switch (paquete_cpu->codigo_operacion)
+        t_list* lista;
+        int dir = -1;
+        char* texto;
+      switch (recibir_operacion(config_memo.cpu))
       {
-          case :
-            
+          case MOV_IN_INSTRUCTION:
+            lista = _recibir_paquete(config_memo.cpu);
+            dir=*(int*)list_get(lista,0);
+            //MOV_IN_SUCCES
             break;
-          
+            case MOV_OUT_INSTRUCTION:
+            lista = _recibir_paquete(config_memo.cpu);
+            dir=*(int*)list_get(lista,0);
+            texto=*(char**)list_get(lista,1);
           default:
             break;
       }
-      eliminar_paquete(paquete_cpu);*/
-      running_cpu=false;
+      //running_cpu=false;
     }
     log_info(clogger,"Terminando de ejecutar las tareas del CPU");
     
