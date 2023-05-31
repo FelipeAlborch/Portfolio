@@ -113,7 +113,7 @@ Instruccion obtener_tipo_instruccion(char *instruccion)
     //printf("Lei la instruccion SET\n");
     return SET;
   }
-  else if (!strcmp(instruccion, "IO")){
+  else if (!strcmp(instruccion, "IO") || !strcmp(instruccion, "I/O") ){
     //printf("Lei la instruccion I/0\n");
     return IO;
   }

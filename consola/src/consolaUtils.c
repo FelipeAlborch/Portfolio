@@ -166,10 +166,19 @@ char* leer_linea(FILE* archivo)
 
   getline(&linea_leida, &tam_linea, archivo);
 
-  if(linea_leida[string_length(linea_leida) -1] == '\n')
+  while(linea_leida[string_length(linea_leida) -1] == '\n' || linea_leida[string_length(linea_leida) -1] == '\r')
   {
     linea_leida[string_length(linea_leida) -1] = '\0';
   }
+
+  //if(linea_leida[string_length(linea_leida) -1] == '\n' || linea_leida[string_length(linea_leida) -1] == '\r')
+  //{
+  //  linea_leida[string_length(linea_leida) -1] = '\0';
+  //}
+  //if(linea_leida[string_length(linea_leida) -1] == '\n' || linea_leida[string_length(linea_leida) -1] == '\r')
+  //{
+  //  linea_leida[string_length(linea_leida) -1] = '\0';
+  //}
     
   return linea_leida;
 }

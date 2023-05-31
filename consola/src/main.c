@@ -36,11 +36,11 @@ int main(int argc, char *argv[]) {
     enviar_paquete(paquete_instrucciones, socketKernel);
 
     //list_destroy_and_destroy_elements(lista_instrucciones, (void*) liberar_instruccion);
-    for(int i = 0; i < list_size(lista_instrucciones); i++)
-    {
-        LineaInstruccion* instr = list_get(lista_instrucciones, i);
-        liberar_instruccion(instr);
-    }
+    //for(int i = 0; i < list_size(lista_instrucciones); i++)
+    //{
+    //    LineaInstruccion* instr = list_get(lista_instrucciones, i);
+    //    liberar_instruccion(instr);
+    //}
    //list_destroy(lista_instrucciones);        //Este list_destroy tira error: corrupted size vs. prev_size Aborted (core dumped)
     eliminar_paquete(paquete_instrucciones);
     
