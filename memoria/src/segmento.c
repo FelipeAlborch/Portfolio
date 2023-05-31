@@ -9,6 +9,9 @@ void crear_estructuras(){
     huecos_libres = list_create();
     int cero= config_memo.tam_seg_0;
     t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
+    
+    log_warning(mlogger,"Hueco size %d",sizeof(t_hueco_libre));
+
     hueco->estado = LIBRE;
     hueco->inicio = 0;
     hueco->tamanio = config_memo.tam_memo;    
@@ -16,7 +19,16 @@ void crear_estructuras(){
     modificar_hueco(0,0,cero,OCUPADO);
     inicializar_segmentos();
     
-    free(hueco);
+    
+    /* log_debug(mlogger,"Hueco size %d",sizeof(hueco->estado));
+    log_debug(mlogger,"Hueco size %d",sizeof(hueco->inicio));
+    log_debug(mlogger,"Hueco size %d",sizeof(hueco->tamanio));
+    log_debug(mlogger,"Hueco size %d",sizeof(hueco)); */
+     
+
+    /* free(hueco->inicio);
+    free(hueco->tamanio);   
+    free(hueco); */
 }
 void inicializar_segmentos(){
     t_tabla_segmentos* tabla = crear_tabla_segmentos(0,0,0,config_memo.tam_seg_0);
@@ -26,6 +38,7 @@ void inicializar_segmentos(){
     list_add_in_index(tabla_segmentos_gral,0,tabla);
     
     
+    free(tabla->segmento);
     free(tabla);
 }
 void modificar_tabla_segmentos(t_tabla_segmentos* tabla,int pid, int dir, int id,int base, int size){

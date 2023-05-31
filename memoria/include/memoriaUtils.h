@@ -51,11 +51,13 @@ typedef struct
 void sigHandler_sigint(int signo);
 void startSigHandlers(void);
 
-void terminar_programa(t_log* logger, t_config* configMemoria);
+void terminar_programa(t_log* logger);
 void liberar_memoria();
 void liberar_listas();
 void liberar_conexion_memoria();
 void liberar_t_config();
+void liberar_huecos(t_hueco_libre* hueco);
+void liberar_t_segmento(t_tabla_segmentos* segmento);
 
 void inicializar_configuracion();
 void inicializar_memoria();

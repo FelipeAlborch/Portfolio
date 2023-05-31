@@ -25,13 +25,13 @@ void sigHandler_sigint(int signo) {
 	log_warning(loggerMemoria, "Tiraste un CTRL+C, macho, abortaste el proceso.");
 	//metricas();
 	//log_debug(mlogger,"metricas");
-	terminar_programa(loggerMemoria, memoriaConfig);
-	printf("-------------------FINAL POR CTRL+C-------------------");
+	terminar_programa(loggerMemoria);
+	printf("-------------------FINAL POR CTRL+C-------------------\n");
 
 	exit(-1);
 }
 
-void terminar_programa(t_log* milogger, t_config* memoria){
+void terminar_programa(t_log* milogger){
     /*LEAKS*/
   
   
@@ -41,8 +41,7 @@ void terminar_programa(t_log* milogger, t_config* memoria){
 	
   log_destroy(milogger);
   liberar_t_config();
-	config_destroy(memoria);
-  free(memoria->path);
+	
 	printf("----------FIN------------\n");
 };
 void liberar_memoria(){
@@ -53,16 +52,33 @@ void liberar_memoria(){
     log_destroy(klogger);
 };
 void liberar_listas(){
-    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)free);
-    list_clean_and_destroy_elements(huecos_libres,(void*)free);
+    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)liberar_t_segmento);
+    list_destroy_and_destroy_elements(huecos_libres,(void*)liberar_huecos);
+    //list_destroy(huecos_libres);
 };
+void liberar_huecos(t_hueco_libre* hueco){
+    free(hueco->estado);
+    /* free(hueco->inicio);
+    free(hueco->tamanio); */ 
+    free(hueco);
+};
+void liberar_t_segmento(t_tabla_segmentos* segmento){
+    free(segmento->segmento);
+    free(segmento);
+};  
 void liberar_conexion_memoria(){
+    
+    liberar_conexion(config_memo.cpu);
+    liberar_conexion(config_memo.fs);
+    liberar_conexion(config_memo.kernel); 
     liberar_conexion(server_m);
 };
 void liberar_t_config(){
   free(config_memo.algoritmo);
   free(config_memo.ip);
   free(config_memo.puerto);
+  
+  //free(memoriaConfig->path);
 };
 void inicializar_configuracion(){
     obtener_valores_de_configuracion_memoria(memoriaConfig);
@@ -71,10 +87,12 @@ void inicializar_configuracion(){
 
 void inicializar_memoria(){
 
-    inicializar_configuracion();
     inicializar_logs();
+    inicializar_configuracion();
+    
     crear_estructuras();   
     conectar();
+    config_destroy(memoriaConfig);
 };
 	
 
@@ -272,6 +290,9 @@ void algoritmos(){
   if(strcmp(config_memo.algoritmo,"FF")==0){
     config_memo.algoritmo_int=FIRST_FIT;
   }
+  else if(strcmp(config_memo.algoritmo,"BEST")==0){
+    config_memo.algoritmo_int=BEST_FIT;
+  }
   else if(strcmp(config_memo.algoritmo,"BF")==0){
     config_memo.algoritmo_int=BEST_FIT;
   }
@@ -279,7 +300,7 @@ void algoritmos(){
     config_memo.algoritmo_int=WORST_FIT;
   }
   else{
-    log_error(loggerMemoria,"No se reconoce el algoritmo de asignación");
+    log_error(mlogger,"No se reconoce el algoritmo de asignación");
   }
 }
 
