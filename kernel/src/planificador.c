@@ -144,6 +144,7 @@ void* planificador_corto_plazo_hrrn()
         // Antes de mandar el proximo a ejecutar, acomodamos la lista por response ratio
         list_sort(lista_ready_hrrn, comparar_response_ratio);
         // Saco el primer proceso de la lista filtrada
+        loguear_rr_de_procesos(logger_planificador_extra);
         pcb* proceso_a_ejecutar = list_remove(lista_ready_hrrn,0);
 
         agregar_proceso_exec(proceso_a_ejecutar);

@@ -81,6 +81,8 @@ bool comparar_response_ratio(pcb*, pcb*);
 */
 double estimar_proxima_rafaga(pcb*);
 
+void loguear_rr_de_procesos(t_log*);
+
 /*****************************************************************************
  *              FUNCIONES UTILES PARA COMUNICACION
 ******************************************************************************/

@@ -105,6 +105,16 @@ double estimar_proxima_rafaga(pcb* un_pcb)
     return nuevo_estimado;
 }
 
+void loguear_rr_de_procesos(t_log* logger)
+{
+    pcb* proceso;
+    for(int i = 0; i < list_size(lista_ready_hrrn); i++)
+    {
+        proceso = list_get(lista_ready_hrrn, i);
+        double rr = calcular_response_ratio(proceso);
+        log_info(logger, "El RR de %d, es %f\n", proceso->pid, rr);
+    }
+}
 /*****************************************************************************
  *              FUNCIONES UTILES PARA COMUNICACION
 ******************************************************************************/
