@@ -442,11 +442,11 @@ void loguear_lista_de_instrucciones(t_list* lista_de_instrucciones, t_log* logge
 
 void* liberar_instruccion(LineaInstruccion* una_instruccion)
 {
-    free(una_instruccion->identificador);
+    //free(una_instruccion->identificador);
     free(una_instruccion->parametros[0]);
     free(una_instruccion->parametros[1]);
     free(una_instruccion->parametros[2]);
-    free(una_instruccion);
+    //free(una_instruccion);
     return NULL;
 }
 
