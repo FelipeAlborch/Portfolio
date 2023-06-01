@@ -298,6 +298,9 @@ void serializar_contexto_ejecucion(t_paquete* paquete, pcb* un_pcb)
     int cantidad_de_instrucciones = list_size(un_pcb->lista_de_instrucciones);
     agregar_a_paquete(paquete, &cantidad_de_instrucciones, sizeof(int));
 
+    int cantidad_de_segmentos = list_size(un_pcb->tabla_de_segmentos);
+    agregar_a_paquete(paquete, &cantidad_de_segmentos, sizeof(int));
+
     int i = 0;
     for(i; i < cantidad_de_instrucciones; i++)
     {
@@ -306,6 +309,13 @@ void serializar_contexto_ejecucion(t_paquete* paquete, pcb* un_pcb)
         agregar_a_paquete(paquete, una_instruccion->parametros[0], strlen(una_instruccion->parametros[0])+1);
         agregar_a_paquete(paquete, una_instruccion->parametros[1], strlen(una_instruccion->parametros[1])+1);
         agregar_a_paquete(paquete, una_instruccion->parametros[2], strlen(una_instruccion->parametros[2])+1);
+    }
+
+    for(i = 0; i < cantidad_de_segmentos; i++)
+    {
+        t_segmento* segmento = list_get(un_pcb->tabla_de_segmentos, i);
+        agregar_a_paquete(paquete, &(segmento->base), sizeof(int));
+        agregar_a_paquete(paquete, &(segmento->size), sizeof(int));
     }
 
     agregar_a_paquete(paquete, &(un_pcb->pid), sizeof(int));
@@ -332,9 +342,11 @@ void serializar_contexto_ejecucion(t_paquete* paquete, pcb* un_pcb)
 pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
 {
     int cantidad_de_instrucciones = *(int *)list_get(valores_contexto_enviado, 0);
+    int cantidad_de_segmentos = *(int*) list_get(valores_contexto_enviado, 1);
 
     pcb* contexto_recibido = /*(pcb*) */malloc(sizeof(pcb));
     t_list* lista_de_instrucciones = list_create();
+    t_list* tabla_de_segmentos = list_create();
     int i;
     int base;   // Representa el desplazamiento a traves de la lista para ubicar los valores empaquetados en el orden predefinido
 
@@ -343,15 +355,28 @@ pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
         base = 4 * i;
         LineaInstruccion* una_instruccion = malloc(sizeof(LineaInstruccion));
 
-        una_instruccion->identificador = string_duplicate(list_get(valores_contexto_enviado, base + 1));
-        una_instruccion->parametros[0] = string_duplicate(list_get(valores_contexto_enviado, base + 2));
-        una_instruccion->parametros[1] = string_duplicate(list_get(valores_contexto_enviado, base + 3));
-        una_instruccion->parametros[2] = string_duplicate(list_get(valores_contexto_enviado, base + 4));
+        una_instruccion->identificador = string_duplicate(list_get(valores_contexto_enviado, base + 2));
+        una_instruccion->parametros[0] = string_duplicate(list_get(valores_contexto_enviado, base + 3));
+        una_instruccion->parametros[1] = string_duplicate(list_get(valores_contexto_enviado, base + 4));
+        una_instruccion->parametros[2] = string_duplicate(list_get(valores_contexto_enviado, base + 5));
 
         list_add(lista_de_instrucciones, una_instruccion);
     }
 
-    base = (cantidad_de_instrucciones * 4) + 1;
+    base = (cantidad_de_instrucciones * 4) + 2;
+
+    for(i = 0; i < cantidad_de_segmentos; i++)
+    {
+        t_segmento* un_segmento = malloc(sizeof(t_segmento));
+
+        un_segmento->base = *(int*)list_get(valores_contexto_enviado, base);
+        base++;
+        un_segmento->size = *(int*) list_get(valores_contexto_enviado, base);
+        base++;
+
+        list_add(tabla_de_segmentos, un_segmento);
+    }
+
     int valores_restantes = base;
 
     contexto_recibido->pid = *(int*)list_get(valores_contexto_enviado, valores_restantes);
@@ -375,8 +400,10 @@ pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
     contexto_recibido->tiempo_io = *(int*)list_get(valores_contexto_enviado, valores_restantes + 14);
 
     contexto_recibido->lista_de_instrucciones = list_duplicate(lista_de_instrucciones);
+    contexto_recibido->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
 
     list_destroy(lista_de_instrucciones);
+    list_destroy(tabla_de_segmentos);
 
     return contexto_recibido;
 }
