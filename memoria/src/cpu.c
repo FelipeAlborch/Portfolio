@@ -12,7 +12,7 @@ void conectar_cpu(){
 	    pthread_exit(&hilo_cpu);
     }
     log_info(clogger,"Se conectó el CPU: %d \n",config_memo.cpu);
-		//eliminar_paquete(paquete);
+    eliminar_paquete(paquete);
     running_cpu=true;
     ejecutar_cpu();
 }

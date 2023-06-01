@@ -120,10 +120,10 @@ void conectar_fs(){
     }
     log_info(flogger,"Se conectó el FileSystem: %d \n",config_memo.fs);
 		
-    //eliminar_paquete(paquete);
-    free(paquete->buffer->stream);
-    free(paquete->buffer);
-    free(paquete);
+    eliminar_paquete(paquete);
+    //free(paquete->buffer->stream);
+    //free(paquete->buffer);
+    //free(paquete);
     running_fs=true;
     ejecutar_fs();
 }

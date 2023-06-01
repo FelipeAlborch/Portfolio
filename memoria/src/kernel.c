@@ -13,7 +13,7 @@ void conectar_kernel(){
     }
     log_info(klogger,"Se conectó el kernel: %d \n",config_memo.kernel);
 		
-    //eliminar_paquete(paquete);
+    eliminar_paquete(paquete);
     running_k=true;
     ejecutar_kernel();        //DESCOMENTAR ESTA LINEA PARA EJECUTAR EL KERNEL
     //ejecutar_kernel_test();     //COMENTAR ESTA LINEA PARA EJECUTAR EL KERNEL
