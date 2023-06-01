@@ -53,7 +53,32 @@
 			"fstream": "c",
 			"new": "c",
 			"stdexcept": "c",
-			"typeinfo": "c"
+			"typeinfo": "c",
+			"algorithm": "c",
+			"bit": "c",
+			"cctype": "c",
+			"cerrno": "c",
+			"cfloat": "c",
+			"climits": "c",
+			"clocale": "c",
+			"cmath": "c",
+			"cstdarg": "c",
+			"cstdint": "c",
+			"cstdlib": "c",
+			"cwctype": "c",
+			"deque": "c",
+			"unordered_map": "c",
+			"exception": "c",
+			"iterator": "c",
+			"numeric": "c",
+			"ios": "c",
+			"iosfwd": "c",
+			"limits": "c",
+			"queue": "c",
+			"sstream": "c",
+			"streambuf": "c",
+			"cinttypes": "c",
+			"cstdbool": "c"
 		}
 	}
 }

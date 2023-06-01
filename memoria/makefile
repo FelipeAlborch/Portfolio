@@ -35,9 +35,13 @@ OBJS = $(patsubst src/%.c,obj/%.o,$(SRCS_C))
 # Set binary target
 BIN = bin/$(call filename,$(shell cd . && pwd | xargs basename))
 
+# Set logs directory
+LOGS = logs/
+
 .PHONY: all
 all: CFLAGS = $(CDEBUG)
 all: $(BIN)
+all: $(LOGS)
 
 .PHONY: release
 release: CFLAGS = $(CRELEASE)
@@ -45,7 +49,7 @@ release: $(BIN)
 
 .PHONY: clean
 clean:
-	-rm -rfv obj bin
+	-rm -rfv obj bin logs
 
 .PHONY: watch
 watch:
@@ -65,7 +69,7 @@ $(DEPS): $$(shell find $$(patsubst %bin/,%src/,$$(dir $$@)) -iname "*.c") \
 	$$(shell find $$(patsubst %bin/,%include/,$$(dir $$@)) -iname "*.h")
 	make --no-print-directory -C $(patsubst %bin/,%,$(dir $@))
 
-$(sort $(dir $(BIN) $(OBJS))):
+$(sort $(dir $(LOGS) $(BIN) $(OBJS) )):
 	mkdir -pv $@
 
 
@@ -90,3 +94,28 @@ memcheck: all
 helgrind: all
 	valgrind --tool=helgrind $(HELGRIND_FLAGS) ./$(BIN) $(ARGS)
 
+obj/%.o: tests/%.c $(SRCS_H) $(DEPS) | $(dir $(OBJS))
+	gcc $(CFLAGS) -c -o "$@" $< $(IDIRS:%=-I%)
+
+.PHONY: build-check
+build-check: CFLAGS = $(CDEBUG)
+build-check: OBJS += $(patsubst tests/%.c,obj/%.o,$(shell find tests/ -iname "*.c"))
+build-check: LIBS = check commons pthread m rt subunit
+build-check: $(OBJS) | $(dir $(BIN))
+	gcc $(CFLAGS) -o bin/check tests/check.c $(DEPS) $(IDIRS:%=-I%) $(LIBDIRS:%=-L%) $(LIBS:%=-l%)
+
+.PHONY: check
+check: CFLAGS = $(CDEBUG)
+check: OBJS += $(patsubst tests/%.c,obj/%.o,$(shell find tests/ -iname "*.c"))
+check: LIBS = check commons pthread m rt subunit
+check: $(OBJS) | $(dir $(BIN))
+	gcc $(CFLAGS) -o bin/check tests/check.c $(DEPS) $(IDIRS:%=-I%) $(LIBDIRS:%=-L%) $(LIBS:%=-l%)
+	./bin/check
+
+.PHONY: cunit
+cunit: CFLAGS = $(CDEBUG)
+cunit: OBJS += $(patsubst tests/%.c,obj/%.o,$(shell find tests/ -iname "*.c"))
+cunit: LIBS = cunit commons pthread m rt subunit
+cunit: $(OBJS) | $(dir $(BIN))
+	gcc $(CFLAGS) -o bin/cunit tests/cunit.c $(DEPS) $(IDIRS:%=-I%) $(LIBDIRS:%=-L%) $(LIBS:%=-l%)
+	./bin/cunit

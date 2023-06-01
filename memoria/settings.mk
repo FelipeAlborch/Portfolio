@@ -13,5 +13,5 @@ CRELEASE=-O3 -Wall -DNDEBUG
 ARGS=memoria.config
 
 # Valgrind flags
-MEMCHECK_FLAGS=--track-origins=yes --log-file="memcheck.log"
-HELGRIND_FLAGS=--log-file="helgrind.log"
+MEMCHECK_FLAGS=--track-origins=yes --show-leak-kinds=all -s --log-file="logs/memcheck.log"
+HELGRIND_FLAGS=--log-file="logs/helgrind.log"

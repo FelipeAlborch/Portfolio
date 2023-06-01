@@ -407,7 +407,6 @@ void solicitar_eliminacion_segmento(int nro_segmento, int pid_proceso)
     eliminar_paquete(paquete_ds);
 }
 
-
 void leer_segmentos(pcb* un_pcb)
 {
     for(int i = 0; i < list_size(un_pcb->tabla_de_segmentos); i++)

@@ -79,10 +79,10 @@ void escuchar_consola(int socketConsola)
 			agregar_proceso_a_tabla(nuevo_pcb);
 
 			loguear_pcb(nuevo_pcb,logger_kernel_util_extra);
-			
 			agregar_proceso_new(nuevo_pcb);
 			list_destroy_and_destroy_elements(lista_de_consola, free);
 
+			list_destroy_and_destroy_elements(lista_de_consola, free);
 			return;
             break;
 
