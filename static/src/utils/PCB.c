@@ -486,7 +486,7 @@ void serializar_tabla_segmentos(t_paquete* paquete, t_list* tabla_segmentos)
 
     for(int i = 0; i < cantidad_segmentos; i++)
     {
-        t_segmento* segmento = list_get(tabla_segmentos, 0);
+        t_segmento* segmento = list_get(tabla_segmentos, i);
         agregar_a_paquete(paquete, &(segmento->base), sizeof(int));
         agregar_a_paquete(paquete, &(segmento->size), sizeof(int));
     }
