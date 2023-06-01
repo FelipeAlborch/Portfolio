@@ -7,8 +7,8 @@ void conectar_kernel(){
     paquete = recibir_paquete(config_memo.kernel);
     if(paquete->codigo_operacion != KERNEL){
         log_error(klogger,"Vos no sos el kernel. Se cancela la conexión %d",paquete->codigo_operacion);
-        eliminar_paquete(paquete);
-        pthread_detach(hilo_kernel);
+        //eliminar_paquete(paquete);
+       // pthread_detach(hilo_kernel);
 		pthread_exit(&hilo_kernel);
     }
     log_info(klogger,"Se conectó el kernel: %d \n",config_memo.kernel);
@@ -30,30 +30,30 @@ void ejecutar_kernel(){
     
         //lista=_recibir_paquete(conectar);
         //int codigo=*(int*)list_get(lista,0);
-        switch (recibir_operacion(config_memo.kernel))
+        switch (recibir_operacion(conectar))
         {
           case INICIO_PROCESO:
-            lista = _recibir_paquete(config_memo.kernel); // Agregue esta linea
+            lista = _recibir_paquete(conectar); // Agregue esta linea
             pid=*(int*)list_get(lista,0);   // Cambie el 1 por un 0
             crear_proceso(pid);
             
           
             break;
           case FIN_PROCESO:
-            lista = _recibir_paquete(config_memo.kernel);    // Agregue esta linea
+            lista = _recibir_paquete(conectar);    // Agregue esta linea
             pid=*(int*)list_get(lista,0);   // Cambie el 1 por un 0
             eliminar_proceso(pid);
 
             break;
           case CREATE_SEGMENT:
-            lista = _recibir_paquete(config_memo.kernel);    // Agregue esta linea
+            lista = _recibir_paquete(conectar);    // Agregue esta linea
             int id=*(int*)list_get(lista,0);    // Cambie los indices
             pid=*(int*)list_get(lista,2);
             int tam=*(int*)list_get(lista,1);
             create_segment(pid,tam,id);
             break;
           case DELETE_SEGMENT:
-            lista = _recibir_paquete(config_memo.kernel);    // Agregue esta linea
+            lista = _recibir_paquete(conectar);    // Agregue esta linea
             id=*(int*)list_get(lista,0);    // Cambie los indices
             pid=*(int*)list_get(lista,1);
             printf("id: %d, pid: %d\n",id,pid);
