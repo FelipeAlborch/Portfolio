@@ -115,13 +115,13 @@ void conectar_fs(){
     if(paquete->codigo_operacion != FILE_SYSTEM){
       log_error(flogger,"Vos no sos el FS. Se cancela la conexión %d ",paquete->codigo_operacion);
      // eliminar_paquete(paquete);
-      pthread_detach(hilo_kernel);
-			pthread_exit(&hilo_kernel);
+      pthread_detach(hilo_fs);
+			pthread_exit(&hilo_fs);
     }
     log_info(flogger,"Se conectó el FileSystem: %d \n",config_memo.fs);
 		
     //eliminar_paquete(paquete);
-    free(paquete->buffer->stream);
+    
     free(paquete->buffer);
     free(paquete);
     running_fs=true;

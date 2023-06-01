@@ -35,9 +35,13 @@ OBJS = $(patsubst src/%.c,obj/%.o,$(SRCS_C))
 # Set binary target
 BIN = bin/$(call filename,$(shell cd . && pwd | xargs basename))
 
+# Set logs directory
+LOGS = logs/
+
 .PHONY: all
 all: CFLAGS = $(CDEBUG)
 all: $(BIN)
+all: $(LOGS)
 
 .PHONY: release
 release: CFLAGS = $(CRELEASE)
@@ -45,7 +49,7 @@ release: $(BIN)
 
 .PHONY: clean
 clean:
-	-rm -rfv obj bin
+	-rm -rfv obj bin logs
 
 .PHONY: watch
 watch:
@@ -65,7 +69,7 @@ $(DEPS): $$(shell find $$(patsubst %bin/,%src/,$$(dir $$@)) -iname "*.c") \
 	$$(shell find $$(patsubst %bin/,%include/,$$(dir $$@)) -iname "*.h")
 	make --no-print-directory -C $(patsubst %bin/,%,$(dir $@))
 
-$(sort $(dir $(BIN) $(OBJS))):
+$(sort $(dir $(LOGS) $(BIN) $(OBJS) )):
 	mkdir -pv $@
 
 

@@ -10,7 +10,7 @@ void crear_estructuras(){
     int cero= config_memo.tam_seg_0;
     t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
     
-    log_warning(mlogger,"Hueco size %d",sizeof(t_hueco_libre));
+    //log_warning(mlogger,"Hueco size %d",sizeof(t_hueco_libre));
 
     hueco->estado = LIBRE;
     hueco->inicio = 0;
