@@ -380,7 +380,7 @@ pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
         list_add(tabla_de_segmentos, un_segmento);
     }
     
-    */
+    
     int valores_restantes = base;
 
     contexto_recibido->pid = *(int*)list_get(valores_contexto_enviado, valores_restantes);
