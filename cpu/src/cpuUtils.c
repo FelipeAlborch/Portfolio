@@ -99,7 +99,7 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
     }
 
-    if (es_instruccion_de_corte(instruccion))
+    if (es_instruccion_de_corte(instruccion) || haySegmentationFault)
     {
       log_destroy(logger);
       return;
