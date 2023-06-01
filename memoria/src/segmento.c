@@ -59,13 +59,7 @@ t_segmento* crear_segmento(int base, int size){
 
 
 
-void* leer_dato(int pid, int direccion, int size){
-	void* info;
-	return info;
-}
-void escribir_dato(int pid, int direccion, int size, void* valor){
 
-}
 
 void eliminar_segmento(int pid, int id){
     
@@ -132,7 +126,24 @@ t_segmento* buscar_segmento(int base, t_list* segmentos){
 
     return NULL;
 }
-
+t_segmento* buscar_segmento_dir(int dir){
+    t_segmento *segmento = crear_segmento(-1,-1);
+    bool _buscar_en_tabla (t_tabla_segmentos* tabla) {
+        
+        if(tabla->direcion_fisica == dir){
+            segmento->base= tabla->segmento->base;
+            segmento->size= tabla->segmento->size;
+            return true;
+        }
+    }
+    bool oki = list_any_satisfy(tabla_segmentos_gral, (void*)_buscar_en_tabla);
+    if(oki){
+        return segmento;
+    }
+    else{
+        return NULL;
+    }
+}
 void liberar_proceso(int pid) {
     t_list_iterator* iterator= list_iterator_create(tabla_segmentos_gral);
     while (list_iterator_has_next(iterator)) {

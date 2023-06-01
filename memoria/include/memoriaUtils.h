@@ -103,8 +103,11 @@ void respuestas(int cliente, int code,void* algo);
 
 void crear_estructuras();
 
-void* leer_dato(int pid, int direccion, int size);
-void escribir_dato(int pid, int direccion, int size, void* valor);
+void move_in();
+void move_out();
+
+void* leer_dato(int direccion);
+int escribir_dato(int direccion, char* valor);
 
 void eliminar_segmento(int pid, int direccion);
 void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos);
@@ -137,6 +140,7 @@ void modificar_hueco(int index, int inicio, int tam, int estado);
 int buscar_hueco_libre(int size);
 int buscar_hueco_base(int base);
 int base_hueco(int index);
+int buscar_pid(int dir);
 t_hueco_libre* crear_hueco_libre(int inicio, int tam,int estado);
 
 int first_fit(int size);

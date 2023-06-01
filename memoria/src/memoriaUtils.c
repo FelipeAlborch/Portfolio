@@ -121,6 +121,9 @@ void conectar_fs(){
     log_info(flogger,"Se conectó el FileSystem: %d \n",config_memo.fs);
 		
     //eliminar_paquete(paquete);
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(paquete);
     running_fs=true;
     ejecutar_fs();
 }
@@ -218,11 +221,15 @@ void mostrar_valores_de_configuracion_memoria (){
       case M_READ:
         log_trace(loggerMemoria,"PID: %d - Acción: <LEER> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
         break;
-
+      case MOV_IN_INSTRUCTION:
+        log_trace(loggerMemoria,"PID: %d - Acción: <LEER> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
+        break;
       case M_WRITE:
         log_trace(loggerMemoria,"“PID: %d - Acción: <ESCRIBIR> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
         break;
-
+      case MOV_OUT_INSTRUCTION:
+        log_trace(loggerMemoria,"PID: %d - Acción: <ESCRIBIR> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
+        break;
       case INICIO_PROCESO:
         log_trace(loggerMemoria,"Creación de Proceso PID: %d",pid);
         break;

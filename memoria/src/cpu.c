@@ -24,20 +24,16 @@ void ejecutar_cpu(){
     //t_paquete* paquete_cpu =malloc(size_of(t_paquete));
     while (running_cpu)
     {
-        t_list* lista;
-        int dir = -1;
-        char* texto;
+        
+        
       switch (recibir_operacion(config_memo.cpu))
       {
           case MOV_IN_INSTRUCTION:
-            lista = _recibir_paquete(config_memo.cpu);
-            dir=*(int*)list_get(lista,0);
-            //MOV_IN_SUCCES
+            move_in();
             break;
             case MOV_OUT_INSTRUCTION:
-            lista = _recibir_paquete(config_memo.cpu);
-            dir=*(int*)list_get(lista,0);
-            texto=*(char**)list_get(lista,1);
+            move_out();
+            break;
           default:
             break;
       }
@@ -45,5 +41,93 @@ void ejecutar_cpu(){
     }
     log_info(clogger,"Terminando de ejecutar las tareas del CPU");
     
-  }
-  //sleep(configuracionCPU.RETARDO_INSTRUCCION/1000);
+}
+void move_in(){
+    t_list* lista = _recibir_paquete(config_memo.cpu);
+    int dir=*(int*)list_get(lista,0);
+    int pid = buscar_pid(dir);
+    void* info = leer_dato(dir);
+    responder_cpu(dir,MOV_IN_INSTRUCTION,info);
+    loggear(MOV_IN_INSTRUCTION,pid,"CPU",dir,strlen(info)+1,0);
+    list_destroy_and_destroy_elements(lista,free);
+}
+void move_out(){
+    t_list* lista = _recibir_paquete(config_memo.cpu);
+    int dir=*(int*)list_get(lista,0);
+    char* valor = (char*)list_get(lista,1);
+    int pid = buscar_pid(dir);
+    int info = escribir_dato(dir,valor);
+    responder_cpu(dir,MOV_OUT_INSTRUCTION,info);
+    loggear(MOV_OUT_INSTRUCTION,pid,"CPU",dir,strlen(valor)+1,0);
+    list_destroy_and_destroy_elements(lista,free);
+}
+void* leer_dato(int direccion){
+    sleep(config_memo.retardo/1000);
+    int pid = buscar_pid(direccion);
+    t_segmento* segmento = buscar_segmento_dir(direccion);
+    if(segmento == NULL){
+        free(segmento);
+        loggear(M_ERROR,pid,"",direccion,0,0);
+        return NULL;
+    }
+    //memcpy(memoria+direccion,&valor,strlen(valor)+1);
+	void* info = malloc(segmento->size);
+    memcpy(info,memoria+direccion,segmento->size);
+    loggear(M_READ,pid,info,direccion,segmento->size,segmento->base);
+    free(segmento);
+	return info;
+}
+
+int escribir_dato(int direccion,char* valor){
+    sleep(config_memo.retardo/1000);
+    
+
+    int pid = buscar_pid(direccion);
+    int cero = M_ERROR;
+    if (pid != M_ERROR)
+    {
+        memcpy(memoria+direccion,&valor,strlen(valor)+1);
+        cero = memcmp(memoria+direccion,valor,strlen(valor)+1);
+        if (cero == 0 ){
+            return pid;
+        }
+    }
+    if (cero == M_ERROR || pid == M_ERROR)
+    {
+        
+        loggear(M_ERROR,pid,valor,direccion,strlen(valor)+1,0);
+        return M_ERROR;
+    }
+
+}
+int buscar_pid(int dir){
+    int pid = M_ERROR;
+    bool _buscar_en_tabla (t_tabla_segmentos* tabla) {
+        
+        if(tabla->direcion_fisica == dir){
+            pid = tabla->pid;
+            return true;
+        }else{
+            return false;
+        }
+        
+    }
+    bool oki = list_any_satisfy(tabla_segmentos_gral, (void*)_buscar_en_tabla);
+    if (oki == false) {
+        log_error(mlogger,"No se encontro el segmento");
+        return M_ERROR;
+    }
+    
+    return pid;
+}
+
+void responder_cpu(int pid, int cod, void* info){
+    if (pid == M_ERROR){
+        loggear(M_ERROR,pid,"",0,0,0);
+        respuestas(config_memo.cpu,M_ERROR,info);
+        return;
+    }
+    respuestas(config_memo.cpu,cod,info);
+    
+    
+}
