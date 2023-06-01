@@ -1,5 +1,7 @@
 #include <cpuUtils.h>
 
+bool haySegmentationFault = false;
+
 void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socketMemoria)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
@@ -67,6 +69,22 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         log_info(logger, "Solicitandole a Kernel que cierre el archivo [%s]...", lineaInstruccion->parametros[0]);
         abrir_o_cerrar_archivo(pcb, lineaInstruccion, socketKernel, F_CLOSE);
         break;
+      
+      case F_READ:
+        ejecutar_f_read_o_f_write(pcb, lineaInstruccion, socketKernel, F_READ);
+        break;
+
+      case F_WRITE:
+        ejecutar_f_read_o_f_write(pcb, lineaInstruccion, socketKernel, F_WRITE);
+        break;
+
+      case MOV_IN_INSTRUCTION:
+        ejecutar_mov_in(pcb, lineaInstruccion, socketMemoria, socketKernel);
+        break;
+
+      case MOV_OUT_INSTRUCTION:
+        ejecutar_mov_out(pcb, lineaInstruccion, socketMemoria, socketKernel);
+        break;
 
       case YIELD:
         ejecutar_yield(pcb, socketKernel);
@@ -77,10 +95,11 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
         break;
 
       default:
+        log_info(logger, "Lei una instruccion desconocida...");
         break;
     }
 
-    if (es_instruccion_de_corte(instruccion))
+    if (es_instruccion_de_corte(instruccion) || haySegmentationFault)
     {
       log_destroy(logger);
       return;
@@ -94,7 +113,7 @@ Instruccion obtener_tipo_instruccion(char *instruccion)
     //printf("Lei la instruccion SET\n");
     return SET;
   }
-  else if (!strcmp(instruccion, "IO")){
+  else if (!strcmp(instruccion, "IO") || !strcmp(instruccion, "I/O") ){
     //printf("Lei la instruccion I/0\n");
     return IO;
   }
@@ -202,7 +221,6 @@ void ejecutar_io(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, IO); //Consultar con Facu
   log_info(logger, "Contexto de ejecucion enviado!");
-  log_info(logger, "Motivo del envio: IO");
 
   log_destroy(logger);
 }
@@ -322,6 +340,142 @@ void ejecutar_f_truncate(pcb *pcb, LineaInstruccion *instruccion, int socketKern
   log_destroy(logger);
 }
 
+void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int socketKernel, int operacion)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+  t_paquete *paquete = crear_paquete_operacion(operacion);
+  int cantBytes = atoi(instruccion->parametros[2]);
+  int DF = obtener_direccion_fisica(atoi(instruccion->parametros[1]), pcb, cantBytes);
+
+  if(DF == -1)
+  {
+    haySegmentationFault = true;
+    log_warning(logger, "Termiando el proceso, hay SEGMENTATION FAULT...");
+    enviar_contexto_ejecucion(pcb, socketKernel, SEG_FAULT);
+    return;
+  }
+
+  if(operacion == F_READ)
+  {
+    log_info(logger, "Solicitandole al Kernel que lea del archivo [%s], [%d] bytes, en la DF [%d]...", 
+      instruccion->parametros[0], cantBytes, DF);
+  }
+  else 
+  {
+    log_info(logger, "Solicitandole al Kernel que escriba en el archivo [%s], [%d] bytes, en la DF [%d]...", 
+      instruccion->parametros[0], cantBytes, DF);
+  }
+
+  agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
+  agregar_a_paquete(paquete, &cantBytes, sizeof(int));
+  agregar_a_paquete(paquete, &DF, sizeof(int));
+
+  enviar_contexto_ejecucion(pcb, socketKernel, operacion);
+  log_info(logger, "Solicitud enciada al Kernel!");
+
+  log_destroy(logger);
+}
+
+void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria, int socketKernel)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+  t_paquete *paquete = crear_paquete_operacion(MOV_IN_INSTRUCTION);
+  int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb, cantidad_bytes_registro(instruccion->parametros[0]));
+  t_list *listaPlana;
+
+  if(DF == -1)
+  {
+    haySegmentationFault = true;
+    log_warning(logger, "Termiando el proceso, hay SEGMENTATION FAULT...");
+    enviar_contexto_ejecucion(pcb, socketKernel, SEG_FAULT);
+    return;
+  }
+
+  agregar_a_paquete(paquete, &DF, sizeof(int));
+  enviar_paquete(paquete, socketMemoria);
+
+  // Esperando respuesta de memoria...
+  switch (recibir_operacion(socketMemoria))
+  {
+  case MOV_IN_SUCCES:
+    listaPlana = _recibir_paquete(socketMemoria);
+    char *contenidoMemoria = string_duplicate(list_get(listaPlana, 0));
+    log_info(logger, "Valor obtenido de Memoira es [%s]", contenidoMemoria);
+
+    strcpy(instruccion->parametros[1], contenidoMemoria);
+    ejecutar_set(pcb, instruccion);
+    break;
+  
+  default:
+    log_info(logger, "Ocurrio un error en la lectura de Memoria..");
+    break;
+  }
+
+  list_destroy_and_destroy_elements(listaPlana, &free);
+  log_destroy(logger);
+}
+
+void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria, int socketKernel)
+{
+  Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
+  t_paquete *paquete = crear_paquete_operacion(MOV_OUT_INSTRUCTION);
+  int DF = obtener_direccion_fisica(instruccion->parametros[0], pcb, cantidad_bytes_registro(instruccion->parametros[1]));
+
+  if(DF == -1)
+  {
+    haySegmentationFault = true;
+    log_warning(logger, "Termiando el proceso, hay SEGMENTATION FAULT...");
+    enviar_contexto_ejecucion(pcb, socketKernel, SEG_FAULT);
+    return;
+  }
+
+  char* valorACopiar = string_duplicate(obtener_valor_registro(instruccion, pcb));
+
+  agregar_a_paquete(paquete, &DF, sizeof(int));
+  agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar) + 1);
+  enviar_paquete(paquete, socketMemoria);
+
+  log_destroy(logger);
+}
+
+char* obtener_valor_registro(LineaInstruccion *instruccion, pcb *pcb)
+{
+  if(!strcmp(instruccion->parametros[0], "AX"))
+    return pcb->AX;
+  else if(!strcmp(instruccion->parametros[0], "BX"))
+    return pcb->BX;  
+  else if(!strcmp(instruccion->parametros[0], "CX"))
+    return pcb->CX;
+  else if(!strcmp(instruccion->parametros[0], "DX"))
+    return pcb->DX;
+  if(!strcmp(instruccion->parametros[0], "EAX"))
+    return pcb->EAX;
+  else if(!strcmp(instruccion->parametros[0], "EBX"))
+    return pcb->EBX;  
+  else if(!strcmp(instruccion->parametros[0], "ECX"))
+    return pcb->ECX;
+  else if(!strcmp(instruccion->parametros[0], "EDX"))
+    return pcb->EDX;
+  if(!strcmp(instruccion->parametros[0], "RAX"))
+    return pcb->RAX;
+  else if(!strcmp(instruccion->parametros[0], "RBX"))
+    return pcb->RBX;  
+  else if(!strcmp(instruccion->parametros[0], "RCX"))
+    return pcb->RCX;
+  else if(!strcmp(instruccion->parametros[0], "RDX"))
+    return pcb->RDX;
+}
+
+int cantidad_bytes_registro(char* unRegistro)
+{
+  if(strlen(unRegistro) == 2)
+    return 4;
+  else if(strlen(unRegistro) == 3 && unRegistro[0] == 'E')
+    return 8;
+  else 
+    return 16;
+}
+
 void ejecutar_yield(pcb *pcb, int socketKernel)
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
@@ -329,7 +483,6 @@ void ejecutar_yield(pcb *pcb, int socketKernel)
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, YIELD);
   log_info(logger, "Contexto de ejecucion enviado!");
-  log_info(logger, "Motivo del envio: YIELD");
 
   log_destroy(logger);
 }
@@ -341,7 +494,6 @@ void ejecutar_exit(pcb *pcb, int socketKernel)
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, EXIT); // Consultar con Facu
   log_info(logger, "Contexto de ejecucion enviado!");
-  log_info(logger, "Motivo del envio: EXIT");
 
   log_destroy(logger);
 }
@@ -419,14 +571,18 @@ bool es_instruccion_de_corte(Instruccion instruccion)
 {
   switch (instruccion)
   {
-  /*case F_WRITE:
-    return true; */
+  case MOV_IN:
+    return true;
+  case MOV_OUT:
+    return true;
+  case F_WRITE:
+    return true; 
   case F_TRUNCATE:
     return true;
   case F_SEEK:
     return true;
-  /*case F_READ:
-    return true; */
+  case F_READ:
+    return true; 
   case F_CLOSE:
     return true;
   case F_OPEN:

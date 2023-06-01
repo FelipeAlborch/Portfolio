@@ -121,18 +121,18 @@ char* identificar_estado(estado_pcb un_estado)
 
 void liberar_pcb(pcb* un_pcb)
 {
-    free(un_pcb->AX);
-    free(un_pcb->BX);
-    free(un_pcb->CX);
-    free(un_pcb->DX);
-    free(un_pcb->EAX);
-    free(un_pcb->EBX);
-    free(un_pcb->ECX);
-    free(un_pcb->EDX);
-    free(un_pcb->RAX);
-    free(un_pcb->RBX);
-    free(un_pcb->RCX);
-    free(un_pcb->RDX);
+    //free(un_pcb->AX);
+    //free(un_pcb->BX);
+    //free(un_pcb->CX);
+    //free(un_pcb->DX);
+    //free(un_pcb->EAX);
+    //free(un_pcb->EBX);
+    //free(un_pcb->ECX);
+    //free(un_pcb->EDX);
+    //free(un_pcb->RAX);
+    //free(un_pcb->RBX);
+    //free(un_pcb->RCX);
+    //free(un_pcb->RDX);
     list_destroy_and_destroy_elements(un_pcb->lista_de_instrucciones, (void*)liberar_instruccion);
     //list_destroy_and_destroy_elements(un_pcb->tabla_de_segmentos, (void*)liberar_segmento);
     //list_destroy_and_destroy_elements(un_pcb->tabla_archivos_abiertos, (void*)liberar_archivo);
@@ -311,6 +311,7 @@ void serializar_contexto_ejecucion(t_paquete* paquete, pcb* un_pcb)
         agregar_a_paquete(paquete, una_instruccion->parametros[2], strlen(una_instruccion->parametros[2])+1);
     }
 
+
     for(i = 0; i < cantidad_de_segmentos; i++)
     {
         t_segmento* segmento = list_get(un_pcb->tabla_de_segmentos, i);
@@ -342,11 +343,13 @@ void serializar_contexto_ejecucion(t_paquete* paquete, pcb* un_pcb)
 pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
 {
     int cantidad_de_instrucciones = *(int *)list_get(valores_contexto_enviado, 0);
+
     int cantidad_de_segmentos = *(int*) list_get(valores_contexto_enviado, 1);
 
     pcb* contexto_recibido = /*(pcb*) */malloc(sizeof(pcb));
     t_list* lista_de_instrucciones = list_create();
     t_list* tabla_de_segmentos = list_create();
+
     int i;
     int base;   // Representa el desplazamiento a traves de la lista para ubicar los valores empaquetados en el orden predefinido
 
@@ -376,7 +379,8 @@ pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
 
         list_add(tabla_de_segmentos, un_segmento);
     }
-
+    
+    */
     int valores_restantes = base;
 
     contexto_recibido->pid = *(int*)list_get(valores_contexto_enviado, valores_restantes);
@@ -400,6 +404,7 @@ pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
     contexto_recibido->tiempo_io = *(int*)list_get(valores_contexto_enviado, valores_restantes + 14);
 
     contexto_recibido->lista_de_instrucciones = list_duplicate(lista_de_instrucciones);
+
     contexto_recibido->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
 
     list_destroy(lista_de_instrucciones);
@@ -441,11 +446,11 @@ void loguear_lista_de_instrucciones(t_list* lista_de_instrucciones, t_log* logge
 
 void* liberar_instruccion(LineaInstruccion* una_instruccion)
 {
-    free(una_instruccion->identificador);
+    //free(una_instruccion->identificador);
     free(una_instruccion->parametros[0]);
     free(una_instruccion->parametros[1]);
     free(una_instruccion->parametros[2]);
-    free(una_instruccion);
+    //free(una_instruccion);
     return NULL;
 }
 
@@ -480,6 +485,7 @@ void liberar_contexto_ejecucion(pcb* un_contexto)
     //free(un_contexto->RCX);
     //free(un_contexto->RDX);
     list_destroy_and_destroy_elements(un_contexto->lista_de_instrucciones, (void*)liberar_instruccion);
+    //list_destroy_and_destroy_elements(un_contexto->tabla_de_segmentos, liberar_segmento);
     free(un_contexto);
 }
 

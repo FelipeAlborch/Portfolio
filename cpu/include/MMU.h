@@ -4,7 +4,7 @@
 #include <cpuUtils.h>
 #include <math.h>
 
-int obtener_direccion_fisica(int);
+int obtener_direccion_fisica(int, pcb*, int);
 int obtener_num_segmento(int);
 int obtener_desplazamiento_del_segmento(int);
 

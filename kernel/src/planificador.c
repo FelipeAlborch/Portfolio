@@ -114,7 +114,6 @@ void* planificador_largo_plazo() {
         esperar_tabla_segmentos(proceso);
 
         leer_segmentos(proceso);
-        
         agregar_proceso_ready(proceso);
     }
 }
@@ -145,6 +144,7 @@ void* planificador_corto_plazo_hrrn()
         // Antes de mandar el proximo a ejecutar, acomodamos la lista por response ratio
         list_sort(lista_ready_hrrn, comparar_response_ratio);
         // Saco el primer proceso de la lista filtrada
+        loguear_rr_de_procesos(logger_planificador_extra);
         pcb* proceso_a_ejecutar = list_remove(lista_ready_hrrn,0);
 
         agregar_proceso_exec(proceso_a_ejecutar);
@@ -168,10 +168,12 @@ void ejecutar(pcb* proceso_a_ejecutar)
     t_list* lista_recepcion_valores;
     pcb* proceso_en_ejecucion;
     char* nombre_recurso;
+    int operacion_de_cpu;
+    int tamanio, direccion_fisica;
 
     recibirOperacion:
-    int operacion_de_cpu = recibir_operacion(socketCPU);
-
+    
+    operacion_de_cpu = recibir_operacion(socketCPU);
     switch(operacion_de_cpu)
     {
         case YIELD:
@@ -192,8 +194,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             agregar_proceso_ready(proceso_en_ejecucion);
             
-
-            list_destroy(lista_recepcion_valores);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            //list_destroy(lista_recepcion_valores);
             liberar_contexto_ejecucion(contexto_recibido);
             
         break;
@@ -220,7 +222,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             pthread_create(&hilo_io, NULL, esperar_io, (void*) proceso_en_ejecucion);
             pthread_detach(hilo_io);
 
-            list_destroy(lista_recepcion_valores);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            //list_destroy(lista_recepcion_valores);
             liberar_contexto_ejecucion(contexto_recibido);
         break;
         
@@ -238,7 +241,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             //TODO
             //avisar_memoria(FIN_PROCESO);
 
-            list_destroy(lista_recepcion_valores);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            //list_destroy(lista_recepcion_valores);
             liberar_contexto_ejecucion(contexto_recibido);
         break;
 
@@ -272,14 +276,18 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 resultado_recurso = true;
 
                 liberar_contexto_ejecucion(contexto_de_wait);
-                list_destroy(lista_recepcion_valores);
-                list_destroy(lista_contexto_wait);
+                list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+                list_destroy_and_destroy_elements(lista_contexto_wait,free);
+                //list_destroy(lista_recepcion_valores);
+                //list_destroy(lista_contexto_wait);
                 return;
             }
 
             liberar_contexto_ejecucion(contexto_de_wait);
-            list_destroy(lista_recepcion_valores);
-            list_destroy(lista_contexto_wait);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            list_destroy_and_destroy_elements(lista_contexto_wait,free);
+            //list_destroy(lista_recepcion_valores);
+            //list_destroy(lista_contexto_wait);
             
             if(proceso_bloqueado_por_recurso)
             {
@@ -322,15 +330,19 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 resultado_recurso = true;
 
                 liberar_contexto_ejecucion(contexto_de_signal);
-                list_destroy(lista_recepcion_valores);
-                list_destroy(lista_contexto_signal);
+                list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+                list_destroy_and_destroy_elements(lista_contexto_signal,free);
+                //list_destroy(lista_recepcion_valores);
+                //list_destroy(lista_contexto_signal);
                 
                 return;
             }
 
             liberar_contexto_ejecucion(contexto_de_signal);
-            list_destroy(lista_recepcion_valores);
-            list_destroy(lista_contexto_signal);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            list_destroy_and_destroy_elements(lista_contexto_signal,free);
+            //list_destroy(lista_recepcion_valores);
+            //list_destroy(lista_contexto_signal);
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
             
             goto recibirOperacion;
@@ -408,7 +420,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 break;
             }
 
-            list_destroy(lista_contexto_cs);
+            list_destroy_and_destroy_elements(lista_contexto_cs, free);
+            //list_destroy(lista_contexto_cs);
             liberar_contexto_ejecucion(contexto_cs);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
@@ -448,7 +461,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             
 
             //list_destroy(valores_tras_eliminacion);
-            list_destroy(lista_recepcion_valores);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            //list_destroy(lista_recepcion_valores);
             liberar_contexto_ejecucion(contexto_ds);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
@@ -478,35 +492,30 @@ void ejecutar(pcb* proceso_a_ejecutar)
             {
                 // PEDIR AL FS
                 // archivo = obtener_archivo_de_fs();
+                t_paquete* paquete_a_fs = crear_paquete_operacion(CREAR_ARCHIVO);
+                agregar_a_paquete(paquete_a_fs, nombre_recurso, strlen(nombre_recurso)+1);
+                enviar_paquete(paquete_a_fs, socketFS);
+                
+                int rta1;
+                int rta2;
+                recv(socketFS, &rta1, sizeof(int), MSG_WAITALL );
+                recv(socketFS, &rta2, sizeof(int), MSG_WAITALL );
+                
 
                 // SI NO EXISTE, CREARLO
                 t_recurso* archivo = crear_recurso(nombre_recurso, 1);
+                archivo->posicion = 0;
 
                 dictionary_put(tabla_global_archivos_abiertos, nombre_recurso, archivo);
             }
 
             fopen_recurso(proceso_a_ejecutar, nombre_recurso);
 
-            if(!resultado_recurso)
-            {   
-                log_warning(logger_planificador_extra, "Error al abrir el archivo. Terminando proceso");
-                proceso_en_ejecucion = desalojar_proceso_en_exec();
-                
-                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO SE PUDO ABRIR EL ARCHIVO >", proceso_en_ejecucion->pid);
-                
-                terminar_proceso(proceso_en_ejecucion);
-
-                resultado_recurso = true;
-
-                liberar_contexto_ejecucion(contexto_de_fopen);
-                list_destroy(lista_recepcion_valores);
-                list_destroy(lista_contexto_fopen);
-                return;
-            }
-
             liberar_contexto_ejecucion(contexto_de_fopen);
-            list_destroy(lista_recepcion_valores);
-            list_destroy(lista_contexto_fopen);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            list_destroy_and_destroy_elements(lista_contexto_fopen,free);
+            //list_destroy(lista_recepcion_valores);
+            //list_destroy(lista_contexto_fopen);
             
             if(proceso_bloqueado_por_recurso)
             {
@@ -538,29 +547,19 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             fclose_recurso(proceso_a_ejecutar, nombre_recurso);
 
-            if(!resultado_recurso)
-            {   
-                log_warning(logger_planificador_extra, "Error al cerrar el archivo. Terminando proceso");
-                proceso_en_ejecucion = desalojar_proceso_en_exec();
-                
-                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO SE PUDO CERRAR CORRECTAMENTE EL ARCHIVO >", proceso_en_ejecucion->pid);
-                
-                terminar_proceso(proceso_en_ejecucion);
-
-                resultado_recurso = true;
-
-                liberar_contexto_ejecucion(contexto_de_fclose);
-                list_destroy(lista_recepcion_valores);
-                list_destroy(lista_contexto_fclose);
-                return;
+            
+            if(!archivo_esta_abierto(nombre_recurso))
+            {
+                // REMOVER DE LA TABLA DE ARCHIVOS ABIERTOS
+                t_recurso* archivo = dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
+                free(archivo);
             }
 
-            // REMOVER DE LA TABLA DE ARCHIVOS ABIERTOS
-            dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
-
             liberar_contexto_ejecucion(contexto_de_fclose);
-            list_destroy(lista_recepcion_valores);
-            list_destroy(lista_contexto_fclose);
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            list_destroy_and_destroy_elements(lista_contexto_fclose,free);
+            //list_destroy(lista_recepcion_valores);
+            //list_destroy(lista_contexto_fclose);
             
             if(proceso_bloqueado_por_recurso)
             {
@@ -593,32 +592,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             fseek_archivo(proceso_a_ejecutar, nombre_recurso, posicion);
 
-            if(!resultado_recurso)
-            {   
-                log_warning(logger_planificador_extra, "Error al cerrar el archivo. Terminando proceso");
-                proceso_en_ejecucion = desalojar_proceso_en_exec();
-                
-                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO SE PUDO OPERAR SOBRE EL ARCHIVO >", proceso_en_ejecucion->pid);
-                
-                terminar_proceso(proceso_en_ejecucion);
-
-                resultado_recurso = true;
-
-                liberar_contexto_ejecucion(contexto_de_fseek);
-                list_destroy(lista_recepcion_valores);
-                list_destroy(lista_contexto_fseek);
-                return;
-            }
-
             liberar_contexto_ejecucion(contexto_de_fseek);
-            list_destroy(lista_recepcion_valores);
-            list_destroy(lista_contexto_fseek);
-            
-            if(proceso_bloqueado_por_recurso)
-            {
-                proceso_bloqueado_por_recurso = false;
-                return;
-            }
+            list_destroy_and_destroy_elements(lista_recepcion_valores, free);
+            list_destroy_and_destroy_elements(lista_contexto_fseek, free);
+            //list_destroy(lista_recepcion_valores);
+            //list_destroy(lista_contexto_fseek);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
             
@@ -626,10 +604,104 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
         break;
 
-            // case F_READ:
-            // case F_WRITE:
-            // case F_TRUNCATE:
+            case F_READ:
+                lista_recepcion_valores = _recibir_paquete(socketCPU);
+                nombre_recurso = list_get(lista_recepcion_valores, 0);
+                direccion_fisica = *(int*) list_get(lista_recepcion_valores, 1);
+                tamanio = *(int*) list_get(lista_recepcion_valores, 2);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
 
+                int operacion_fread = recibir_operacion(socketCPU);
+                t_list* lista_contexto_fread = _recibir_paquete(socketCPU);
+                pcb* contexto_de_fread = recibir_contexto_ejecucion(lista_contexto_fread);
+
+                log_info(logger_planificador_extra, "Contexto recibido por F_READ");
+
+                actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fread);
+
+                loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
+                t_paquete* paquete_fread = crear_paquete_operacion(LEER_ARCHIVO);
+                agregar_a_paquete(paquete_fread, nombre_recurso, strlen(nombre_recurso)+1);
+                agregar_a_paquete(paquete_fread, &direccion_fisica, sizeof(int));
+                agregar_a_paquete(paquete_fread, &tamanio, sizeof(int));
+                
+                pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
+
+                enviar_paquete(paquete_fread, socketFS);
+
+                pthread_t* hilo_fread;
+                pthread_create(&hilo_fread, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
+                pthread_detach(hilo_fread);
+
+                return;
+
+            break;
+
+            case F_WRITE:
+                lista_recepcion_valores = _recibir_paquete(socketCPU);
+                nombre_recurso = list_get(lista_recepcion_valores, 0);
+                direccion_fisica = *(int*) list_get(lista_recepcion_valores, 1);
+                tamanio = *(int*) list_get(lista_recepcion_valores, 2);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
+
+                int operacion_fwrite = recibir_operacion(socketCPU);
+                t_list* lista_contexto_fwrite = _recibir_paquete(socketCPU);
+                pcb* contexto_de_fwrite = recibir_contexto_ejecucion(lista_contexto_fwrite);
+
+                log_info(logger_planificador_extra, "Contexto recibido por F_READ");
+
+                actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fwrite);
+
+                loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
+                t_paquete* paquete_fwrite = crear_paquete_operacion(ESCRIBIR_ARCHIVO);
+                agregar_a_paquete(paquete_fwrite, nombre_recurso, strlen(nombre_recurso)+1);
+                agregar_a_paquete(paquete_fwrite, &direccion_fisica, sizeof(int));
+                agregar_a_paquete(paquete_fwrite, &tamanio, sizeof(int));
+                
+                pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
+                
+                enviar_paquete(paquete_fwrite, socketFS);
+
+                pthread_t* hilo_fwrite;
+                pthread_create(&hilo_fwrite, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
+                pthread_detach(hilo_fwrite);
+
+                return;
+
+            break;
+
+            case F_TRUNCATE:
+                lista_recepcion_valores = _recibir_paquete(socketCPU);
+                nombre_recurso = list_get(lista_recepcion_valores, 0);
+                tamanio = *(int*) list_get(lista_recepcion_valores, 1);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_TRUNCATE: %s, tamanio: %d", nombre_recurso, tamanio);
+
+                int operacion_ftruncate = recibir_operacion(socketCPU);
+                t_list* lista_contexto_truncate = _recibir_paquete(socketCPU);
+                pcb* contexto_de_ftruncate = recibir_contexto_ejecucion(lista_contexto_truncate);
+
+                log_info(logger_planificador_extra, "Contexto recibido por F_TRUNCATE");
+
+                actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_ftruncate);
+
+                loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+
+                t_paquete* paquete_ftruncate = crear_paquete_operacion(TRUNCAR_ARCHIVO);
+                agregar_a_paquete(paquete_ftruncate, nombre_recurso, strlen(nombre_recurso)+1);
+                agregar_a_paquete(paquete_ftruncate, &tamanio, sizeof(int));
+                
+                pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
+                
+                enviar_paquete(paquete_ftruncate, socketFS);
+
+                pthread_t* hilo_ftruncate;
+                pthread_create(&hilo_ftruncate, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
+                pthread_detach(hilo_ftruncate);
+
+                return;
+    
         case DESCONEXION:
             log_info(logger_planificador_obligatorio, "CPU Desconectado");
         break;

@@ -10,7 +10,9 @@ typedef enum
 	PAQUETE,
 	LISTA_INSTRUCCIONES,
 	PCB,
-	MENSAJE
+	MENSAJE,
+	MOV_IN_SUCCES,
+	SEG_FAULT
 }op_code;
 
 typedef struct
