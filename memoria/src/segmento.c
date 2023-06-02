@@ -8,18 +8,17 @@ void crear_estructuras(){
     memoria=malloc(config_memo.tam_memo);
     huecos_libres = list_create();
     int cero= config_memo.tam_seg_0;
-    int tam = config_memo.tam_memo;
-    t_hueco_libre* seg = malloc(sizeof(t_hueco_libre));
+    int tam = config_memo.tam_memo -1;
+    t_hueco_libre* seg = crear_hueco_libre(0,cero-1,OCUPADO);
+
     
-    //log_warning(mlogger,"Hueco size %d",sizeof(t_hueco_libre));
+    t_hueco_libre* seg2 = crear_hueco_libre(cero,tam-cero,LIBRE);
+    
+    list_add_in_index(huecos_libres,0,seg);
+    list_add_in_index(huecos_libres,1,seg2);
 
-    seg->estado = LIBRE;
-    seg->inicio = 0;
-    seg->tamanio = tam;  
-    log_debug(mlogger,"Hueco 0 -> tam %d",(seg->tamanio));  
-    list_add(huecos_libres,seg);
 
-    modificar_hueco(0,0,cero-1,OCUPADO);
+    //modificar_hueco(0,0,cero-1,OCUPADO);
     inicializar_segmentos();
     
     imprimir_huecos();
@@ -43,8 +42,8 @@ void inicializar_segmentos(){
     list_add_in_index(tabla_segmentos_gral,0,tabla);
     
     
-    free(tabla->segmento);
-    free(tabla);
+    /* free(tabla->segmento);
+    free(tabla); */
 }
 void modificar_tabla_segmentos(t_tabla_segmentos* tabla,int pid, int dir, int id,int base, int size){
     tabla->pid = pid;
@@ -205,11 +204,16 @@ int buscar_hueco_libre(int size){
     case FIRST_FIT:
     index = first_fit(size);
     log_info(mlogger,"El indice del hueco libre es: %d",index);
+    return index;
     break;
     case BEST_FIT:
     index = best_fit(size);
+    log_info(mlogger,"El indice del hueco libre es: %d",index);
+    return index;
     case WORST_FIT:
     index = worst_fit(size);
+    log_info(mlogger,"El indice del hueco libre es: %d",index);
+    return index;
    default:
     break;
    }
@@ -260,7 +264,7 @@ t_list* crear_tabla_proceso(int pid){
     free(tabla_seg->segmento);
     free(tabla_seg);
     free(segmento);   // Si liberas el segmento despues de crearlo, lo estas perdiendo por completo. Cuando lo intentes mandar al kernel, no va a existir.
-    imprimir_tabla(lista);
+    //imprimir_tabla(lista);
     return lista;
 }
 void imprimir_tabla(t_list* lista){
@@ -320,18 +324,23 @@ void modificar_tabla_proceso(int pid, int index, int base, int size){
     tabla1 = buscar_en_tabla_id(pid,index);
     log_warning(mlogger,"pid: %d, dir: %d, index: %d, base: %d, size: %d",tabla1->pid,tabla1->direcion_fisica,tabla1->index,tabla1->segmento->base,tabla1->segmento->size);
     
-    free(tabla1->segmento);
-    free(tabla1);
+/*     free(tabla1->segmento);
+    free(tabla1); */
 }
 void modificar_hueco(int index, int inicio, int tam, int estado){
-
+    printf("indice %d\n",index);
     if(estado == OCUPADO){
-        t_hueco_libre* hueco =list_get(huecos_libres,index);
-        int base = hueco->inicio;
-        t_hueco_libre* huecoNuevo = crear_hueco_libre(base,tam,estado);
-        list_replace(huecos_libres,index,huecoNuevo);
+        t_hueco_libre* hueco =list_remove(huecos_libres,index);
 
-        if(hueco->tamanio - tam > 0){
+        int base = hueco->inicio;
+        int size = hueco->tamanio;
+        log_info(mlogger,"Hueco: %d - Base: %d  - Tamaño: %d - Estado: %d",index,hueco->inicio,hueco->tamanio,hueco->estado);
+    
+        t_hueco_libre* huecoNuevo = crear_hueco_libre(base,tam,OCUPADO);
+        
+        log_info(mlogger,"HuecoNuevo: %d - Base: %d  - Tamaño: %d - Estado: %d",index,huecoNuevo->inicio,huecoNuevo->tamanio,huecoNuevo->estado);
+        list_add_in_index(huecos_libres,index,huecoNuevo);
+        if(size - tam > 0){
             hueco->estado = LIBRE;
             hueco->inicio = huecoNuevo->inicio + huecoNuevo->tamanio + 1;
             hueco->tamanio -=  tam;
@@ -381,9 +390,11 @@ int buscar_hueco_base(int base){
     return M_ERROR;
 }
 int base_hueco(int index){
+    int base = -2;
     t_hueco_libre* hueco = list_get(huecos_libres,index);
-    printf("base hueco: %d\n",hueco->inicio);
-    return hueco->inicio;
+    base = hueco->inicio;
+    printf("base hueco: %d\n",base);
+    return base;
 }
 t_list* tabla_proceso(int pid){
     t_list* listar=list_create();

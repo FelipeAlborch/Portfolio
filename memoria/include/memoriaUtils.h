@@ -154,4 +154,6 @@ t_tabla_segmentos* crear_tabla_segmentos(int pid, int index, int base, int tam_s
 t_segmento* buscar_segmento(int id_seg, t_list* segmentos);
 t_segmento* crear_segmento(int pid, int size);
 
+void crear_seg();
+void crear_proc();
 #endif

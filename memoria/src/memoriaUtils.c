@@ -286,11 +286,11 @@ int first_fit(int size){
     t_hueco_libre* hueco = list_iterator_next(iterador);
     if (hueco->tamanio >= size && hueco->estado == LIBRE) {
       index = list_iterator_index(iterador);
-      free(hueco);
+      //free(hueco);
       list_iterator_destroy(iterador);
       return index;
     }
-    free(hueco);
+    //free(hueco);
   }
   list_iterator_destroy(iterador);
   return index;
