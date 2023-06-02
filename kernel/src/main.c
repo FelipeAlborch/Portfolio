@@ -271,6 +271,7 @@ int main(int argc, char *argv[]) {
     pthread_join(hiloConsolas, NULL);
 
     //log_destroy(loggerKernel);
+    free(configuracionKernel.IP_SERVER);
     config_destroy(kernelConfig);
     destruir_estructuras_planificacion();
 

@@ -3,7 +3,7 @@
 int iniciar_servidor_para_consolas(config_de_kernel configuracionKernel)
 {
     Logger* logger = iniciar_logger_modulo(KERNEL_LOGGER);
-    int socketServidorConsolas = iniciar_servidor_en("127.0.0.1", configuracionKernel.PUERTO_ESCUCHA);
+    int socketServidorConsolas = iniciar_servidor_en(configuracionKernel.IP_SERVER, configuracionKernel.PUERTO_ESCUCHA);
 
     if(socketServidorConsolas < 0)
     {
