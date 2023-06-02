@@ -265,6 +265,9 @@ void algoritmos(){
   if(strcmp(config_memo.algoritmo,"FF")==0){
     config_memo.algoritmo_int=FIRST_FIT;
   }
+  else if(strcmp(config_memo.algoritmo,"FIRST")==0){
+    config_memo.algoritmo_int=FIRST_FIT;
+  }
   else if(strcmp(config_memo.algoritmo,"BEST")==0){
     config_memo.algoritmo_int=BEST_FIT;
   }
@@ -272,6 +275,9 @@ void algoritmos(){
     config_memo.algoritmo_int=BEST_FIT;
   }
   else if(strcmp(config_memo.algoritmo,"WF")==0){
+    config_memo.algoritmo_int=WORST_FIT;
+  }
+  else if(strcmp(config_memo.algoritmo,"WORST")==0){
     config_memo.algoritmo_int=WORST_FIT;
   }
   else{
