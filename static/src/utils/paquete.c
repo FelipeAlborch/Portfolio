@@ -118,7 +118,7 @@ t_paquete* recibir_paquete (int socket) {
 	paquete->buffer->stream = stream;
 	paquete->buffer->size = size;
 
-	free(stream);
+	//free(stream);
 	log_destroy(logger);
 	return paquete;
 }
