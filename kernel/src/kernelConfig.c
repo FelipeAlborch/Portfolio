@@ -18,7 +18,7 @@ config_de_kernel obtener_valores_de_configuracion_kernel(Config* kernelConfig){
     configuracionKernel.GRADO_MAX_MULTIPROGRAMACION = config_get_int_value(kernelConfig,"GRADO_MAX_MULTIPROGRAMACION");
     configuracionKernel.RECURSOS = config_get_array_value(kernelConfig,"RECURSOS");
     configuracionKernel.INSTANCIAS_RECURSOS = config_get_array_value(kernelConfig,"INSTANCIAS_RECURSOS");
-    configuracionKernel.IP_SERVER = string_duplicate("192.168.1.114");
+    configuracionKernel.IP_SERVER = string_duplicate("127.0.0.1");
     crear_diccionario_recursos();
     return configuracionKernel;
 }

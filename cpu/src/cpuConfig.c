@@ -8,7 +8,7 @@ config_de_cpu obtener_valores_de_configuracion_cpu(t_config* cpuConfig){
     configuracionCPU.PUERTO_MEMORIA = config_get_string_value(cpuConfig, "PUERTO_MEMORIA");
     configuracionCPU.PUERTO_ESCUCHA = config_get_string_value(cpuConfig, "PUERTO_ESCUCHA");
     configuracionCPU.TAM_MAX_SEGMENTO = config_get_int_value(cpuConfig, "TAM_MAX_SEGMENTO");
-    configuracionCPU.IP_SERVER = string_duplicate("192.168.1.114");
+    configuracionCPU.IP_SERVER = string_duplicate("127.0.0.1");
     return configuracionCPU;
 }
 

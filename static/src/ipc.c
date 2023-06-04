@@ -1,6 +1,6 @@
 #include <ipc.h>
 
-#define LOCALHOST "192.168.1.83"
+#define LOCALHOST "127.0.0.1"
 
 int conn_create_localhost(Host host_type, char *port)
 {

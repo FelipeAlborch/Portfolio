@@ -153,7 +153,7 @@ void obtener_valores_de_configuracion_memoria(t_config* memoriaConfig){
     config_memo.compactacion = config_get_int_value(memoriaConfig,"RETARDO_COMPACTACION");
     config_memo.algoritmo = config_get_string_value(memoriaConfig,"ALGORITMO_ASIGNACION");
     config_memo.cant_seg_max = config_memo.tam_memo / config_memo.tam_seg_0;
-    config_memo.ip = string_duplicate("192.168.1.83");
+    config_memo.ip = string_duplicate("127.0.0.1");
     config_memo.bytes_libres=config_memo.tam_memo;
     algoritmos();
 }
