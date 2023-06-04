@@ -380,7 +380,7 @@ pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
         list_add(tabla_de_segmentos, un_segmento);
     }
     
-    */
+    
     int valores_restantes = base;
 
     contexto_recibido->pid = *(int*)list_get(valores_contexto_enviado, valores_restantes);
@@ -485,7 +485,7 @@ void liberar_contexto_ejecucion(pcb* un_contexto)
     //free(un_contexto->RCX);
     //free(un_contexto->RDX);
     list_destroy_and_destroy_elements(un_contexto->lista_de_instrucciones, (void*)liberar_instruccion);
-    //list_destroy_and_destroy_elements(un_contexto->tabla_de_segmentos, liberar_segmento);
+    list_destroy_and_destroy_elements(un_contexto->tabla_de_segmentos, liberar_segmento);
     free(un_contexto);
 }
 

@@ -345,7 +345,7 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   t_paquete *paquete = crear_paquete_operacion(operacion);
   int cantBytes = atoi(instruccion->parametros[2]);
-  int DF = obtener_direccion_fisica(atoi(instruccion->parametros[1]), pcb, cantBytes);
+  int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb, cantBytes);
 
   if(DF == -1)
   {
@@ -411,7 +411,7 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
     break;
   }
 
-  list_destroy_and_destroy_elements(listaPlana, &free);
+  list_destroy_and_destroy_elements(listaPlana, free);
   log_destroy(logger);
 }
 
@@ -429,11 +429,15 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
     return;
   }
 
-  char* valorACopiar = string_duplicate(obtener_valor_registro(instruccion, pcb));
+  int cantidadDeBytes = cantidad_bytes_registro(instruccion->parametros[1]);
+  char* valorACopiar = valor_del_registro_como_string(instruccion->parametros[1], cantidadDeBytes);
+  //char* valorACopiar = string_duplicate(obtener_valor_registro(instruccion, pcb));
 
   agregar_a_paquete(paquete, &DF, sizeof(int));
   agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar) + 1);
   enviar_paquete(paquete, socketMemoria);
+
+  free(valorACopiar);
 
   log_destroy(logger);
 }

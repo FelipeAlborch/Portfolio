@@ -12,7 +12,7 @@ typedef enum
 	PCB,
 	MENSAJE,
 	MOV_IN_SUCCES,
-	SEG_FAULT
+	SEG_FAULT = 19
 }op_code;
 
 typedef struct
