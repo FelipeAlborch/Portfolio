@@ -24,6 +24,7 @@ int iniciar_servidor_en(char* ip, char* puerto)
 		{
 			continue; // Basicamente vamos al siguiente servinfo;
 		}
+		setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int));
     	//Asociamos el socket
     	if (bind(socket_servidor, p->ai_addr, p->ai_addrlen) == -1) 
 		{

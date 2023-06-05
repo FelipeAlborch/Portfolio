@@ -21,6 +21,7 @@ typedef struct{
     int GRADO_MAX_MULTIPROGRAMACION;
     char** RECURSOS;
     char** INSTANCIAS_RECURSOS;
+    char* IP_SERVER;
 }config_de_kernel;
 
 typedef struct{

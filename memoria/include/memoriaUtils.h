@@ -11,7 +11,7 @@
 #define TAM_CABECERA sizeof(t_segmento)
 #define TAM_PAQ sizeof(t_paquete)
 #define LIBRE true
-#define OCUPADO 100
+#define OCUPADO 505
 #define M_ERROR -100
 
 extern t_log* mlogger;
@@ -125,7 +125,7 @@ void modificar_segmento(t_segmento* segmento, int base, int size);
 
 void imprimir_tabla(t_list* lista);
 void imprimir_tabla_gral();
-
+void imprimir_huecos();
 
 void ejecutar_kernel_test();
 void crear_proceso(int paquete);

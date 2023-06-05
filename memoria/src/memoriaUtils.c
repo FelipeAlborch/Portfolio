@@ -120,10 +120,10 @@ void conectar_fs(){
     }
     log_info(flogger,"Se conectó el FileSystem: %d \n",config_memo.fs);
 		
-    //eliminar_paquete(paquete);
 
     free(paquete->buffer);
     free(paquete);
+
     running_fs=true;
     ejecutar_fs();
 }
@@ -265,6 +265,9 @@ void algoritmos(){
   if(strcmp(config_memo.algoritmo,"FF")==0){
     config_memo.algoritmo_int=FIRST_FIT;
   }
+  else if(strcmp(config_memo.algoritmo,"FIRST")==0){
+    config_memo.algoritmo_int=FIRST_FIT;
+  }
   else if(strcmp(config_memo.algoritmo,"BEST")==0){
     config_memo.algoritmo_int=BEST_FIT;
   }
@@ -274,6 +277,9 @@ void algoritmos(){
   else if(strcmp(config_memo.algoritmo,"WF")==0){
     config_memo.algoritmo_int=WORST_FIT;
   }
+  else if(strcmp(config_memo.algoritmo,"WORST")==0){
+    config_memo.algoritmo_int=WORST_FIT;
+  }
   else{
     log_error(mlogger,"No se reconoce el algoritmo de asignación");
   }
@@ -281,18 +287,24 @@ void algoritmos(){
 
 int first_fit(int size){
   int index = -2; 
-  for (int i = 0; i < list_size(huecos_libres); i++) {
-        t_hueco_libre* hueco = list_get(huecos_libres, i);
-        if (hueco->tamanio >= size && hueco->estado == LIBRE) {
-            index = i;
-            return index;
-        }
+  t_list_iterator* iterador = list_iterator_create(huecos_libres);
+  while (list_iterator_has_next(iterador)) {
+    t_hueco_libre* hueco = list_iterator_next(iterador);
+    if (hueco->tamanio >= size && hueco->estado == LIBRE) {
+      index = list_iterator_index(iterador);
+      free(hueco);
+      list_iterator_destroy(iterador);
+      return index;
     }
-    
+    free(hueco);
+  }
+  list_iterator_destroy(iterador);
+  return index;
 }
+// 0-> ocupado 1-> libre 2-> no existe
 int best_fit(int size){
   int index = -2;
-    int min = config_memo.tam_memo + 1;
+  int min = config_memo.tam_memo + 1;
 
     for (int i = 0; i < list_size(huecos_libres); i++) {
         t_hueco_libre* hueco = list_get(huecos_libres, i);
@@ -306,6 +318,7 @@ int best_fit(int size){
 
     return index;
 }
+
 int worst_fit(int size){
   int index = -2;
     int max = -1;
@@ -321,4 +334,21 @@ int worst_fit(int size){
     }
 
     return index;
+}
+
+void imprimir_huecos(){
+  int inicio;
+  int tam;
+  t_list_iterator* iterador = list_iterator_create(huecos_libres);
+  t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
+  while (list_iterator_has_next(iterador)) {
+    hueco = list_iterator_next(iterador);
+    inicio = hueco->inicio; 
+    tam = hueco->tamanio;
+    int estado = hueco->estado;
+    log_info(mlogger,"Hueco: %d - Base: %d  - Tamaño: %d - Estado: %d",list_iterator_index(iterador),inicio,tam,estado);
+    //free(hueco);
+  }
+  list_iterator_destroy(iterador);
+  
 }

@@ -3,7 +3,7 @@
 int iniciar_servidor_para_consolas(config_de_kernel configuracionKernel)
 {
     Logger* logger = iniciar_logger_modulo(KERNEL_LOGGER);
-    int socketServidorConsolas = iniciar_servidor_en("127.0.0.1", configuracionKernel.PUERTO_ESCUCHA);
+    int socketServidorConsolas = iniciar_servidor_en(configuracionKernel.IP_SERVER, configuracionKernel.PUERTO_ESCUCHA);
 
     if(socketServidorConsolas < 0)
     {
@@ -81,6 +81,7 @@ void escuchar_consola(int socketConsola)
 			loguear_pcb(nuevo_pcb,logger_kernel_util_extra);
 			agregar_proceso_new(nuevo_pcb);
 			list_destroy_and_destroy_elements(lista_de_consola, free);
+
 			return;
             break;
 
