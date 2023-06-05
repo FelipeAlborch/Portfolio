@@ -15,8 +15,9 @@ int obtener_direccion_fisica(char* direccionLogica, pcb *pcb, int cantBytes)
     log_info(logger, "Desplazamiento del segmento [%d]: [%d]", numeroSegmento, desplazamientoSegmento);
 
     log_info(logger, "La cantidad de bytes es de: %d", cantBytes);
-
-    if(segmento->size < desplazamientoSegmento + cantBytes)
+    log_info(logger, "El tamanio del segmento es de: %d", segmento->size);
+    
+    if(segmento->size <= desplazamientoSegmento + cantBytes)
       return -1;
 
     int DF = desplazamientoSegmento + segmento->base;

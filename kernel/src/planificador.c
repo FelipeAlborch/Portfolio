@@ -703,9 +703,6 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 return;
 
             case SEG_FAULT:
-                log_info(logger_planificador_extra, "WACHO SEG FAULTEO TODO");
-                printf("SEG FAULT LÑOCO");
-                sleep(3);
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
                 contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
                 log_warning(logger_planificador_extra, "Contexto del proceso: < %d > recibido por SEG_FAULT.", proceso_a_ejecutar->pid);
