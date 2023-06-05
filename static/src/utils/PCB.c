@@ -485,7 +485,7 @@ void liberar_contexto_ejecucion(pcb* un_contexto)
     //free(un_contexto->RCX);
     //free(un_contexto->RDX);
     list_destroy_and_destroy_elements(un_contexto->lista_de_instrucciones, (void*)liberar_instruccion);
-    //list_destroy_and_destroy_elements(un_contexto->tabla_de_segmentos, liberar_segmento);
+    list_destroy_and_destroy_elements(un_contexto->tabla_de_segmentos, liberar_segmento);
     free(un_contexto);
 }
 

@@ -101,6 +101,7 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
 
     if (es_instruccion_de_corte(instruccion) || haySegmentationFault)
     {
+      haySegmentationFault = false;
       log_destroy(logger);
       return;
     }
@@ -345,7 +346,7 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   t_paquete *paquete = crear_paquete_operacion(operacion);
   int cantBytes = atoi(instruccion->parametros[2]);
-  int DF = obtener_direccion_fisica(atoi(instruccion->parametros[1]), pcb, cantBytes);
+  int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb, cantBytes);
 
   if(DF == -1)
   {
@@ -381,6 +382,7 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   t_paquete *paquete = crear_paquete_operacion(MOV_IN_INSTRUCTION);
   int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb, cantidad_bytes_registro(instruccion->parametros[0]));
+  int cantDeBytes = cantidad_bytes_registro(instruccion->parametros[0]);
   t_list *listaPlana;
 
   if(DF == -1)
@@ -392,6 +394,7 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
   }
 
   agregar_a_paquete(paquete, &DF, sizeof(int));
+  agregar_a_paquete(paquete ,&cantDeBytes, sizeof(int));
   enviar_paquete(paquete, socketMemoria);
 
   // Esperando respuesta de memoria...
@@ -404,6 +407,7 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
 
     strcpy(instruccion->parametros[1], contenidoMemoria);
     ejecutar_set(pcb, instruccion);
+    list_destroy_and_destroy_elements(listaPlana, free);
     break;
   
   default:
@@ -411,7 +415,6 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
     break;
   }
 
-  list_destroy_and_destroy_elements(listaPlana, &free);
   log_destroy(logger);
 }
 
@@ -429,40 +432,46 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
     return;
   }
 
-  char* valorACopiar = string_duplicate(obtener_valor_registro(instruccion, pcb));
-
+  int cantidadDeBytes = cantidad_bytes_registro(instruccion->parametros[1]);
+  char* valorACopiar = valor_del_registro_como_string(obtener_valor_registro(instruccion, pcb), cantidadDeBytes);
+  //char* valorACopiar = string_duplicate(obtener_valor_registro(instruccion, pcb));
+  log_debug(logger, "Los caracteres a copiar son: %s", valorACopiar);
+  log_debug(logger, "la cantidad de bytes a copiar son: %d", (int)(strlen(valorACopiar)-1));
+  
   agregar_a_paquete(paquete, &DF, sizeof(int));
-  agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar) + 1);
+  agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar)-1);
   enviar_paquete(paquete, socketMemoria);
+
+  free(valorACopiar);
 
   log_destroy(logger);
 }
 
 char* obtener_valor_registro(LineaInstruccion *instruccion, pcb *pcb)
 {
-  if(!strcmp(instruccion->parametros[0], "AX"))
+  if(!strcmp(instruccion->parametros[0], "AX") || !strcmp(instruccion->parametros[1], "AX"))
     return pcb->AX;
-  else if(!strcmp(instruccion->parametros[0], "BX"))
+  else if(!strcmp(instruccion->parametros[0], "BX") || !strcmp(instruccion->parametros[1], "BX"))
     return pcb->BX;  
-  else if(!strcmp(instruccion->parametros[0], "CX"))
+  else if(!strcmp(instruccion->parametros[0], "CX") || !strcmp(instruccion->parametros[1], "CX"))
     return pcb->CX;
-  else if(!strcmp(instruccion->parametros[0], "DX"))
+  else if(!strcmp(instruccion->parametros[0], "DX") || !strcmp(instruccion->parametros[1], "DX"))
     return pcb->DX;
-  if(!strcmp(instruccion->parametros[0], "EAX"))
+  if(!strcmp(instruccion->parametros[0], "EAX") || !strcmp(instruccion->parametros[1], "EAX"))
     return pcb->EAX;
-  else if(!strcmp(instruccion->parametros[0], "EBX"))
+  else if(!strcmp(instruccion->parametros[0], "EBX") || !strcmp(instruccion->parametros[1], "EBX"))
     return pcb->EBX;  
-  else if(!strcmp(instruccion->parametros[0], "ECX"))
+  else if(!strcmp(instruccion->parametros[0], "ECX") || !strcmp(instruccion->parametros[1], "ECX"))
     return pcb->ECX;
-  else if(!strcmp(instruccion->parametros[0], "EDX"))
+  else if(!strcmp(instruccion->parametros[0], "EDX") || !strcmp(instruccion->parametros[1], "EDX"))
     return pcb->EDX;
-  if(!strcmp(instruccion->parametros[0], "RAX"))
+  if(!strcmp(instruccion->parametros[0], "RAX") || !strcmp(instruccion->parametros[1], "RAX"))
     return pcb->RAX;
-  else if(!strcmp(instruccion->parametros[0], "RBX"))
+  else if(!strcmp(instruccion->parametros[0], "RBX") || !strcmp(instruccion->parametros[1], "RBX"))
     return pcb->RBX;  
-  else if(!strcmp(instruccion->parametros[0], "RCX"))
+  else if(!strcmp(instruccion->parametros[0], "RCX") || !strcmp(instruccion->parametros[1], "RCX"))
     return pcb->RCX;
-  else if(!strcmp(instruccion->parametros[0], "RDX"))
+  else if(!strcmp(instruccion->parametros[0], "RDX") || !strcmp(instruccion->parametros[1], "RDX"))
     return pcb->RDX;
 }
 

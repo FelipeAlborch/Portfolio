@@ -701,10 +701,28 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 pthread_detach(hilo_ftruncate);
 
                 return;
-    
-        case DESCONEXION:
-            log_info(logger_planificador_obligatorio, "CPU Desconectado");
-        break;
+
+            case SEG_FAULT:
+                lista_recepcion_valores = _recibir_paquete(socketCPU);
+                contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
+                log_warning(logger_planificador_extra, "Contexto del proceso: < %d > recibido por SEG_FAULT.", proceso_a_ejecutar->pid);
+                proceso_en_ejecucion = desalojar_proceso_en_exec();
+
+                log_warning(logger_planificador_extra, "Terminando proceso: < %d > por  SEG_FAULT.", proceso_a_ejecutar->pid);
+
+                actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
+                loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
+
+                terminar_proceso(proceso_en_ejecucion);
+
+                list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+                liberar_contexto_ejecucion(contexto_recibido);
+            
+            return;
+
+            case DESCONEXION:
+                log_info(logger_planificador_obligatorio, "CPU Desconectado");
+            break;
         
         default:
             log_warning(logger_planificador_obligatorio, "Operación desconocida.");
