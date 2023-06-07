@@ -122,8 +122,10 @@ void ejecutar_kernel_test(){
     sleep(1);
     crear_proc();
     crear_seg();
-    
-    
+    eliminar_segmento(121,3);
+    liberar_proceso(221);
+    eliminar_segmento(121,4);
+    liberar_proceso(122);
 }
 void create_segment(int pid,int tam,int id){
     
