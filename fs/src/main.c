@@ -10,52 +10,33 @@ char *STORE_FILE = "blocks.txt";
 const int BLOCK_SIZE = 64;
 const int BLOCK_COUNT = 65536;
 
-FCB_table fcb_table;
+FCB_table *fcb_table;
 
+void init_config(t_log **log, fs_config **config);
+void init_sockets(t_log *log, fs_config *config, int *fs_socket, int *mem_socket);
+void init_threads(t_log *log, fs_config *config, int fs_socket, int mem_socket);
+void cleanup(t_log *log, fs_config *config, int fs_socket, int mem_socket);
 void * kernel_handler(void *socket_fd);
 
 int 
 main(int argc, char *argv[])
 {
-    int fs_socket, mem_socket, status;
+    t_log *log;
+    fs_config *config;
+    int fs_socket;
+    int mem_socket;
+    int error;
 
-    pthread_t thread_id;
+    init_config(&log, &config);
 
-    t_log *log = log_create_fs();
+    error = fcb_table_init(&fcb_table, config);
+    assert(error == 0);
 
-    fs_config *config = config_create_fs();
+    init_sockets(log, config, &fs_socket, &mem_socket);
 
-    print_cwd();
+    init_threads(log, config, fs_socket, mem_socket);
 
-    config_print_fs(config);
-
-    status = fcb_table_init(&fcb_table, BITMAP_FILE, STORE_FILE, BLOCK_SIZE, BLOCK_COUNT);
-
-    mem_socket = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
-
-    t_paquete *paquete = paquete_create(FILE_SYSTEM);
-
-    write_socket_paquete(mem_socket, (void *)paquete);
-
-    paquete_destroy(paquete);
-
-    log_info(log, "Conectado a memoria en %s:%s", config->IP_MEMORIA, config->PUERTO_MEMORIA);
-
-    fs_socket = conn_create(SERVER, config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
-
-    log_info(log, "Escuchando kernel en %s:%s", config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
-
-    status = pthread_create(&thread_id, NULL, kernel_handler, (void *)alloc_int(fs_socket));
-    if (status != 0) perror("pthread_create");
-
-    pthread_join(thread_id, (void **)&status);
-    if (status != 0) perror("pthread_join");
-
-    conn_close(fs_socket);
-
-    config_destroy_fs(config);
-
-    log_destroy(log);
+    cleanup(log, config, fs_socket, mem_socket);
         
     return 0;
 }
@@ -89,4 +70,54 @@ void *kernel_handler(void *arg)
     log_destroy(log);
 
     pthread_exit((void *) 0);
+}
+
+void init_config(t_log **log, fs_config **config)
+{
+    *log = log_create_fs();
+
+    *config = config_create_fs();
+
+    print_cwd();
+
+    config_print_fs(*config);
+}
+
+void init_sockets(t_log *log, fs_config *config, int *fs_socket, int *mem_socket)
+{
+    *mem_socket = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
+
+    t_paquete *paquete = paquete_create(FILE_SYSTEM);
+
+    write_socket_paquete(*mem_socket, (void *)paquete);
+
+    paquete_destroy(paquete);
+
+    log_info(log, "Conectado a memoria en %s:%s", config->IP_MEMORIA, config->PUERTO_MEMORIA);
+
+    *fs_socket = conn_create(SERVER, config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
+
+    log_info(log, "Escuchando kernel en %s:%s", config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
+}
+
+void init_threads(t_log *log, fs_config *config, int fs_socket, int mem_socket)
+{
+    pthread_t thread_id;
+
+    int status = pthread_create(&thread_id, NULL, kernel_handler, (void *)alloc_int(fs_socket));
+    if (status != 0) perror("pthread_create");
+
+    pthread_join(thread_id, (void **)&status);
+    if (status != 0) perror("pthread_join");
+}
+
+void cleanup(t_log *log, fs_config *config, int fs_socket, int mem_socket)
+{
+    conn_close(fs_socket);
+
+    conn_close(mem_socket);
+
+    config_destroy_fs(config);
+
+    log_destroy(log);
 }

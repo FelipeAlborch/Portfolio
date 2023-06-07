@@ -8,6 +8,8 @@ fs_config *config_create_fs() {
 
 fs_config *config_create_fs_from_file(char *path) {
 
+    assert(access(path, F_OK) == 0);
+
     t_config *t_config = config_create(path);
 
     fs_config *fs_config = malloc(sizeof(struct fs_config));

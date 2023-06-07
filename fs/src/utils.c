@@ -12,14 +12,18 @@ int bitmap_byte_count(FCB_table *fcb_table) {
     return (fcb_table->block_count + 7) / 8;
 }
 
-int fcb_table_init(FCB_table *fcb_table, char *bitmap_file, char *data_file, int block_size, int block_count) {
+int fcb_table_init(FCB_table **fcb_table_, fs_config *config) {
     int error = 0;
-    fcb_table->block_size = block_size;
-    fcb_table->block_count = block_count;
+    *fcb_table_ = malloc(sizeof(FCB_table));
+    FCB_table *fcb_table = *fcb_table_;
     fcb_table->index = dictionary_create();
+    t_superbloque *superbloque = superbloque_create_from_file(config->PATH_SUPERBLOQUE);
+    fcb_table->block_size = superbloque->BLOCK_SIZE;
+    fcb_table->block_count = superbloque->BLOCK_COUNT;
+    superbloque_destroy(superbloque);
 
-    if (access(bitmap_file, F_OK) == 0) {
-        int fd = open(bitmap_file, O_RDONLY);
+    if (access(config->PATH_BITMAP, F_OK) != -1) {
+        int fd = open(config->PATH_BITMAP, O_RDONLY);
         char *content = malloc(bitmap_byte_count(fcb_table));
         read(fd, content, bitmap_byte_count(fcb_table));
         fcb_table->bitmap = bitarray_create_with_mode(content, bitmap_byte_count(fcb_table), MSB_FIRST);
@@ -29,13 +33,13 @@ int fcb_table_init(FCB_table *fcb_table, char *bitmap_file, char *data_file, int
         fcb_table->bitmap = bitarray_create_with_mode(zeroes, bitmap_byte_count(fcb_table), MSB_FIRST);
     }
 
-    error = mmap_file_sync(bitmap_file, bitmap_byte_count(fcb_table), &fcb_table->bitmap->bitarray);
+    error = mmap_file_sync(config->PATH_BITMAP, bitmap_byte_count(fcb_table), &fcb_table->bitmap->bitarray);
     if (error == -1) { 
         perror("mmap_file_sync");
         return error;
     }
 
-    error = mmap_file_sync(data_file, data_byte_count(fcb_table), &fcb_table->block_store);
+    error = mmap_file_sync(config->PATH_BLOQUES, data_byte_count(fcb_table), &fcb_table->block_store);
     if (error == -1) { 
         perror("mmap_file_sync");
         return error;
@@ -80,13 +84,26 @@ FCB *fcb_create(char *file_name) {
     fcb->file_name = strdup(file_name);
     fcb->file_size = 0;
     fcb->dptr = NULL;
-    fcb->iptr = list_create();
+    fcb->iptr = NULL;
+    return fcb;
+}
+
+FCB *fcb_create_from_file(char *path) {
+    assert(access(path, F_OK) == 0);
+    t_config *t_config = config_create(path);
+    FCB *fcb = malloc(sizeof(FCB));
+    fcb->file_name = strdup(config_get_string_value(t_config, "NOMBRE_ARCHIVO"));
+    fcb->file_size = config_get_int_value(t_config, "TAMANIO_ARCHIVO");
+    fcb->dptr = (char *)config_get_long_value(t_config, "PUNTERO_DIRECTO");
+    fcb->iptr = (uint32_t *)config_get_long_value(t_config, "PUNTERO_DIRECTO");
+    config_destroy(t_config);
     return fcb;
 }
 
 int fcb_destroy(FCB *fcb) {
     free(fcb->file_name);
-    list_destroy(fcb->iptr);
+    free(fcb->dptr);
+    free(fcb->iptr);
     free(fcb);
     return 0;
 }
@@ -96,27 +113,35 @@ int fcb_table_destroy(FCB_table *fcb_table) {
     bitarray_destroy(fcb_table->bitmap);
     munmap(fcb_table->block_store, data_byte_count(fcb_table));
     dictionary_destroy_and_destroy_elements(fcb_table->index, (void(*)(void *))fcb_destroy);
+    free(fcb_table);
     return 0;
 }
 
+// reallocates fcb new_size blocks
+// first accumulates the difference between current_size and new_size
+// if not enough blocks are available, returns -1
+// then allocates or deallocates blocks depending on the sign of the difference
+// always allocates and deallocates from the end of the file
 int fcb_realloc(int new_size, FCB *fcb, FCB_table *fcb_table) {
-    if (list_size(fcb->iptr) * fcb_table->block_size < new_size) {
-        for (int i = 0; i < fcb_table->block_count; i++) {
-            if (bitarray_test_bit(fcb_table->bitmap, i) == 0) {
-                // Check if we have enough blocks
-                if (list_size(fcb->iptr) * fcb_table->block_size >= new_size) {
-                    return 0;
-                }
-                // Set the bit to 1
-                bitarray_set_bit(fcb_table->bitmap, i);
-                // Add the block to the FCB
-                list_add(fcb->iptr, fcb_table->block_store + (i * fcb_table->block_size));
-            }
-        }
-        return 0;
-    } else if (list_size(fcb->iptr) * fcb_table->block_size > new_size) {
-
-    }  
+    // int difference = new_size - fcb->file_size;
+    // if (difference > 0) {
+    //     // alloc
+    //     for (int i = 0; i < difference; i++) {
+    //         int block_index = bitarray_scan(fcb_table->bitmap, 0, 1, 0);
+    //         if (block_index == -1)
+    //             return -1;
+    //         char *block_ptr = fcb_table->block_store + block_index * fcb_table->block_size;
+    //         list_add(fcb->iptr, block_ptr);
+    //         bitarray_set_bit(fcb_table->bitmap, block_index);
+    //     }
+    // } else if (difference < 0) {
+    //     // dealloc
+    //     for (int i = 0; i < -difference; i++) {
+    //         char *block_ptr = list_remove(fcb->iptr, list_size(fcb->iptr) - 1);
+    //         bitarray_clean_bit(fcb_table->bitmap, (block_ptr - fcb_table->block_store) / fcb_table->block_size);
+    //     }
+    // }
+    // fcb->file_size = new_size;
     return 0;
 }
 
@@ -176,3 +201,52 @@ int fcb_table_remove(char *file_name, FCB_table *fcb_table) {
 //     // No free block found
 //     return -1;
 // }
+
+t_superbloque *superbloque_create_from_file(char *path) {
+    assert(access(path, F_OK) == 0);
+    t_config *t_config = config_create(path);
+    t_superbloque *superbloque = malloc(sizeof(t_superbloque));
+    superbloque->BLOCK_SIZE = config_get_int_value(t_config, "BLOCK_SIZE");
+    superbloque->BLOCK_COUNT = config_get_int_value(t_config, "BLOCK_COUNT");
+    config_destroy(t_config);
+    return superbloque;
+}
+
+void superbloque_destroy(t_superbloque *superbloque) {
+    free(superbloque);
+}
+
+int f_open(char *file_name, FCB **fcb) {
+
+    int fd = open(file_name, O_RDWR | O_CREAT, 0775);
+    assert(fd != -1);
+
+    struct stat file_stat;
+// NOMBRE_ARCHIVO=Notas1erParcialK9999
+// TAMANIO_ARCHIVO=256
+// PUNTERO_DIRECTO=12
+// PUNTERO_INDIRECTO=45
+
+    assert(fstat(fd, &file_stat) != -1);
+
+    if (file_stat.st_size == 0) {
+        *fcb = fcb_create(file_name);
+        FILE *fp = fdopen(fd, "w");
+        fprintf(fp, "NOMBRE_ARCHIVO=%s\n", file_name);
+        fprintf(fp, "TAMANIO_ARCHIVO=%d\n", 0);
+        fprintf(fp, "PUNTERO_DIRECTO=%d\n", 0);
+        fprintf(fp, "PUNTERO_INDIRECTO=%d\n", 0);
+        fclose(fp);
+        (*fcb)->file_size = 0;
+        (*fcb)->dptr = 0;
+        (*fcb)->iptr = NULL;
+    } else {
+        *fcb = fcb_create(file_name);
+        FILE *fp = fdopen(fd, "r");
+        fclose(fp);
+    }
+
+    assert(close(fd) != -1);
+
+    return 0;
+}

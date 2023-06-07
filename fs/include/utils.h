@@ -6,6 +6,7 @@
 #include <commons/string.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -13,13 +14,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <config.h>
 #include <fun.h>
 
 typedef struct FCB {
     char *file_name;
     int file_size;
     char *dptr;
-    t_list *iptr;
+    uint32_t *iptr;
 } FCB;
 
 typedef struct FCB_table {
@@ -29,6 +31,11 @@ typedef struct FCB_table {
     t_bitarray *bitmap;
     t_dictionary *index;
 } FCB_table;
+
+typedef struct t_superbloque {
+    int BLOCK_SIZE;
+    int BLOCK_COUNT;
+} t_superbloque;
 
 /**
  * print_cwd - imprime el directorio actual de trabajo.
@@ -60,7 +67,7 @@ int bitmap_byte_count(FCB_table *fcb_table);
  * @param block_count: cantidad de bloques
  * @return 0 si se creó correctamente, -1 si ocurrió un error
  */
- int fcb_table_init(FCB_table *fcb_table, char *bitmap_file, char *store_file, int block_size, int block_count);
+int fcb_table_init(FCB_table **fcb_table_, fs_config *config);
 
 /**
  * mmap_file - mapea un archivo en memoria.
@@ -96,6 +103,8 @@ int mmap_file_sync(char *file_name, int length, char **file_pointer);
  * @return descriptor de archivo si se creó correctamente, -1 si ocurrió un error
  */
 FCB *fcb_create(char *file_name);
+
+FCB *fcb_create_from_file(char *file_name);
 
 /**
  * f_destroy - destruye un archivo de la tabla global de archivos abiertos y de la tabla de archivos abiertos del proceso
@@ -151,6 +160,24 @@ int fcb_table_add(FCB *fcb, FCB_table *fcb_table);
  * @return 0 si se quitó correctamente, -1 si ocurrió un error
  */
 int fcb_table_remove(char *file_name, FCB_table *fcb_table);
+
+/**
+ * fcb_table_get - busca un archivo en la tabla de archivos abiertos del proceso
+ * 
+ * @param file_name: nombre del archivo a buscar
+ * @param fcb_table: tabla de archivos abiertos del proceso
+ * @return puntero al archivo si se encontró, NULL si no se encontró
+ */
+t_superbloque *superbloque_create_from_file(char *file_name);
+
+/**
+ * superbloque_destroy - busca un archivo en la tabla de archivos abiertos del proceso  
+ * 
+ * @param file_name: nombre del archivo a buscar
+ * @param fcb_table: tabla de archivos abiertos del proceso
+ * @return puntero al archivo si se encontró, NULL si no se encontró
+ */
+void superbloque_destroy(t_superbloque *);
 
 // int f_create(...);
 
