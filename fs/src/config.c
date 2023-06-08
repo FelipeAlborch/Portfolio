@@ -12,21 +12,21 @@ fs_config *config_create_fs_from_file(char *path) {
 
     t_config *t_config = config_create(path);
 
-    fs_config *fs_config = malloc(sizeof(struct fs_config));
+    fs_config *config = malloc(sizeof(fs_config));
 
-    fs_config->IP_FSYSTEM = strdup(config_get_string_value(t_config, "IP_FSYSTEM"));
-    fs_config->IP_MEMORIA = strdup(config_get_string_value(t_config, "IP_MEMORIA"));
-    fs_config->PUERTO_MEMORIA = strdup(config_get_string_value(t_config, "PUERTO_MEMORIA"));
-    fs_config->PUERTO_ESCUCHA = strdup(config_get_string_value(t_config, "PUERTO_ESCUCHA"));
-    fs_config->PATH_SUPERBLOQUE = strdup(config_get_string_value(t_config, "PATH_SUPERBLOQUE"));
-    fs_config->PATH_BITMAP = strdup(config_get_string_value(t_config, "PATH_BITMAP"));
-    fs_config->PATH_BLOQUES = strdup(config_get_string_value(t_config, "PATH_BLOQUES"));
-    fs_config->PATH_FCB = strdup(config_get_string_value(t_config, "PATH_FCB"));
-    fs_config->RETARDO_ACCESO_BLOQUE = config_get_int_value(t_config, "RETARDO_ACCESO_BLOQUE");
+    config->IP_FSYSTEM = strdup(config_get_string_value(t_config, "IP_FSYSTEM"));
+    config->IP_MEMORIA = strdup(config_get_string_value(t_config, "IP_MEMORIA"));
+    config->PUERTO_MEMORIA = strdup(config_get_string_value(t_config, "PUERTO_MEMORIA"));
+    config->PUERTO_ESCUCHA = strdup(config_get_string_value(t_config, "PUERTO_ESCUCHA"));
+    config->PATH_SUPERBLOQUE = strdup(config_get_string_value(t_config, "PATH_SUPERBLOQUE"));
+    config->PATH_BITMAP = strdup(config_get_string_value(t_config, "PATH_BITMAP"));
+    config->PATH_BLOQUES = strdup(config_get_string_value(t_config, "PATH_BLOQUES"));
+    config->PATH_FCB = strdup(config_get_string_value(t_config, "PATH_FCB"));
+    config->RETARDO_ACCESO_BLOQUE = config_get_int_value(t_config, "RETARDO_ACCESO_BLOQUE");
 
     config_destroy(t_config);
     
-    return fs_config;
+    return config;
 }
 
 void config_print_fs(fs_config *config) {

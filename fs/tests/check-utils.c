@@ -43,7 +43,7 @@ START_TEST(test_superbloque_config)
     fprintf(fp, "BLOCK_COUNT=1024\n");
     fclose(fp);
 
-    t_superbloque *superbloque = superbloque_create_from_file("test-superbloque.dat");
+    Superbloque *superbloque = superbloque_create_from_file("test-superbloque.dat");
     ck_assert(access("test-superbloque.dat", F_OK) != -1);
     ck_assert_int_eq(superbloque->BLOCK_SIZE, 64);
     ck_assert_int_eq(superbloque->BLOCK_COUNT, 1024);
@@ -61,37 +61,36 @@ START_TEST(test_files_and_memory)
     int block_size = 10;
     int block_count = 600;
     int data_size = block_size * block_count;
+
     fs_config *config = malloc(sizeof(fs_config));
     config->PATH_BITMAP = "test2-bitmap.dat";
     config->PATH_BLOQUES = "test2-bloques.dat";
     config->PATH_SUPERBLOQUE = "test2-superbloque.dat";
-    FCB_table *fcb_table;
 
     FILE *fp = fopen(config->PATH_SUPERBLOQUE, "w");
-    fprintf(fp, "BLOCK_SIZE=64\n");
-    fprintf(fp, "BLOCK_COUNT=1024\n");
+    fprintf(fp, "BLOCK_SIZE=%d\n", block_size);
+    fprintf(fp, "BLOCK_COUNT=%d\n", block_count);
     fclose(fp);
 
-    int status = fcb_table_init(&fcb_table, config);
-    ck_assert(status == 0);
+    Disk *disk = disk_create(config);
 
     // check max bit
-    int bitmap_max_bit = bitarray_get_max_bit(fcb_table->bitmap);
-    ck_assert_int_eq(bitmap_max_bit, bitmap_byte_count(fcb_table) * 8);
+    int bitmap_max_bit = bitarray_get_max_bit(disk->bitmap);
+    ck_assert_int_eq(bitmap_max_bit, bitmap_byte_count(disk->superbloque) * 8);
 
     // check memory allocation initialized with 0
     char *zeroes = calloc(bitmap_max_bit, 1);
-    int bitmap_zeroed = memcmp(fcb_table->bitmap->bitarray, zeroes, bitmap_max_bit);
+    int bitmap_zeroed = memcmp(disk->bitmap->bitarray, zeroes, bitmap_max_bit);
     ck_assert(bitmap_zeroed == 0);
 
-    bitarray_set_bit(fcb_table->bitmap, 5);
-    bitarray_clean_bit(fcb_table->bitmap, 39);
-    bitarray_set_bit(fcb_table->bitmap, 45);
-    bitarray_clean_bit(fcb_table->bitmap, 33);
-    bitarray_set_bit(fcb_table->bitmap, 19);
-    bitarray_clean_bit(fcb_table->bitmap, 19);
-    bitarray_set_bit(fcb_table->bitmap, 20);
-    bitarray_set_bit(fcb_table->bitmap, 3);
+    bitarray_set_bit(disk->bitmap, 5);
+    bitarray_clean_bit(disk->bitmap, 39);
+    bitarray_set_bit(disk->bitmap, 45);
+    bitarray_clean_bit(disk->bitmap, 33);
+    bitarray_set_bit(disk->bitmap, 19);
+    bitarray_clean_bit(disk->bitmap, 19);
+    bitarray_set_bit(disk->bitmap, 20);
+    bitarray_set_bit(disk->bitmap, 3);
 
     // srand(time(NULL));
     // while (true)
@@ -108,8 +107,8 @@ START_TEST(test_files_and_memory)
     // }
 
     // unallocate the memory
-    if (fcb_table->block_store != MAP_FAILED) {
-        munmap(fcb_table->block_store, data_size);
+    if (disk->bloques != MAP_FAILED) {
+        munmap(disk->bloques, data_size);
     }
     // delete created files
     if (access(config->PATH_BITMAP, F_OK) != -1) remove(config->PATH_BITMAP);
@@ -130,35 +129,32 @@ START_TEST(test_fcb_table_init)
     config->PATH_BITMAP = "test-bitmap.dat";
     config->PATH_BLOQUES = "test-bloques.dat";
     config->PATH_SUPERBLOQUE = "test-superbloque.dat";
-    FCB_table *fcb_table;
-
+    
     FILE *fp = fopen(config->PATH_SUPERBLOQUE, "w");
     fprintf(fp, "BLOCK_SIZE=%d\n", block_size);
     fprintf(fp, "BLOCK_COUNT=%d\n", block_count);
     fclose(fp);
 
-    int status = fcb_table_init(&fcb_table, config);
-
+    Disk *disk = disk_create(config);
+    
     // check members
-    ck_assert_int_eq(status, 0);
-    ck_assert_ptr_ne(fcb_table->index, NULL);
-    ck_assert_ptr_ne(fcb_table->bitmap, NULL);
-    ck_assert_int_eq(data_byte_count(fcb_table), data_size);
-    ck_assert_int_eq(bitmap_byte_count(fcb_table), (block_count + 7) / 8);
-    ck_assert_ptr_ne(fcb_table->block_store, MAP_FAILED);
+    ck_assert_ptr_ne(disk->bitmap, NULL);
+    ck_assert_int_eq(data_byte_count(disk->superbloque), data_size);
+    ck_assert_int_eq(bitmap_byte_count(disk->superbloque), (block_count + 7) / 8);
+    ck_assert_ptr_ne(disk->bloques, MAP_FAILED);
 
     // check max bit
-    int bitmap_max_bit = bitarray_get_max_bit(fcb_table->bitmap);
-    ck_assert_int_eq(bitmap_max_bit, bitmap_byte_count(fcb_table) * 8);
+    int bitmap_max_bit = bitarray_get_max_bit(disk->bitmap);
+    ck_assert_int_eq(bitmap_max_bit, bitmap_byte_count(disk->superbloque) * 8);
 
     // check memory allocation is initialized with 0
     char *zeroes = calloc(bitmap_max_bit, 1);
-    int bitmap_zeroed = memcmp(fcb_table->bitmap->bitarray, zeroes, bitmap_max_bit);
+    int bitmap_zeroed = memcmp(disk->bitmap->bitarray, zeroes, bitmap_max_bit);
     ck_assert(bitmap_zeroed == 0);
 
     // unallocate the memory
-    if (fcb_table->block_store != MAP_FAILED) {
-        munmap(fcb_table->block_store, data_size);
+    if (disk->bloques != MAP_FAILED) {
+        munmap(disk->bloques, data_size);
     }
     // delete created files
     if (access(config->PATH_BITMAP, F_OK) != -1) remove(config->PATH_BITMAP);

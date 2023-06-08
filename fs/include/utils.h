@@ -4,6 +4,7 @@
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
 #include <commons/string.h>
+#include <commons/log.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -21,21 +22,25 @@ typedef struct FCB {
     char *file_name;
     int file_size;
     char *dptr;
-    uint32_t *iptr;
+    t_list *iptr;
 } FCB;
 
-typedef struct FCB_table {
-    char *block_store;
-    int block_size;
-    int block_count;
-    t_bitarray *bitmap;
-    t_dictionary *index;
-} FCB_table;
-
-typedef struct t_superbloque {
+typedef struct Superbloque {
     int BLOCK_SIZE;
     int BLOCK_COUNT;
-} t_superbloque;
+} Superbloque;
+
+typedef struct Disk {
+    char *bloques;
+    t_bitarray *bitmap;
+    Superbloque *superbloque;
+} Disk;
+
+typedef struct Env {
+    t_log *logger;
+    fs_config *config;
+    Disk *disk;
+} Env;
 
 /**
  * print_cwd - imprime el directorio actual de trabajo.
@@ -45,29 +50,33 @@ void print_cwd();
 /**
  * data_byte_count - devuelve la cantidad de bytes que ocupa el almacenamiento de datos.
  * 
- * @param fcb_table: tabla de control de archivos
+ * @param superbloque: superbloque 
  * @return cantidad de bytes que ocupa el almacenamiento de datos
  */
-int data_byte_count(FCB_table *fcb_table);
+int data_byte_count(Superbloque *superbloque);
 
 /**
  * bitmap_byte_count - devuelve la cantidad de bytes que ocupa el bitmap.
  * 
- * @param fcb_table: tabla de control de archivos
+ * @param superbloque: superbloque
  * @return cantidad de bytes que ocupa el bitmap
  */
-int bitmap_byte_count(FCB_table *fcb_table);
+int bitmap_byte_count(Superbloque *superbloque);
 
 /**
- * fcb_table_init - inicializa campos de tabla de control de archivos.
+ * disk_create - crea un disco.
  * 
- * @param fcb_table: tabla de control de archivos
- * @param block_store_file: archivo de almacenamiento de bloques
- * @param block_size: tamaño de bloque
- * @param block_count: cantidad de bloques
- * @return 0 si se creó correctamente, -1 si ocurrió un error
+ * @param config: configuración del sistema de archivos
+ * @return disco
  */
-int fcb_table_init(FCB_table **fcb_table_, fs_config *config);
+Disk* disk_create(fs_config *config);
+
+/**
+ * disk_destroy - destruye un disco.
+ * 
+ * @param disk: disco
+ */
+void disk_destroy(Disk *disk);
 
 /**
  * mmap_file - mapea un archivo en memoria.
@@ -80,86 +89,47 @@ int fcb_table_init(FCB_table **fcb_table_, fs_config *config);
 int mmap_file_sync(char *file_name, int length, char **file_pointer);
 
 /**
- * f_open - busca el archivo recibido por parámetro en la tabla global de archivos abiertos.
- * Si lo encuentra, agrega una entrada a la tabla de archivos abiertos del proceso.
- * Si no lo encuentra, lo crea y agrega una entrada a la tabla global de archivos abiertos
- * y a la tabla de archivos abiertos del proceso.
- *
- * @param global_table: tabla global de archivos abiertos
- * @param process_table: tabla de archivos abiertos del proceso
- * @param file_name: nombre del archivo
- * @param flags: banderas de apertura
- * @param mode: modo de apertura
- * @return descriptor de archivo si se abrió o creó correctamente, -1 si ocurrió un error
- */
-// int f_open(global_table* global_table, process_table* process_table, char* file_name, int flags, mode_t mode);
-
-/**
- * f_create - crea un archivo en la tabla global de archivos abiertos y en la tabla de archivos abiertos del proceso
- *
- * @param global_table: tabla global de archivos abiertos
- * @param process_table: tabla de archivos abiertos del proceso
- * @param file_name: nombre del archivo
- * @return descriptor de archivo si se creó correctamente, -1 si ocurrió un error
- */
-FCB *fcb_create(char *file_name);
-
-FCB *fcb_create_from_file(char *file_name);
-
-/**
- * f_destroy - destruye un archivo de la tabla global de archivos abiertos y de la tabla de archivos abiertos del proceso
- *
- * @param global_table: tabla global de archivos abiertos
- * @param process_table: tabla de archivos abiertos del proceso
- * @param file_name: nombre del archivo
- * @return 0 si se destruyó correctamente, -1 si ocurrió un error
- */
-int fcb_destroy(FCB *fcb);
-
-/**
- * fcb_table_destroy - libera memoria de tabla de control de archivos.
+ * fcb_create - crea un file control block (FCB) para un archivo.
  * 
- * @param fcb_table: tabla de control de archivos
- * @return 0 si se creó correctamente, -1 si ocurrió un error
+ * @param file_name: nombre del archivo
+ * @return puntero al FCB creado
  */
-int fcb_table_destroy(FCB_table *fcb_table);
+FCB* fcb_create(char *file_name);
+
+/**
+ * fcb_create_from_file - crea un file control block (FCB) para un archivo existente.
+ * 
+ * @param file_name: nombre del archivo
+ * @param disk: disco
+ * @return puntero al FCB creado
+ */
+FCB* fcb_create_from_file(char *file_name, Disk *disk);
+
+/**
+ * fcb_destroy - destruye un file control block (FCB).
+ * 
+ * @param fcb: archivo a destruir
+ */
+void fcb_destroy(FCB *fcb);
 
 /**
  * fcb_realloc - redimensiona un archivo de la tabla global de archivos abiertos y de la tabla de archivos abiertos del proceso
  *
  * @param new_size: nuevo tamaño del archivo
  * @param fcb: archivo a redimensionar
- * @param fcb_table: tabla de archivos abiertos del proceso
+ * @param disk: disco
  * @return 0 si se redimensionó correctamente, -1 si ocurrió un error
  */
-int fcb_realloc(int new_size, FCB *fcb, FCB_table *fcb_table);
+int fcb_realloc(int new_size, FCB *fcb, Disk *disk);
 
 /**
  * fcb_dealloc - libera los bloques de un archivo de la tabla global de archivos abiertos y de la tabla de archivos abiertos del proceso
  *
  * @param fcb: archivo a liberar
- * @param fcb_table: tabla de archivos abiertos del proceso
+ * @param disk: disco
  * @return 0 si se liberó correctamente, -1 si ocurrió un error
  */
-int fcb_dealloc(FCB *fcb, FCB_table *fcb_table);
-
-/**
- * fcb_table_add - agrega un archivo a la tabla de archivos abiertos del proceso
- *
- * @param fcb: archivo a agregar
- * @param fcb_table: tabla de archivos abiertos del proceso
- * @return 0 si se agregó correctamente, -1 si ocurrió un error
- */
-int fcb_table_add(FCB *fcb, FCB_table *fcb_table);
-
-/**
- * fcb_table_remove - quita un archivo de la tabla de archivos abiertos del proceso
- *
- * @param file_name: nombre del archivo a quitar
- * @param fcb_table: tabla de archivos abiertos del proceso
- * @return 0 si se quitó correctamente, -1 si ocurrió un error
- */
-int fcb_table_remove(char *file_name, FCB_table *fcb_table);
+int fcb_dealloc(FCB *fcb, Disk *disk);
 
 /**
  * fcb_table_get - busca un archivo en la tabla de archivos abiertos del proceso
@@ -168,16 +138,15 @@ int fcb_table_remove(char *file_name, FCB_table *fcb_table);
  * @param fcb_table: tabla de archivos abiertos del proceso
  * @return puntero al archivo si se encontró, NULL si no se encontró
  */
-t_superbloque *superbloque_create_from_file(char *file_name);
+Superbloque* superbloque_create_from_file(char *file_name);
 
 /**
  * superbloque_destroy - busca un archivo en la tabla de archivos abiertos del proceso  
  * 
  * @param file_name: nombre del archivo a buscar
  * @param fcb_table: tabla de archivos abiertos del proceso
- * @return puntero al archivo si se encontró, NULL si no se encontró
  */
-void superbloque_destroy(t_superbloque *);
+void superbloque_destroy(Superbloque *superbloque);
 
 // int f_create(...);
 

@@ -21,10 +21,10 @@ typedef struct fs_config {
 
 fs_config *config_create_fs();
 
-fs_config *config_create_fs_from_file(char *);
+fs_config *config_create_fs_from_file(char *path);
 
-void config_print_fs(fs_config *);
+void config_print_fs(fs_config *config);
 
-void config_destroy_fs(fs_config *);
+void config_destroy_fs(fs_config *config);
 
 #endif

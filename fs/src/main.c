@@ -5,38 +5,30 @@
 #include <config.h>
 #include <pthread.h>
 
-char *BITMAP_FILE = "bitmap.bin";
-char *STORE_FILE = "blocks.txt";
-const int BLOCK_SIZE = 64;
-const int BLOCK_COUNT = 65536;
-
-FCB_table *fcb_table;
-
 void init_config(t_log **log, fs_config **config);
+void init_disk(t_log *log, fs_config *config, Disk **disk);
 void init_sockets(t_log *log, fs_config *config, int *fs_socket, int *mem_socket);
 void init_threads(t_log *log, fs_config *config, int fs_socket, int mem_socket);
-void cleanup(t_log *log, fs_config *config, int fs_socket, int mem_socket);
+void cleanup(t_log *log, fs_config *config, Disk *disk, int fs_socket, int mem_socket);
 void * kernel_handler(void *socket_fd);
 
-int 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     t_log *log;
     fs_config *config;
+    Disk *disk;
     int fs_socket;
     int mem_socket;
-    int error;
 
     init_config(&log, &config);
 
-    error = fcb_table_init(&fcb_table, config);
-    assert(error == 0);
+    init_disk(log, config, &disk);
 
     init_sockets(log, config, &fs_socket, &mem_socket);
 
     init_threads(log, config, fs_socket, mem_socket);
 
-    cleanup(log, config, fs_socket, mem_socket);
+    cleanup(log, config, disk, fs_socket, mem_socket);
         
     return 0;
 }
@@ -83,6 +75,11 @@ void init_config(t_log **log, fs_config **config)
     config_print_fs(*config);
 }
 
+void init_disk(t_log *log, fs_config *config, Disk **disk)
+{
+    *disk = disk_create(config);
+}
+
 void init_sockets(t_log *log, fs_config *config, int *fs_socket, int *mem_socket)
 {
     *mem_socket = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
@@ -106,16 +103,20 @@ void init_threads(t_log *log, fs_config *config, int fs_socket, int mem_socket)
 
     int status = pthread_create(&thread_id, NULL, kernel_handler, (void *)alloc_int(fs_socket));
     if (status != 0) perror("pthread_create");
+    assert(status == 0);
 
     pthread_join(thread_id, (void **)&status);
     if (status != 0) perror("pthread_join");
+    assert(status == 0);
 }
 
-void cleanup(t_log *log, fs_config *config, int fs_socket, int mem_socket)
+void cleanup(t_log *log, fs_config *config, Disk *disk, int fs_socket, int mem_socket)
 {
     conn_close(fs_socket);
 
     conn_close(mem_socket);
+
+    disk_destroy(disk);
 
     config_destroy_fs(config);
 

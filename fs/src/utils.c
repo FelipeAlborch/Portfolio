@@ -4,48 +4,46 @@ void print_cwd() {
     printf("PWD = %s\n", getcwd(NULL, 0));
 }
 
-int data_byte_count(FCB_table *fcb_table) {
-    return fcb_table->block_size * fcb_table->block_count;
+int data_byte_count(Superbloque *superbloque) {
+    return superbloque->BLOCK_SIZE * superbloque->BLOCK_COUNT;
 }
 
-int bitmap_byte_count(FCB_table *fcb_table) {
-    return (fcb_table->block_count + 7) / 8;
+int bitmap_byte_count(Superbloque *superbloque) {
+    return (superbloque->BLOCK_COUNT + 7) / 8;
 }
 
-int fcb_table_init(FCB_table **fcb_table_, fs_config *config) {
+Disk *disk_create(fs_config *config) {
     int error = 0;
-    *fcb_table_ = malloc(sizeof(FCB_table));
-    FCB_table *fcb_table = *fcb_table_;
-    fcb_table->index = dictionary_create();
-    t_superbloque *superbloque = superbloque_create_from_file(config->PATH_SUPERBLOQUE);
-    fcb_table->block_size = superbloque->BLOCK_SIZE;
-    fcb_table->block_count = superbloque->BLOCK_COUNT;
-    superbloque_destroy(superbloque);
+    Disk *disk = malloc(sizeof(Disk));
+    disk->superbloque = superbloque_create_from_file(config->PATH_SUPERBLOQUE);
+    disk->bloques = malloc(data_byte_count(disk->superbloque));
 
     if (access(config->PATH_BITMAP, F_OK) != -1) {
         int fd = open(config->PATH_BITMAP, O_RDONLY);
-        char *content = malloc(bitmap_byte_count(fcb_table));
-        read(fd, content, bitmap_byte_count(fcb_table));
-        fcb_table->bitmap = bitarray_create_with_mode(content, bitmap_byte_count(fcb_table), MSB_FIRST);
+        char *content = malloc(bitmap_byte_count(disk->superbloque));
+        error = read(fd, content, bitmap_byte_count(disk->superbloque));
+        assert(error == bitmap_byte_count(disk->superbloque));
+        disk->bitmap = bitarray_create_with_mode(content, disk->superbloque->BLOCK_COUNT, MSB_FIRST);
         close(fd);
     } else {
-        char *zeroes = calloc(bitmap_byte_count(fcb_table), 8);
-        fcb_table->bitmap = bitarray_create_with_mode(zeroes, bitmap_byte_count(fcb_table), MSB_FIRST);
+        char *zeroes = calloc(bitmap_byte_count(disk->superbloque), 8);
+        disk->bitmap = bitarray_create_with_mode(zeroes, bitmap_byte_count(disk->superbloque), MSB_FIRST);
     }
 
-    error = mmap_file_sync(config->PATH_BITMAP, bitmap_byte_count(fcb_table), &fcb_table->bitmap->bitarray);
-    if (error == -1) { 
-        perror("mmap_file_sync");
-        return error;
-    }
+    error = mmap_file_sync(config->PATH_BITMAP, bitmap_byte_count(disk->superbloque), &disk->bitmap->bitarray);
+    assert(error != -1);
 
-    error = mmap_file_sync(config->PATH_BLOQUES, data_byte_count(fcb_table), &fcb_table->block_store);
-    if (error == -1) { 
-        perror("mmap_file_sync");
-        return error;
-    }
+    error = mmap_file_sync(config->PATH_BLOQUES, data_byte_count(disk->superbloque), &disk->bloques);
+    assert(error != -1);
 
-    return error;
+    return disk;
+}
+
+void disk_destroy(Disk *disk) {
+    superbloque_destroy(disk->superbloque);
+    bitarray_destroy(disk->bitmap);
+    free(disk->bloques);
+    free(disk);
 }
 
 int mmap_file_sync(char *file_name, int length, char **file_content){
@@ -84,37 +82,36 @@ FCB *fcb_create(char *file_name) {
     fcb->file_name = strdup(file_name);
     fcb->file_size = 0;
     fcb->dptr = NULL;
-    fcb->iptr = NULL;
+    fcb->iptr = list_create();
     return fcb;
 }
 
-FCB *fcb_create_from_file(char *path) {
+FCB *fcb_create_from_file(char *path, Disk *disk) {
     assert(access(path, F_OK) == 0);
-    t_config *t_config = config_create(path);
+    
+    t_config *config = config_create(path);
     FCB *fcb = malloc(sizeof(FCB));
-    fcb->file_name = strdup(config_get_string_value(t_config, "NOMBRE_ARCHIVO"));
-    fcb->file_size = config_get_int_value(t_config, "TAMANIO_ARCHIVO");
-    fcb->dptr = (char *)config_get_long_value(t_config, "PUNTERO_DIRECTO");
-    fcb->iptr = (uint32_t *)config_get_long_value(t_config, "PUNTERO_DIRECTO");
-    config_destroy(t_config);
+    fcb->file_name = strdup(config_get_string_value(config, "NOMBRE_ARCHIVO"));
+    fcb->file_size = config_get_int_value(config, "TAMANIO_ARCHIVO");
+    int dptr = config_get_int_value(config, "PUNTERO_DIRECTO");
+    int iptr = config_get_int_value(config, "PUNTERO_INDIRECTO");
+    config_destroy(config);
+    
+    fcb->dptr = disk->bloques + dptr * disk->superbloque->BLOCK_SIZE;
+    fcb->iptr = list_create();
+    for (int i = 0; i < disk->superbloque->BLOCK_SIZE / sizeof(int); i++) {
+        char **ptr = malloc(sizeof(char));
+        *ptr = disk->bloques + (iptr * disk->superbloque->BLOCK_SIZE + i * sizeof(int));
+        list_add(fcb->iptr, ptr);
+    }
     return fcb;
 }
 
-int fcb_destroy(FCB *fcb) {
+void fcb_destroy(FCB *fcb) {
     free(fcb->file_name);
     free(fcb->dptr);
     free(fcb->iptr);
     free(fcb);
-    return 0;
-}
-
-int fcb_table_destroy(FCB_table *fcb_table) {
-    munmap(fcb_table->bitmap->bitarray, bitmap_byte_count(fcb_table));
-    bitarray_destroy(fcb_table->bitmap);
-    munmap(fcb_table->block_store, data_byte_count(fcb_table));
-    dictionary_destroy_and_destroy_elements(fcb_table->index, (void(*)(void *))fcb_destroy);
-    free(fcb_table);
-    return 0;
 }
 
 // reallocates fcb new_size blocks
@@ -122,7 +119,7 @@ int fcb_table_destroy(FCB_table *fcb_table) {
 // if not enough blocks are available, returns -1
 // then allocates or deallocates blocks depending on the sign of the difference
 // always allocates and deallocates from the end of the file
-int fcb_realloc(int new_size, FCB *fcb, FCB_table *fcb_table) {
+int fcb_realloc(int new_size, FCB *fcb, Disk *disk) {
     // int difference = new_size - fcb->file_size;
     // if (difference > 0) {
     //     // alloc
@@ -145,32 +142,15 @@ int fcb_realloc(int new_size, FCB *fcb, FCB_table *fcb_table) {
     return 0;
 }
 
-int fcb_dealloc(FCB *fcb, FCB_table *fcb_table) {
+int fcb_dealloc(FCB *fcb, Disk *disk) {
     t_list_iterator *iterator = list_iterator_create(fcb->iptr);
     while(list_iterator_has_next(iterator)) {
         char *block_ptr = list_iterator_next(iterator);
-        // dealloc block store
-        memset(block_ptr, 0, fcb_table->block_size);
-        // dealloc block bitmap
-        bitarray_clean_bit(fcb_table->bitmap, (block_ptr - fcb_table->block_store) / fcb_table->block_size);
+        memset(block_ptr, 0, disk->superbloque->BLOCK_SIZE);
+        bitarray_clean_bit(disk->bitmap, (block_ptr - disk->bloques) / disk->superbloque->BLOCK_SIZE);
         list_remove(fcb->iptr, list_iterator_index(iterator));
     }
-    return 0;
-}
-
-int fcb_table_add(FCB *fcb, FCB_table *fcb_table) {
-    if (dictionary_has_key(fcb_table->index, fcb->file_name))
-        return -1;
-    dictionary_put(fcb_table->index, fcb->file_name, fcb);
-    return 0;
-}
-
-int fcb_table_remove(char *file_name, FCB_table *fcb_table) {
-    if (!dictionary_has_key(fcb_table->index, file_name))
-        return -1;
-    FCB *fcb = dictionary_get(fcb_table->index, file_name);
-    dictionary_remove(fcb_table->index, file_name);
-    fcb_destroy(fcb);
+    list_iterator_destroy(iterator);
     return 0;
 }
 
@@ -202,17 +182,17 @@ int fcb_table_remove(char *file_name, FCB_table *fcb_table) {
 //     return -1;
 // }
 
-t_superbloque *superbloque_create_from_file(char *path) {
+Superbloque *superbloque_create_from_file(char *path) {
     assert(access(path, F_OK) == 0);
     t_config *t_config = config_create(path);
-    t_superbloque *superbloque = malloc(sizeof(t_superbloque));
+    Superbloque *superbloque = malloc(sizeof(Superbloque));
     superbloque->BLOCK_SIZE = config_get_int_value(t_config, "BLOCK_SIZE");
     superbloque->BLOCK_COUNT = config_get_int_value(t_config, "BLOCK_COUNT");
     config_destroy(t_config);
     return superbloque;
 }
 
-void superbloque_destroy(t_superbloque *superbloque) {
+void superbloque_destroy(Superbloque *superbloque) {
     free(superbloque);
 }
 
