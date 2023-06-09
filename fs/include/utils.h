@@ -89,24 +89,27 @@ void disk_destroy(Disk *disk);
 int mmap_file_sync(char *file_name, int length, char **file_pointer);
 
 /**
- * fcb_create - crea un file control block (FCB) para un archivo.
- * 
- * @param file_name: nombre del archivo
- * @return puntero al FCB creado
- */
-FCB * fcb_create(char *file_name);
-
-/**
- * fcb_create_from_file - crea un file control block (FCB) para un archivo existente.
+ * fcb_create - crea un file control block (FCB) y el archivo asociado.
  * 
  * @param file_name: nombre del archivo
  * @param disk: disco
- * @return puntero al FCB creado
+ * @param fcb: puntero al FCB creado
+ * @return 0 si se creó correctamente, -1 si ocurrió un error
  */
-FCB * fcb_create_from_file(char *file_name, Disk *disk);
+int fcb_create(char *file_name, Disk disk, FCB **fcb);
 
 /**
- * fcb_destroy - destruye un file control block (FCB).
+ * fcb_create_from_file - crea un file control block (FCB) a partir de un archivo.
+ * 
+ * @param path: ruta del archivo
+ * @param disk: disco
+ * @param fcb: puntero al FCB creado
+ * @return 0 si se creó correctamente, -1 si ocurrió un error
+ */
+int fcb_create_from_file(char *path, Disk *disk, FCB **fcb);
+
+/**
+ * fcb_destroy - destruye un file control block (FCB) y el archivo asociado.
  * 
  * @param fcb: archivo a destruir
  */

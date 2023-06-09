@@ -2,60 +2,6 @@
 #include <utils.h>
 #include <config.h>
 
-START_TEST(test_fs_config)
-{
-    FILE *fp = fopen("test-fs.config", "w");
-    fprintf(fp, "IP_FSYSTEM=127.0.0.1\n");
-    fprintf(fp, "IP_MEMORIA=127.0.0.1\n");
-    fprintf(fp, "PUERTO_MEMORIA=8002\n");
-    fprintf(fp, "PUERTO_ESCUCHA=8003\n");
-    fprintf(fp, "PATH_SUPERBLOQUE=drive/superbloque.dat\n");
-    fprintf(fp, "PATH_BITMAP=drive/bitmap.dat\n");
-    fprintf(fp, "PATH_BLOQUES=drive/bloques.dat\n");
-    fprintf(fp, "PATH_FCB=drive/fcb\n");
-    fprintf(fp, "RETARDO_ACCESO_BLOQUE=15000\n");
-    fclose(fp);
-
-    fs_config *config = config_create_fs_from_file("test-fs.config");
-    ck_assert(access("test-fs.config", F_OK) != -1);
-    ck_assert_str_eq(config->IP_FSYSTEM, "127.0.0.1");
-    ck_assert_str_eq(config->IP_MEMORIA, "127.0.0.1");
-    ck_assert_str_eq(config->PUERTO_MEMORIA, "8002");
-    ck_assert_str_eq(config->PUERTO_ESCUCHA, "8003");
-    ck_assert_str_eq(config->PATH_SUPERBLOQUE, "drive/superbloque.dat");
-    ck_assert_str_eq(config->PATH_BITMAP, "drive/bitmap.dat");
-    ck_assert_str_eq(config->PATH_BLOQUES, "drive/bloques.dat");
-    ck_assert_str_eq(config->PATH_FCB, "drive/fcb");
-    ck_assert_int_eq(config->RETARDO_ACCESO_BLOQUE, 15000);
-
-    config_destroy_fs(config);
-
-    if (access("test-fs.config", F_OK) != -1) remove("test-fs.config");
-
-    ck_assert(access("test-fs.config", F_OK) == -1);
-}
-END_TEST
-
-START_TEST(test_superbloque_config)
-{
-    FILE *fp = fopen("test-superbloque.dat", "w");
-    fprintf(fp, "BLOCK_SIZE=64\n");
-    fprintf(fp, "BLOCK_COUNT=1024\n");
-    fclose(fp);
-
-    Superbloque *superbloque = superbloque_create_from_file("test-superbloque.dat");
-    ck_assert(access("test-superbloque.dat", F_OK) != -1);
-    ck_assert_int_eq(superbloque->BLOCK_SIZE, 64);
-    ck_assert_int_eq(superbloque->BLOCK_COUNT, 1024);
-
-    superbloque_destroy(superbloque);
-
-    if (access("test-superbloque.dat", F_OK) != -1) remove("test-superbloque.dat");
-
-    ck_assert(access("test-superbloque.dat", F_OK) == -1);
-}
-END_TEST
-
 START_TEST(test_files_and_memory)
 {
     int block_size = 10;
@@ -107,15 +53,72 @@ START_TEST(test_files_and_memory)
     // }
 
     // unallocate the memory
-    if (disk->bloques != MAP_FAILED) {
+    // if (disk->bloques != MAP_FAILED) {
         munmap(disk->bloques, data_size);
-    }
+    // }
+    // if (disk->bitmap->bitarray != MAP_FAILED) {
+        munmap(disk->bitmap->bitarray, block_count);
+    // }
     // delete created files
     if (access(config->PATH_BITMAP, F_OK) != -1) remove(config->PATH_BITMAP);
     if (access(config->PATH_BLOQUES, F_OK) != -1) remove(config->PATH_BLOQUES);
     if (access(config->PATH_SUPERBLOQUE, F_OK) != -1) remove(config->PATH_SUPERBLOQUE);
 
     ck_assert(true);
+}
+END_TEST
+
+START_TEST(test_fs_config)
+{
+    FILE *fp = fopen("test-fs.config", "w");
+    fprintf(fp, "IP_FSYSTEM=127.0.0.1\n");
+    fprintf(fp, "IP_MEMORIA=127.0.0.1\n");
+    fprintf(fp, "PUERTO_MEMORIA=8002\n");
+    fprintf(fp, "PUERTO_ESCUCHA=8003\n");
+    fprintf(fp, "PATH_SUPERBLOQUE=drive/superbloque.dat\n");
+    fprintf(fp, "PATH_BITMAP=drive/bitmap.dat\n");
+    fprintf(fp, "PATH_BLOQUES=drive/bloques.dat\n");
+    fprintf(fp, "PATH_FCB=drive/fcb\n");
+    fprintf(fp, "RETARDO_ACCESO_BLOQUE=15000\n");
+    fclose(fp);
+
+    fs_config *config = config_create_fs_from_file("test-fs.config");
+    ck_assert(access("test-fs.config", F_OK) != -1);
+    ck_assert_str_eq(config->IP_FSYSTEM, "127.0.0.1");
+    ck_assert_str_eq(config->IP_MEMORIA, "127.0.0.1");
+    ck_assert_str_eq(config->PUERTO_MEMORIA, "8002");
+    ck_assert_str_eq(config->PUERTO_ESCUCHA, "8003");
+    ck_assert_str_eq(config->PATH_SUPERBLOQUE, "drive/superbloque.dat");
+    ck_assert_str_eq(config->PATH_BITMAP, "drive/bitmap.dat");
+    ck_assert_str_eq(config->PATH_BLOQUES, "drive/bloques.dat");
+    ck_assert_str_eq(config->PATH_FCB, "drive/fcb");
+    ck_assert_int_eq(config->RETARDO_ACCESO_BLOQUE, 15000);
+
+    config_destroy_fs(config);
+
+    if (access("test-fs.config", F_OK) != -1) remove("test-fs.config");
+
+    ck_assert(access("test-fs.config", F_OK) == -1);
+}
+END_TEST
+
+START_TEST(test_superbloque_config)
+{
+    FILE *fp = fopen("test-superbloque.dat", "w");
+    fprintf(fp, "BLOCK_SIZE=64\n");
+    fprintf(fp, "BLOCK_COUNT=1024\n");
+    fclose(fp);
+
+    Superbloque *superbloque = superbloque_create_from_file("test-superbloque.dat");
+    ck_assert(access("test-superbloque.dat", F_OK) != -1);
+    ck_assert_int_eq(superbloque->BLOCK_SIZE, 64);
+    ck_assert_int_eq(superbloque->BLOCK_COUNT, 1024);
+
+    superbloque_destroy(superbloque);
+
+    if (access("test-superbloque.dat", F_OK) != -1) remove("test-superbloque.dat");
+
+    ck_assert(access("test-superbloque.dat", F_OK) == -1);
 }
 END_TEST
 
@@ -209,9 +212,9 @@ Suite *utils_test_suite(void)
     TCase *tc = tcase_create(__FILE__);
     tcase_add_test(tc, test_mmap_file_sync);
     tcase_add_test(tc, test_fcb_table_init);
-    tcase_add_test(tc, test_files_and_memory);
-    tcase_add_test(tc, test_fs_config);
     tcase_add_test(tc, test_superbloque_config);
+    tcase_add_test(tc, test_fs_config);
+    tcase_add_test(tc, test_files_and_memory);
     // tcase_add_unchecked_fixture(tc, utils_unchecked_setup, utils_unchecked_teardown);
     suite_add_tcase(s, tc);
 
