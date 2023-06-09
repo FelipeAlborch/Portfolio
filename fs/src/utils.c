@@ -81,8 +81,8 @@ FCB *fcb_create(char *file_name) {
     FCB *fcb = malloc(sizeof(FCB));
     fcb->file_name = strdup(file_name);
     fcb->file_size = 0;
-    fcb->dptr = (uint32_t)(uintptr_t)NULL;
-    fcb->iptr = (uint32_t)(uintptr_t)NULL;
+    fcb->dptr = 0;
+    fcb->iptr = 0;
     return fcb;
 }
 
@@ -135,7 +135,7 @@ int bitarray_count_free(t_bitarray *bitarray) {
     return count;
 }
 
-int bitarray_get_free(t_bitarray *bitarray) {
+int bitarray_next_free(t_bitarray *bitarray) {
     for (int i = 0; i < bitarray->size; i++) {
         if (!bitarray_test_bit(bitarray, i))
             return i;
@@ -150,7 +150,7 @@ int fcb_alloc(int size, FCB *fcb, Disk *disk) {
         return -1;
     }
     if (blocks_allocated(fcb, disk) == 0 && blocks_needed > 0) {
-        int free_block = bitarray_get_free(disk->bitmap);
+        int free_block = bitarray_next_free(disk->bitmap);
         if (free_block == -1)
             return -1;
         bitarray_set_bit(disk->bitmap, free_block);
@@ -159,14 +159,14 @@ int fcb_alloc(int size, FCB *fcb, Disk *disk) {
         blocks_needed --;
     }
     if (blocks_allocated(fcb, disk) == 1 && blocks_needed > 0) {
-        int free_block = bitarray_get_free(disk->bitmap);
+        int free_block = bitarray_next_free(disk->bitmap);
         if (free_block == -1)
             return -1;
         bitarray_set_bit(disk->bitmap, free_block);
         fcb->iptr = block_address(free_block, disk);
     }
-    while (blocks_needed > 0) {
-        int free_block = bitarray_get_free(disk->bitmap);
+    while (blocks_allocated(fcb, disk) > 1 && blocks_needed > 0) {
+        int free_block = bitarray_next_free(disk->bitmap);
         if (free_block == -1)
             return -1;
         bitarray_set_bit(disk->bitmap, free_block);
