@@ -21,8 +21,8 @@
 typedef struct FCB {
     char *file_name;
     int file_size;
-    char *dptr;
-    t_list *iptr;
+    uint32_t dptr;
+    uint32_t iptr;
 } FCB;
 
 typedef struct Superbloque {
@@ -69,7 +69,7 @@ int bitmap_byte_count(Superbloque *superbloque);
  * @param config: configuración del sistema de archivos
  * @return disco
  */
-Disk* disk_create(fs_config *config);
+Disk * disk_create(fs_config *config);
 
 /**
  * disk_destroy - destruye un disco.
@@ -94,7 +94,7 @@ int mmap_file_sync(char *file_name, int length, char **file_pointer);
  * @param file_name: nombre del archivo
  * @return puntero al FCB creado
  */
-FCB* fcb_create(char *file_name);
+FCB * fcb_create(char *file_name);
 
 /**
  * fcb_create_from_file - crea un file control block (FCB) para un archivo existente.
@@ -103,7 +103,7 @@ FCB* fcb_create(char *file_name);
  * @param disk: disco
  * @return puntero al FCB creado
  */
-FCB* fcb_create_from_file(char *file_name, Disk *disk);
+FCB * fcb_create_from_file(char *file_name, Disk *disk);
 
 /**
  * fcb_destroy - destruye un file control block (FCB).
@@ -113,7 +113,17 @@ FCB* fcb_create_from_file(char *file_name, Disk *disk);
 void fcb_destroy(FCB *fcb);
 
 /**
- * fcb_realloc - redimensiona un archivo de la tabla global de archivos abiertos y de la tabla de archivos abiertos del proceso
+ * fcb_alloc - asigna bloques a un archivo.
+ * 
+ * @param size: tamaño a reservar en archivo
+ * @param fcb: archivo a asignar bloques
+ * @param disk: disco
+ * @return 0 si se asignaron correctamente, -1 si ocurrió un error
+ */
+int fcb_alloc(int size, FCB *fcb, Disk *disk);
+
+/**
+ * fcb_realloc - redimensiona un archivo
  *
  * @param new_size: nuevo tamaño del archivo
  * @param fcb: archivo a redimensionar
@@ -123,28 +133,27 @@ void fcb_destroy(FCB *fcb);
 int fcb_realloc(int new_size, FCB *fcb, Disk *disk);
 
 /**
- * fcb_dealloc - libera los bloques de un archivo de la tabla global de archivos abiertos y de la tabla de archivos abiertos del proceso
+ * fcb_dealloc - libera los bloques de un archivo
  *
+ * @param size: tamaño a liberar en archivo
  * @param fcb: archivo a liberar
  * @param disk: disco
  * @return 0 si se liberó correctamente, -1 si ocurrió un error
  */
-int fcb_dealloc(FCB *fcb, Disk *disk);
+int fcb_dealloc(int size, FCB *fcb, Disk *disk);
 
 /**
- * fcb_table_get - busca un archivo en la tabla de archivos abiertos del proceso
+ * superbloque_create_from_file - crea un superbloque a partir de un archivo.
  * 
- * @param file_name: nombre del archivo a buscar
- * @param fcb_table: tabla de archivos abiertos del proceso
- * @return puntero al archivo si se encontró, NULL si no se encontró
+ * @param file_name: nombre del archivo
+ * @return puntero al superbloque creado
  */
-Superbloque* superbloque_create_from_file(char *file_name);
+Superbloque * superbloque_create_from_file(char *file_name);
 
 /**
- * superbloque_destroy - busca un archivo en la tabla de archivos abiertos del proceso  
+ * superbloque_destroy - destruye un superbloque.
  * 
- * @param file_name: nombre del archivo a buscar
- * @param fcb_table: tabla de archivos abiertos del proceso
+ * @param superbloque: superbloque
  */
 void superbloque_destroy(Superbloque *superbloque);
 

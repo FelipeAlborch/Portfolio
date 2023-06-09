@@ -81,14 +81,14 @@ FCB *fcb_create(char *file_name) {
     FCB *fcb = malloc(sizeof(FCB));
     fcb->file_name = strdup(file_name);
     fcb->file_size = 0;
-    fcb->dptr = NULL;
-    fcb->iptr = list_create();
+    fcb->dptr = (uint32_t)(uintptr_t)NULL;
+    fcb->iptr = (uint32_t)(uintptr_t)NULL;
     return fcb;
 }
 
 FCB *fcb_create_from_file(char *path, Disk *disk) {
     assert(access(path, F_OK) == 0);
-    
+
     t_config *config = config_create(path);
     FCB *fcb = malloc(sizeof(FCB));
     fcb->file_name = strdup(config_get_string_value(config, "NOMBRE_ARCHIVO"));
@@ -96,91 +96,123 @@ FCB *fcb_create_from_file(char *path, Disk *disk) {
     int dptr = config_get_int_value(config, "PUNTERO_DIRECTO");
     int iptr = config_get_int_value(config, "PUNTERO_INDIRECTO");
     config_destroy(config);
-    
-    fcb->dptr = disk->bloques + dptr * disk->superbloque->BLOCK_SIZE;
-    fcb->iptr = list_create();
-    for (int i = 0; i < disk->superbloque->BLOCK_SIZE / sizeof(int); i++) {
-        char **ptr = malloc(sizeof(char));
-        *ptr = disk->bloques + (iptr * disk->superbloque->BLOCK_SIZE + i * sizeof(int));
-        list_add(fcb->iptr, ptr);
-    }
+
+    fcb->dptr = (uint32_t)(uintptr_t)disk->bloques + dptr * disk->superbloque->BLOCK_SIZE;
+    fcb->iptr = (uint32_t)(uintptr_t)disk->bloques + iptr * disk->superbloque->BLOCK_SIZE;
+
     return fcb;
 }
 
 void fcb_destroy(FCB *fcb) {
     free(fcb->file_name);
-    free(fcb->dptr);
-    free(fcb->iptr);
     free(fcb);
 }
 
-// reallocates fcb new_size blocks
-// first accumulates the difference between current_size and new_size
-// if not enough blocks are available, returns -1
-// then allocates or deallocates blocks depending on the sign of the difference
-// always allocates and deallocates from the end of the file
-int fcb_realloc(int new_size, FCB *fcb, Disk *disk) {
-    // int difference = new_size - fcb->file_size;
-    // if (difference > 0) {
-    //     // alloc
-    //     for (int i = 0; i < difference; i++) {
-    //         int block_index = bitarray_scan(fcb_table->bitmap, 0, 1, 0);
-    //         if (block_index == -1)
-    //             return -1;
-    //         char *block_ptr = fcb_table->block_store + block_index * fcb_table->block_size;
-    //         list_add(fcb->iptr, block_ptr);
-    //         bitarray_set_bit(fcb_table->bitmap, block_index);
-    //     }
-    // } else if (difference < 0) {
-    //     // dealloc
-    //     for (int i = 0; i < -difference; i++) {
-    //         char *block_ptr = list_remove(fcb->iptr, list_size(fcb->iptr) - 1);
-    //         bitarray_clean_bit(fcb_table->bitmap, (block_ptr - fcb_table->block_store) / fcb_table->block_size);
-    //     }
-    // }
-    // fcb->file_size = new_size;
-    return 0;
+int blocks_count(int size, Disk *disk) {
+    return (size + disk->superbloque->BLOCK_SIZE - 1) / disk->superbloque->BLOCK_SIZE;
 }
 
-int fcb_dealloc(FCB *fcb, Disk *disk) {
-    t_list_iterator *iterator = list_iterator_create(fcb->iptr);
-    while(list_iterator_has_next(iterator)) {
-        char *block_ptr = list_iterator_next(iterator);
-        memset(block_ptr, 0, disk->superbloque->BLOCK_SIZE);
-        bitarray_clean_bit(disk->bitmap, (block_ptr - disk->bloques) / disk->superbloque->BLOCK_SIZE);
-        list_remove(fcb->iptr, list_iterator_index(iterator));
+int blocks_allocated(FCB *fcb, Disk *disk) {
+    return blocks_count(fcb->file_size, disk);
+}
+
+uintptr_t block_address(uint32_t index, Disk *disk) {
+    return (uintptr_t)disk->bloques + index * disk->superbloque->BLOCK_SIZE;
+}
+
+uint32_t iptr_offset(int file_size, Disk *disk) {
+    int block_count = blocks_count(file_size, disk);
+    assert(block_count > 2);
+    return (block_count - 2) * sizeof(uint32_t);
+}
+
+int bitarray_count_free(t_bitarray *bitarray) {
+    int count = 0;
+    for (int i = 0; i < bitarray->size; i++) {
+        if (!bitarray_test_bit(bitarray, i))
+            count++;
     }
-    list_iterator_destroy(iterator);
+    return count;
+}
+
+int bitarray_get_free(t_bitarray *bitarray) {
+    for (int i = 0; i < bitarray->size; i++) {
+        if (!bitarray_test_bit(bitarray, i))
+            return i;
+    }
+    return -1;
+}
+
+int fcb_alloc(int size, FCB *fcb, Disk *disk) {
+    int free_blocks = bitarray_count_free(disk->bitmap);
+    int blocks_needed = blocks_count(size, disk);
+    if (blocks_needed > free_blocks) {
+        return -1;
+    }
+    if (blocks_allocated(fcb, disk) == 0 && blocks_needed > 0) {
+        int free_block = bitarray_get_free(disk->bitmap);
+        if (free_block == -1)
+            return -1;
+        bitarray_set_bit(disk->bitmap, free_block);
+        fcb->dptr = block_address(free_block, disk);
+        fcb->file_size += disk->superbloque->BLOCK_SIZE;
+        blocks_needed --;
+    }
+    if (blocks_allocated(fcb, disk) == 1 && blocks_needed > 0) {
+        int free_block = bitarray_get_free(disk->bitmap);
+        if (free_block == -1)
+            return -1;
+        bitarray_set_bit(disk->bitmap, free_block);
+        fcb->iptr = block_address(free_block, disk);
+    }
+    while (blocks_needed > 0) {
+        int free_block = bitarray_get_free(disk->bitmap);
+        if (free_block == -1)
+            return -1;
+        bitarray_set_bit(disk->bitmap, free_block);
+        memset((void *)(uintptr_t)(uint32_t)block_address(fcb->iptr, disk) + iptr_offset(fcb->file_size, disk), block_address(free_block, disk), sizeof(uint32_t));
+        fcb->file_size += disk->superbloque->BLOCK_SIZE;
+        blocks_needed --;
+    }
     return 0;
 }
 
-// Function to find a free block in the FCB table
-// int find_free_block(FCB_table *fcb_table) {
-//     int i;
-//     for (i = 0; i < fcb_table->bit_count; i++) {
-//         // Check if the bit is free (0)
-//         if ((fcb_table->bitmap[i / 8] & (1 << (i % 8))) == 0) {
-//             // Mark the bit as used in the bitmap
-//             fcb_table->bitmap[i / 8] |= (1 << (i % 8));
+int fcb_realloc(int new_size, FCB *fcb, Disk *disk) {
+    int difference = new_size - fcb->file_size;
+    if (difference > 0) {
+        fcb_alloc(difference, fcb, disk);
+    } else if (difference < 0) {
+        fcb_dealloc(-difference, fcb, disk);
+    }
+    return 0;
+}
 
-//             // Calculate the block index and offset
-//             int block_index = i / (fcb_table->block_size * 8);
-//             int offset = i % (fcb_table->block_size * 8);
-
-//             // Set the indirect pointer to point to the block
-//             fcb_table->iptr[block_index] = fcb_table->block_store + (block_index * fcb_table->block_size);
-
-//             // Update metadata
-//             fcb_table->byte_count += fcb_table->block_size;
-//             fcb_table->block_count++;
-
-//             return i;
-//         }
-//     }
-
-//     // No free block found
-//     return -1;
-// }
+int fcb_dealloc(int size, FCB *fcb, Disk *disk) {
+    int allocated_blocks = blocks_allocated(fcb, disk);
+    int blocks_needed = blocks_count(size, disk);
+    if (blocks_needed > allocated_blocks) {
+        return -1;
+    }
+    while (blocks_allocated(fcb, disk) > 2 && blocks_needed > 0) {
+        uint32_t *block_index = (uint32_t *)block_address(fcb->iptr, disk) + iptr_offset(fcb->file_size, disk);
+        bitarray_clean_bit(disk->bitmap, *block_index);
+        fcb->file_size -= disk->superbloque->BLOCK_SIZE;
+        blocks_needed --;
+    }
+    if (blocks_allocated(fcb, disk) == 2 && blocks_needed > 0) {
+        uint32_t *block_index = (uint32_t *)block_address(fcb->iptr, disk) + iptr_offset(fcb->file_size, disk);
+        bitarray_clean_bit(disk->bitmap, *block_index);
+        bitarray_clean_bit(disk->bitmap, fcb->iptr);
+        fcb->file_size -= disk->superbloque->BLOCK_SIZE;
+        blocks_needed --;
+    }
+    if (blocks_allocated(fcb, disk) == 1 && blocks_needed > 0) {
+        bitarray_clean_bit(disk->bitmap, fcb->dptr);
+        fcb->file_size -= disk->superbloque->BLOCK_SIZE;
+        blocks_needed --;
+    }
+    return 0;
+}
 
 Superbloque *superbloque_create_from_file(char *path) {
     assert(access(path, F_OK) == 0);
@@ -219,7 +251,7 @@ int f_open(char *file_name, FCB **fcb) {
         fclose(fp);
         (*fcb)->file_size = 0;
         (*fcb)->dptr = 0;
-        (*fcb)->iptr = NULL;
+        (*fcb)->iptr = 0;
     } else {
         *fcb = fcb_create(file_name);
         FILE *fp = fdopen(fd, "r");
