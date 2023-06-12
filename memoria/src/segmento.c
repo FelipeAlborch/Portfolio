@@ -349,19 +349,24 @@ void liberar_hueco(int index){
 void consolidar_hueco(int indice){
     int siguiente = indice + 1;
     int anterior = indice - 1;
-
+    int size = list_size(huecos_libres);
     
-    if(list_size(huecos_libres) <= siguiente){
+    if(size >= siguiente){
         t_hueco_libre* huecoSig = list_get(huecos_libres,siguiente);
+        
         if (huecoSig->estado == LIBRE)
         {
             t_hueco_libre* hueco = list_get(huecos_libres,indice);
             hueco->tamanio = hueco->tamanio + huecoSig->tamanio;
-            list_remove(huecos_libres,siguiente);
+            
             list_replace(huecos_libres,indice,hueco);
+            list_remove(huecos_libres,siguiente);
             log_info(mlogger,"Hueco consolidado con el siguiente");   
+        }else{
+            log_info(mlogger,"No se puede consolidar con el siguiente");
         }
     }
+
     if (anterior > 0)
     {
         t_hueco_libre* huecoAnt = list_get(huecos_libres,anterior);
@@ -373,6 +378,8 @@ void consolidar_hueco(int indice){
             list_remove(huecos_libres,indice);
             list_replace(huecos_libres,anterior,hueco);
             log_info(mlogger,"Hueco consolidado con el anterior");   
+        }else{
+            log_info(mlogger,"No se puede consolidar con el anterior");
         }
     }
 }
