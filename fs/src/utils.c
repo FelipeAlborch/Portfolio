@@ -155,6 +155,10 @@ int block_count(int size, FS *fs) {
     return (size + fs->superbloque->BLOCK_SIZE - 1) / fs->superbloque->BLOCK_SIZE;
 }
 
+int block_index(uint32_t local_address, FS *fs) {
+    return local_address / fs->superbloque->BLOCK_SIZE;
+}
+
 uint32_t block_local_address(uint32_t block_index, FS *fs) {
     return block_index * fs->superbloque->BLOCK_SIZE;
 }
@@ -242,25 +246,27 @@ int fcb_dealloc(int size, FCB *fcb, FS *fs) {
         return -1;
     }
     while (blocks_reserved > 2 && blocks_required > 0) {
-        uint32_t local_adress = *((uint32_t *)block_address(fcb->iptr, fs) + iptr_offset(fcb->file_size, fs));
-        bitarray_clean_bit(fs->bitmap, block_count(local_adress, fs));
+        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_reserved - 2);
+        bitarray_clean_bit(fs->bitmap, block_index(local_adress, fs));
         blocks_reserved --;
         blocks_required --;
     }
     if (blocks_reserved == 2 && blocks_required > 0) {
-        uint32_t local_adress = *((uint32_t *)block_address(fcb->iptr, fs) + iptr_offset(fcb->file_size, fs));
-        bitarray_clean_bit(fs->bitmap, block_count(local_adress, fs));
-        bitarray_clean_bit(fs->bitmap, block_count(fcb->iptr, fs));
+        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_reserved - 2);
+        bitarray_clean_bit(fs->bitmap, block_index(local_adress, fs));
+        bitarray_clean_bit(fs->bitmap, block_index(fcb->iptr, fs));
+        fcb->iptr = 0;
         blocks_reserved --;
         blocks_required --;
     }
     if (blocks_reserved == 1 && blocks_required > 0) {
-        bitarray_clean_bit(fs->bitmap, block_count(fcb->dptr, fs));
+        bitarray_clean_bit(fs->bitmap, block_index(fcb->dptr, fs));
+        fcb->dptr = 0;
         blocks_reserved --;
         blocks_required --;
     }
     fcb->file_size -= size;
-    return 0;
+    return fcb_update(fcb);
 }
 
 Superbloque *superbloque_create_from_file(char *file_path) {

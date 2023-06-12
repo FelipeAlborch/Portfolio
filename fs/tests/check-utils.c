@@ -49,7 +49,7 @@ START_TEST(test_files_and_memory)
 
     error = fcb_create_from_file(file_name, fs, &fcb);
     assert(error == 0);
-    error = fcb_realloc(140, fcb, fs);
+    error = fcb_alloc(11, fcb, fs);
     assert(error == 0);
     fcb_destroy(fcb);
     error = fcb_create_from_file(file_name, fs, &fcb);
@@ -57,6 +57,30 @@ START_TEST(test_files_and_memory)
     ck_assert_int_eq(fcb->file_size, 140);
     ck_assert_int_eq(fcb->dptr, 0);
     ck_assert_int_eq(fcb->iptr, 128);
+    fcb_destroy(fcb);
+
+    error = fcb_create_from_file(file_name, fs, &fcb);
+    assert(error == 0);
+    error = fcb_dealloc(11, fcb, fs);
+    assert(error == 0);
+    fcb_destroy(fcb);
+    error = fcb_create_from_file(file_name, fs, &fcb);
+    assert(error == 0);
+    ck_assert_int_eq(fcb->file_size, 129);
+    ck_assert_int_eq(fcb->dptr, 0);
+    ck_assert_int_eq(fcb->iptr, 128);
+    fcb_destroy(fcb);
+
+    error = fcb_create_from_file(file_name, fs, &fcb);
+    assert(error == 0);
+    error = fcb_dealloc(1, fcb, fs);
+    assert(error == 0);
+    fcb_destroy(fcb);
+    error = fcb_create_from_file(file_name, fs, &fcb);
+    assert(error == 0);
+    ck_assert_int_eq(fcb->file_size, 128);
+    ck_assert_int_eq(fcb->dptr, 0);
+    ck_assert_int_eq(fcb->iptr, 0);
     fcb_destroy(fcb);
 
     // unallocate the memory
