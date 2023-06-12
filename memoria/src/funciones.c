@@ -16,8 +16,9 @@ void crear_proc(){
     imprimir_tabla(listaS2);
 }
 void crear_seg(){
-    create_segment(121,64,3);
+    
     create_segment(121,128,4);
+    create_segment(121,64,3);
     create_segment(122,300,3);
     create_segment(121,50,1);
     create_segment(124,100,1);

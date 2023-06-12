@@ -121,11 +121,15 @@ void ejecutar_kernel_test(){
     sleep(1);
     sleep(1);
     crear_proc();
-    crear_seg();
+    crear_seg(); 
+    log_trace(klogger,"quiero eliminar el seg 3 %d",pid);
     eliminar_segmento(121,3);
-    liberar_proceso(221);
-    eliminar_segmento(121,4);
-    liberar_proceso(122);
+    eliminar_segmento(122,3);
+    //liberar_proceso(221);
+    //eliminar_segmento(121,2);
+    //liberar_proceso(122);
+   // log_trace(klogger,"quiero eliminar el seg 2 %d",pid);
+    imprimir_huecos();
 }
 void create_segment(int pid,int tam,int id){
     

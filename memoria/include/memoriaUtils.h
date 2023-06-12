@@ -136,6 +136,7 @@ t_list* crear_tabla_proceso(int pid);
 t_list* tabla_proceso(int pid);
 
 void liberar_hueco(int index);
+void consolidar_hueco(int indice);
 void modificar_hueco(int index, int inicio, int tam, int estado);
 int buscar_hueco_libre(int size);
 int buscar_hueco_base(int base);
