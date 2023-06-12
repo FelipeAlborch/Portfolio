@@ -19,9 +19,7 @@ typedef struct fs_config {
     int RETARDO_ACCESO_BLOQUE;
 } fs_config;
 
-fs_config *config_create_fs();
-
-fs_config *config_create_fs_from_file(char *path);
+fs_config *config_create_fs_from_file(char *file_path);
 
 void config_print_fs(fs_config *config);
 

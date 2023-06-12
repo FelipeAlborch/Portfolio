@@ -1,34 +1,28 @@
 #include <commons/memory.h>
-#include <log.h>
 #include <ipc.h>
 #include <utils.h>
 #include <config.h>
 #include <pthread.h>
 
-void init_config(t_log **log, fs_config **config);
-void init_disk(t_log *log, fs_config *config, Disk **disk);
-void init_sockets(t_log *log, fs_config *config, int *fs_socket, int *mem_socket);
-void init_threads(t_log *log, fs_config *config, int fs_socket, int mem_socket);
-void cleanup(t_log *log, fs_config *config, Disk *disk, int fs_socket, int mem_socket);
+void init_fs(char *config_path, FS **fs);
+void init_sockets(FS *fs, int *fs_socket, int *mem_socket);
+void init_threads(FS *fs, int fs_socket, int mem_socket);
+void cleanup(FS *fs, int fs_socket, int mem_socket);
 void * kernel_handler(void *socket_fd);
 
 int main(int argc, char *argv[])
 {
-    t_log *log;
-    fs_config *config;
-    Disk *disk;
+    FS *fs;
     int fs_socket;
     int mem_socket;
 
-    init_config(&log, &config);
+    init_fs("fs.config", &fs);
 
-    init_disk(log, config, &disk);
+    init_sockets(fs, &fs_socket, &mem_socket);
 
-    init_sockets(log, config, &fs_socket, &mem_socket);
+    init_threads(fs, fs_socket, mem_socket);
 
-    init_threads(log, config, fs_socket, mem_socket);
-
-    cleanup(log, config, disk, fs_socket, mem_socket);
+    cleanup(fs, fs_socket, mem_socket);
         
     return 0;
 }
@@ -38,7 +32,7 @@ void *kernel_handler(void *arg)
     int fs_socket = *(int *)arg;
     free(arg);
 
-    t_log *log = log_create_fs();
+    t_log *log = log_create("fs.log", "FS", 1, LOG_LEVEL_INFO);
 
     int kr_socket;
     while((kr_socket = conn_accept(fs_socket)) != -1)
@@ -64,25 +58,14 @@ void *kernel_handler(void *arg)
     pthread_exit((void *) 0);
 }
 
-void init_config(t_log **log, fs_config **config)
+void init_fs(char *config_path, FS **fs)
 {
-    *log = log_create_fs();
-
-    *config = config_create_fs();
-
-    print_cwd();
-
-    config_print_fs(*config);
+    *fs = fs_create(config_path);
 }
 
-void init_disk(t_log *log, fs_config *config, Disk **disk)
+void init_sockets(FS *fs, int *fs_socket, int *mem_socket)
 {
-    *disk = disk_create(config);
-}
-
-void init_sockets(t_log *log, fs_config *config, int *fs_socket, int *mem_socket)
-{
-    *mem_socket = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
+    *mem_socket = conn_create(CLIENT, fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
 
     t_paquete *paquete = paquete_create(FILE_SYSTEM);
 
@@ -90,14 +73,14 @@ void init_sockets(t_log *log, fs_config *config, int *fs_socket, int *mem_socket
 
     paquete_destroy(paquete);
 
-    log_info(log, "Conectado a memoria en %s:%s", config->IP_MEMORIA, config->PUERTO_MEMORIA);
+    log_info(fs->log, "Conectado a memoria en %s:%s", fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
 
-    *fs_socket = conn_create(SERVER, config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
+    *fs_socket = conn_create(SERVER, fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
 
-    log_info(log, "Escuchando kernel en %s:%s", config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
+    log_info(fs->log, "Escuchando kernel en %s:%s", fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
 }
 
-void init_threads(t_log *log, fs_config *config, int fs_socket, int mem_socket)
+void init_threads(FS *fs, int fs_socket, int mem_socket)
 {
     pthread_t thread_id;
 
@@ -110,15 +93,11 @@ void init_threads(t_log *log, fs_config *config, int fs_socket, int mem_socket)
     assert(status == 0);
 }
 
-void cleanup(t_log *log, fs_config *config, Disk *disk, int fs_socket, int mem_socket)
+void cleanup(FS *fs, int fs_socket, int mem_socket)
 {
     conn_close(fs_socket);
 
     conn_close(mem_socket);
 
-    disk_destroy(disk);
-
-    config_destroy_fs(config);
-
-    log_destroy(log);
+    fs_destroy(fs);
 }

@@ -1,16 +1,10 @@
 #include <config.h>
 
-#define CONFIG_FILE "fs.config"
+fs_config *config_create_fs_from_file(char *file_path) {
 
-fs_config *config_create_fs() {
-    return config_create_fs_from_file(CONFIG_FILE);
-}
+    assert(access(file_path, F_OK) == 0);
 
-fs_config *config_create_fs_from_file(char *path) {
-
-    assert(access(path, F_OK) == 0);
-
-    t_config *t_config = config_create(path);
+    t_config *t_config = config_create(file_path);
 
     fs_config *config = malloc(sizeof(fs_config));
 

@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stddef.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
@@ -19,6 +21,7 @@
 #include <fun.h>
 
 typedef struct FCB {
+    char *file_path;
     char *file_name;
     int file_size;
     uint32_t dptr;
@@ -30,17 +33,13 @@ typedef struct Superbloque {
     int BLOCK_COUNT;
 } Superbloque;
 
-typedef struct Disk {
+typedef struct FS {
+    t_log *log;
+    fs_config *config;
     char *bloques;
     t_bitarray *bitmap;
     Superbloque *superbloque;
-} Disk;
-
-typedef struct Env {
-    t_log *logger;
-    fs_config *config;
-    Disk *disk;
-} Env;
+} FS;
 
 /**
  * print_cwd - imprime el directorio actual de trabajo.
@@ -64,49 +63,57 @@ int data_byte_count(Superbloque *superbloque);
 int bitmap_byte_count(Superbloque *superbloque);
 
 /**
- * disk_create - crea un disco.
+ * fs_create - crea un filesystem.
  * 
- * @param config: configuración del sistema de archivos
- * @return disco
+ * @param config_path: archivo de configuración del sistema de archivos
+ * @return filesystem
  */
-Disk * disk_create(fs_config *config);
+FS * fs_create(char *config_path);
 
 /**
- * disk_destroy - destruye un disco.
+ * fs_destroy - destruye un filesystem.
  * 
- * @param disk: disco
+ * @param fs: filesystem
  */
-void disk_destroy(Disk *disk);
+void fs_destroy(FS *fs);
 
 /**
  * mmap_file - mapea un archivo en memoria.
  * 
- * @param file_name: nombre del archivo
+ * @param file_path: ruta del archivo
  * @param length: longitud del archivo en bytes
  * @param file_pointer: contenido del archivo
  * @return 0 si se creó correctamente, -1 si ocurrió un error
  */
-int mmap_file_sync(char *file_name, int length, char **file_pointer);
+int mmap_file_sync(char *file_path, int length, char **file_pointer);
 
 /**
  * fcb_create - crea un file control block (FCB) y el archivo asociado.
  * 
  * @param file_name: nombre del archivo
- * @param disk: disco
+ * @param fs: filesystem
  * @param fcb: puntero al FCB creado
  * @return 0 si se creó correctamente, -1 si ocurrió un error
  */
-int fcb_create(char *file_name, Disk disk, FCB **fcb);
+int fcb_create(char *file_name, FS *fs, FCB **fcb);
+
+/**
+ * fcb_update - actualiza un file control block (FCB).
+ * 
+ * @param fcb: archivo a actualizar
+ * @return 0 si se actualizó correctamente, -1 si ocurrió un error
+ */
+int fcb_update(FCB *fcb);
 
 /**
  * fcb_create_from_file - crea un file control block (FCB) a partir de un archivo.
  * 
  * @param path: ruta del archivo
- * @param disk: disco
+ * @param fs: filesystem
  * @param fcb: puntero al FCB creado
  * @return 0 si se creó correctamente, -1 si ocurrió un error
  */
-int fcb_create_from_file(char *path, Disk *disk, FCB **fcb);
+int fcb_create_from_file(char *path, FS *fs, FCB **fcb);
 
 /**
  * fcb_destroy - destruye un file control block (FCB) y el archivo asociado.
@@ -120,38 +127,38 @@ void fcb_destroy(FCB *fcb);
  * 
  * @param size: tamaño a reservar en archivo
  * @param fcb: archivo a asignar bloques
- * @param disk: disco
+ * @param fs: filesystem
  * @return 0 si se asignaron correctamente, -1 si ocurrió un error
  */
-int fcb_alloc(int size, FCB *fcb, Disk *disk);
+int fcb_alloc(int size, FCB *fcb, FS *fs);
 
 /**
  * fcb_realloc - redimensiona un archivo
  *
  * @param new_size: nuevo tamaño del archivo
  * @param fcb: archivo a redimensionar
- * @param disk: disco
+ * @param fs: filesystem
  * @return 0 si se redimensionó correctamente, -1 si ocurrió un error
  */
-int fcb_realloc(int new_size, FCB *fcb, Disk *disk);
+int fcb_realloc(int new_size, FCB *fcb, FS *fs);
 
 /**
  * fcb_dealloc - libera los bloques de un archivo
  *
  * @param size: tamaño a liberar en archivo
  * @param fcb: archivo a liberar
- * @param disk: disco
+ * @param fs: filesystem
  * @return 0 si se liberó correctamente, -1 si ocurrió un error
  */
-int fcb_dealloc(int size, FCB *fcb, Disk *disk);
+int fcb_dealloc(int size, FCB *fcb, FS *fs);
 
 /**
  * superbloque_create_from_file - crea un superbloque a partir de un archivo.
  * 
- * @param file_name: nombre del archivo
+ * @param file_path: ruta del archivo
  * @return puntero al superbloque creado
  */
-Superbloque * superbloque_create_from_file(char *file_name);
+Superbloque * superbloque_create_from_file(char *file_path);
 
 /**
  * superbloque_destroy - destruye un superbloque.

@@ -4,65 +4,71 @@
 
 START_TEST(test_files_and_memory)
 {
-    int block_size = 10;
-    int block_count = 600;
-    int data_size = block_size * block_count;
+    FILE *fp;
+    char *file_name = "test-file";
+    char *file_path = "drive/fcb/test-file";
+    char *path_config = "drive/test-fs.config";
+    char *path_bitmap = "drive/test-bitmap.dat";
+    char *path_bloques = "drive/test-bloques.dat";
+    char *path_superbloque = "drive/test-superbloque.dat";
+    int block_size = 128;
+    int block_count = 16;
 
-    fs_config *config = malloc(sizeof(fs_config));
-    config->PATH_BITMAP = "test2-bitmap.dat";
-    config->PATH_BLOQUES = "test2-bloques.dat";
-    config->PATH_SUPERBLOQUE = "test2-superbloque.dat";
-
-    FILE *fp = fopen(config->PATH_SUPERBLOQUE, "w");
+    fp = fopen(path_config, "w");
+    fprintf(fp, "IP_FSYSTEM=127.0.0.1\n");
+    fprintf(fp, "IP_MEMORIA=127.0.0.1\n");
+    fprintf(fp, "PUERTO_MEMORIA=8002\n");
+    fprintf(fp, "PUERTO_ESCUCHA=8003\n");
+    fprintf(fp, "PATH_SUPERBLOQUE=%s\n", path_superbloque);
+    fprintf(fp, "PATH_BITMAP=%s\n", path_bitmap);
+    fprintf(fp, "PATH_BLOQUES=%s\n", path_bloques);
+    fprintf(fp, "PATH_FCB=drive/fcb\n");
+    fprintf(fp, "RETARDO_ACCESO_BLOQUE=15000\n");
+    fclose(fp);
+    
+    fp = fopen(path_superbloque, "w");
     fprintf(fp, "BLOCK_SIZE=%d\n", block_size);
     fprintf(fp, "BLOCK_COUNT=%d\n", block_count);
     fclose(fp);
 
-    Disk *disk = disk_create(config);
+    FCB *fcb;
+    int error;
+    FS *fs = fs_create(path_config);
 
-    // check max bit
-    int bitmap_max_bit = bitarray_get_max_bit(disk->bitmap);
-    ck_assert_int_eq(bitmap_max_bit, bitmap_byte_count(disk->superbloque) * 8);
+    error = fcb_create(file_name, fs, &fcb);
+    assert(error == 0);
+    error = fcb_realloc(129, fcb, fs);
+    assert(error == 0);
+    fcb_destroy(fcb);
+    error = fcb_create_from_file(file_name, fs, &fcb);
+    assert(error == 0);
+    ck_assert_int_eq(fcb->file_size, 129);
+    ck_assert_int_eq(fcb->dptr, 0);
+    ck_assert_int_eq(fcb->iptr, 128);
+    fcb_destroy(fcb);
 
-    // check memory allocation initialized with 0
-    char *zeroes = calloc(bitmap_max_bit, 1);
-    int bitmap_zeroed = memcmp(disk->bitmap->bitarray, zeroes, bitmap_max_bit);
-    ck_assert(bitmap_zeroed == 0);
-
-    bitarray_set_bit(disk->bitmap, 5);
-    bitarray_clean_bit(disk->bitmap, 39);
-    bitarray_set_bit(disk->bitmap, 45);
-    bitarray_clean_bit(disk->bitmap, 33);
-    bitarray_set_bit(disk->bitmap, 19);
-    bitarray_clean_bit(disk->bitmap, 19);
-    bitarray_set_bit(disk->bitmap, 20);
-    bitarray_set_bit(disk->bitmap, 3);
-
-    // srand(time(NULL));
-    // while (true)
-    // {
-    //     for (int i = 0; i < bitmap_max_bit; i += (rand() % 10)) {
-    //         if (bitarray_test_bit(fcb_table.bitmap, i)) {
-    //             bitarray_clean_bit(fcb_table.bitmap, i);
-    //         }
-    //         else {
-    //             bitarray_set_bit(fcb_table.bitmap, i);
-    //         }
-    //         usleep(50000);
-    //     }
-    // }
+    error = fcb_create_from_file(file_name, fs, &fcb);
+    assert(error == 0);
+    error = fcb_realloc(140, fcb, fs);
+    assert(error == 0);
+    fcb_destroy(fcb);
+    error = fcb_create_from_file(file_name, fs, &fcb);
+    assert(error == 0);
+    ck_assert_int_eq(fcb->file_size, 140);
+    ck_assert_int_eq(fcb->dptr, 0);
+    ck_assert_int_eq(fcb->iptr, 128);
+    fcb_destroy(fcb);
 
     // unallocate the memory
-    // if (disk->bloques != MAP_FAILED) {
-        munmap(disk->bloques, data_size);
-    // }
-    // if (disk->bitmap->bitarray != MAP_FAILED) {
-        munmap(disk->bitmap->bitarray, block_count);
-    // }
+    munmap(fs->bloques, block_size * block_count);
+    munmap(fs->bitmap->bitarray, block_count);
+
     // delete created files
-    if (access(config->PATH_BITMAP, F_OK) != -1) remove(config->PATH_BITMAP);
-    if (access(config->PATH_BLOQUES, F_OK) != -1) remove(config->PATH_BLOQUES);
-    if (access(config->PATH_SUPERBLOQUE, F_OK) != -1) remove(config->PATH_SUPERBLOQUE);
+    if (access(file_path, F_OK) != -1) remove(file_path);
+    if (access(path_config, F_OK) != -1) remove(path_config);
+    if (access(path_bitmap, F_OK) != -1) remove(path_bitmap);
+    if (access(path_bloques, F_OK) != -1) remove(path_bloques);
+    if (access(path_superbloque, F_OK) != -1) remove(path_superbloque);
 
     ck_assert(true);
 }
@@ -125,24 +131,36 @@ END_TEST
 START_TEST(test_fcb_table_init)
 {
     // setup
+    FILE *fp;
+    char *path_config = "test-fs.config";
+    char *path_bitmap = "test-bitmap.dat";
+    char *path_bloques = "test-bloques.dat";
+    char *path_superbloque = "test-superbloque.dat";
     int block_size = 100;
     int block_count = 10;
-    int data_size = block_size * block_count;
-    fs_config *config = malloc(sizeof(fs_config));
-    config->PATH_BITMAP = "test-bitmap.dat";
-    config->PATH_BLOQUES = "test-bloques.dat";
-    config->PATH_SUPERBLOQUE = "test-superbloque.dat";
+
+    fp = fopen(path_config, "w");
+    fprintf(fp, "IP_FSYSTEM=127.0.0.1\n");
+    fprintf(fp, "IP_MEMORIA=127.0.0.1\n");
+    fprintf(fp, "PUERTO_MEMORIA=8002\n");
+    fprintf(fp, "PUERTO_ESCUCHA=8003\n");
+    fprintf(fp, "PATH_SUPERBLOQUE=%s\n", path_superbloque);
+    fprintf(fp, "PATH_BITMAP=%s\n", path_bitmap);
+    fprintf(fp, "PATH_BLOQUES=%s\n", path_bloques);
+    fprintf(fp, "PATH_FCB=drive/fcb\n");
+    fprintf(fp, "RETARDO_ACCESO_BLOQUE=15000\n");
+    fclose(fp);
     
-    FILE *fp = fopen(config->PATH_SUPERBLOQUE, "w");
+    fp = fopen(path_superbloque, "w");
     fprintf(fp, "BLOCK_SIZE=%d\n", block_size);
     fprintf(fp, "BLOCK_COUNT=%d\n", block_count);
     fclose(fp);
 
-    Disk *disk = disk_create(config);
+    FS *disk = fs_create(path_config);
     
     // check members
     ck_assert_ptr_ne(disk->bitmap, NULL);
-    ck_assert_int_eq(data_byte_count(disk->superbloque), data_size);
+    ck_assert_int_eq(data_byte_count(disk->superbloque), block_size * block_count);
     ck_assert_int_eq(bitmap_byte_count(disk->superbloque), (block_count + 7) / 8);
     ck_assert_ptr_ne(disk->bloques, MAP_FAILED);
 
@@ -156,13 +174,14 @@ START_TEST(test_fcb_table_init)
     ck_assert(bitmap_zeroed == 0);
 
     // unallocate the memory
-    if (disk->bloques != MAP_FAILED) {
-        munmap(disk->bloques, data_size);
-    }
+    munmap(disk->bloques, block_size * block_count);
+    munmap(disk->bitmap->bitarray, block_count);
+
     // delete created files
-    if (access(config->PATH_BITMAP, F_OK) != -1) remove(config->PATH_BITMAP);
-    if (access(config->PATH_BLOQUES, F_OK) != -1) remove(config->PATH_BLOQUES);
-    if (access(config->PATH_SUPERBLOQUE, F_OK) != -1) remove(config->PATH_SUPERBLOQUE);
+    if (access(path_config, F_OK) != -1) remove(path_config);
+    if (access(path_bitmap, F_OK) != -1) remove(path_bitmap);
+    if (access(path_bloques, F_OK) != -1) remove(path_bloques);
+    if (access(path_superbloque, F_OK) != -1) remove(path_superbloque);
 }
 END_TEST
 
