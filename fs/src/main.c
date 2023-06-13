@@ -69,7 +69,7 @@ void init_sockets(FS *fs, int *fs_socket, int *mem_socket)
 
     t_paquete *paquete = paquete_create(FILE_SYSTEM);
 
-    write_socket_paquete(*mem_socket, (void *)paquete);
+    write_socket_paquete(*mem_socket, paquete);
 
     paquete_destroy(paquete);
 
