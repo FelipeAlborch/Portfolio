@@ -495,12 +495,17 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 // archivo = obtener_archivo_de_fs();
                 t_paquete* paquete_a_fs = crear_paquete_operacion(CREAR_ARCHIVO);
                 agregar_a_paquete(paquete_a_fs, nombre_recurso, strlen(nombre_recurso)+1);
+                
+                pthread_mutex_lock(&mutex_fs);
+                
                 enviar_paquete(paquete_a_fs, socketFS);
                 
                 int rta1;
                 int rta2;
                 recv(socketFS, &rta1, sizeof(int), MSG_WAITALL );
                 recv(socketFS, &rta2, sizeof(int), MSG_WAITALL );
+
+                pthread_mutex_unlock(&mutex_fs);
                 
 
                 // SI NO EXISTE, CREARLO
@@ -553,7 +558,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             {
                 // REMOVER DE LA TABLA DE ARCHIVOS ABIERTOS
                 t_recurso* archivo = dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
-                free(archivo);
+                liberar_recurso(archivo);
             }
 
             liberar_contexto_ejecucion(contexto_de_fclose);
