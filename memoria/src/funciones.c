@@ -42,7 +42,7 @@ void ejecutar_kernel_test(){
     log_trace(klogger,"quiero eliminar el seg 3 %d",pid);
     eliminar_segmento(121,3);
     eliminar_segmento(121,1);
-    create_segment(221,50,2);
+    create_segment(221,45,2);
    // liberar_proceso(122);
     /* liberar_proceso(221);
     loggear(FIN_PROCESO,221,NULL,0,0,0);
