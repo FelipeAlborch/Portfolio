@@ -351,20 +351,20 @@ int f_read(char *file_name, int offset, int size, void **buffer, FS *fs) {
     }
     *buffer = malloc(size);
     int blocks_required = block_count(size, fs);
-    int blocks_reserved = block_count(offset, fs);
+    int blocks_offset = block_count(offset, fs);
     int blocks_read = 0;
-    while (blocks_reserved > 0 && blocks_read < blocks_required) {
-        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_reserved - 1);
+    while (blocks_offset > 0 && blocks_read < blocks_required) {
+        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_offset - 1);
         memcpy(*buffer + blocks_read * fs->superbloque->BLOCK_SIZE, (void *)ptr_address(local_adress, fs), fs->superbloque->BLOCK_SIZE);
-        blocks_reserved --;
+        blocks_offset --;
         blocks_read ++;
     }
-    if (blocks_reserved == 0 && blocks_read < blocks_required) {
+    if (blocks_offset == 0 && blocks_read < blocks_required) {
         uint32_t local_adress = fcb->dptr;
         memcpy(*buffer + blocks_read * fs->superbloque->BLOCK_SIZE, (void *)ptr_address(local_adress, fs), fs->superbloque->BLOCK_SIZE);
         blocks_read ++;
     }
-    while (blocks_reserved == 0 && blocks_read < blocks_required) {
+    while (blocks_offset == 0 && blocks_read < blocks_required) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_read - 1);
         memcpy(*buffer + blocks_read * fs->superbloque->BLOCK_SIZE, (void *)ptr_address(local_adress, fs), fs->superbloque->BLOCK_SIZE);
         blocks_read ++;
@@ -392,20 +392,20 @@ int f_write(char *file_name, int offset, int size, void *buffer, FS *fs) {
         return -1;
     }
     int blocks_required = block_count(size, fs);
-    int blocks_reserved = block_count(offset, fs);
+    int blocks_offset = block_count(offset, fs);
     int blocks_written = 0;
-    while (blocks_reserved > 0 && blocks_written < blocks_required) {
-        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_reserved - 1);
+    while (blocks_offset > 0 && blocks_written < blocks_required) {
+        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_offset - 1);
         memcpy((void *)ptr_address(local_adress, fs), buffer + blocks_written * fs->superbloque->BLOCK_SIZE, fs->superbloque->BLOCK_SIZE);
-        blocks_reserved --;
+        blocks_offset --;
         blocks_written ++;
     }
-    if (blocks_reserved == 0 && blocks_written < blocks_required) {
+    if (blocks_offset == 0 && blocks_written < blocks_required) {
         uint32_t local_adress = fcb->dptr;
         memcpy((void *)ptr_address(local_adress, fs), buffer + blocks_written * fs->superbloque->BLOCK_SIZE, fs->superbloque->BLOCK_SIZE);
         blocks_written ++;
     }
-    while (blocks_reserved == 0 && blocks_written < blocks_required) {
+    while (blocks_offset == 0 && blocks_written < blocks_required) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_written - 1);
         memcpy((void *)ptr_address(local_adress, fs), buffer + blocks_written * fs->superbloque->BLOCK_SIZE, fs->superbloque->BLOCK_SIZE);
         blocks_written ++;
