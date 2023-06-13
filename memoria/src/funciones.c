@@ -24,6 +24,7 @@ void crear_seg(){
     create_segment(124,100,1);
     create_segment(121,500,2);
     create_segment(122,300,1);
+    create_segment(221,1000,4);
     imprimir_huecos();
     imprimir_tabla_gral();
 }
