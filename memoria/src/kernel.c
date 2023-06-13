@@ -54,10 +54,9 @@ void ejecutar_kernel(){
             lista = _recibir_paquete(conectar);    // Agregue esta linea
             id=*(int*)list_get(lista,0);    // Cambie los indices
             pid=*(int*)list_get(lista,1);
-            printf("id: %d, pid: %d\n",id,pid);
+             //printf("id: %d, pid: %d\n",id,pid);
             eliminar_segmento(pid, id);
             break;
-           
           default:
             break;
       }
@@ -110,31 +109,7 @@ void eliminar_proceso(int pid){
     loggear(FIN_PROCESO,pid,NULL,0,0,0);
 }
 
-void ejecutar_kernel_test(){
-    int conectar=config_memo.kernel;
-    log_trace(mlogger, "Por ejecutar las tareas del kernel");
-    int pid =221;
-    int tam = 250;
-    crear_proceso(pid);
-    
-    log_trace(klogger,"ejecute la creación del proceso %d",pid);
-    sleep(1);
-    sleep(1);
-    crear_proc();
-    crear_seg(); 
-    log_trace(klogger,"quiero eliminar el seg 3 %d",pid);
-    eliminar_segmento(121,3);
-    eliminar_segmento(121,4);
-    liberar_proceso(221);
-    loggear(FIN_PROCESO,221,NULL,0,0,0);
-    liberar_proceso(122);
-    loggear(FIN_PROCESO,122,NULL,0,0,0);
-    imprimir_tabla_gral();
-    //eliminar_segmento(121,2);
-    //liberar_proceso(122);
-   // log_trace(klogger,"quiero eliminar el seg 2 %d",pid);
-    imprimir_huecos();
-}
+
 void create_segment(int pid,int tam,int id){
     
     int bytes=config_memo.bytes_libres;
@@ -154,10 +129,6 @@ void create_segment(int pid,int tam,int id){
         
         return;
     }else{
-        
-        
-        printf("indice: %d\n",indice);
-        
         modificar_hueco(indice,M_ERROR,tam,OCUPADO);
         int base = base_hueco(indice);
         modificar_tabla_proceso(pid,id,base,tam);
@@ -167,4 +138,33 @@ void create_segment(int pid,int tam,int id){
         loggear(CREATE_SEGMENT,pid,NULL,id,tam,base);
     }   
     
+}
+void eliminar_segmento(int pid, int id){
+    
+    t_tabla_segmentos* tabla = buscar_en_tabla_id(pid,id);
+    
+    if (tabla->index == M_ERROR){
+        t_paquete* paquete = crear_paquete_operacion(M_ERROR);
+        enviar_paquete(paquete,config_memo.kernel);
+        eliminar_paquete(paquete); 
+        loggear(M_ERROR,pid,NULL,id,0,0);
+        return;
+    }
+    modificar_hueco(M_ERROR,tabla->segmento->base,tabla->segmento->size,LIBRE);
+    modificar_tabla_segmentos(tabla,pid,-1,id,-1,-1);
+
+    modificar_tabla_proceso(pid,id,0,0);  
+    t_list* nueva = tabla_proceso(pid);
+
+    if (list_size(nueva) > 1)
+    {
+        t_paquete* paquete = crear_paquete_operacion(DELETE_SEGMENT);
+        serializar_tabla_segmentos(paquete, nueva);
+        enviar_paquete(paquete,config_memo.kernel);
+        eliminar_paquete(paquete);
+        imprimir_tabla(nueva);
+    }
+   // list_destroy(nueva);
+    loggear(DELETE_SEGMENT,pid,NULL,id,0,0);
+    log_info(klogger,"Se elimino el segmento %d",id);
 }

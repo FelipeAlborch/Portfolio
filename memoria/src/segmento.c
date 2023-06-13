@@ -3,7 +3,6 @@ t_list* huecos_libres;
 t_list *tabla_segmentos_gral;
 //config_de_memoria config_memo;
 
-
 void crear_estructuras(){
     memoria=malloc(config_memo.tam_memo);
     huecos_libres = list_create();
@@ -11,7 +10,6 @@ void crear_estructuras(){
     int tam = config_memo.tam_memo -1;
     t_hueco_libre* seg = crear_hueco_libre(0,cero-1,OCUPADO);
 
-    
     t_hueco_libre* seg2 = crear_hueco_libre(cero,tam-cero,LIBRE);
     
     list_add_in_index(huecos_libres,0,seg);
@@ -46,47 +44,10 @@ t_segmento* crear_segmento(int base, int size){
 }
 
 
-
-
-
-void eliminar_segmento(int pid, int id){
-    
-    t_tabla_segmentos* tabla = buscar_en_tabla_id(pid,id);
-    
-    if (tabla->index == M_ERROR){
-        t_paquete* paquete = crear_paquete_operacion(M_ERROR);
-        enviar_paquete(paquete,config_memo.kernel);
-        eliminar_paquete(paquete); 
-        loggear(M_ERROR,pid,NULL,id,0,0);
-        return;
-    }
-    
-
-    modificar_hueco(M_ERROR,tabla->segmento->base,tabla->segmento->size,LIBRE);
-    modificar_tabla_segmentos(tabla,pid,-1,id,-1,-1);
-
-    modificar_tabla_proceso(pid,id,0,0);  
-    t_list* nueva = tabla_proceso(pid);
-
-    if (list_size(nueva) > 1)
-    {
-        /* t_paquete* paquete = crear_paquete_operacion(DELETE_SEGMENT);
-        serializar_tabla_segmentos(paquete, nueva);
-        enviar_paquete(paquete,config_memo.kernel);
-        eliminar_paquete(paquete); */
-        imprimir_tabla(nueva);
-    }
-   // list_destroy(nueva);
-/*     free(tabla->segmento);
-    free(tabla); */
-}
-
 void compactar(/* TO DO */){
     recibir_operacion(config_memo.kernel);
     loggear(INICIO_COMPACTAR,0,NULL,0,0,0);
 }
-
-
 
 t_tabla_segmentos* crear_tabla_segmentos(int pid, int index, int base, int size){
 	t_tabla_segmentos* tabla_seg = malloc(sizeof(t_tabla_segmentos));
@@ -108,7 +69,6 @@ int buscar_en_tabla_index(int pid){
             return i;
         }
     }
-
     return M_ERROR;
 }
 
@@ -119,7 +79,6 @@ t_segmento* buscar_segmento(int base, t_list* segmentos){
             return segmento;
         }
     }
-
     return NULL;
 }
 t_segmento* buscar_segmento_dir(int dir){
@@ -161,7 +120,6 @@ void liberar_proceso(int pid) {
     
 }
 void* buscar_en_tabla_id(int pid, int id){
-     
     t_tabla_segmentos* tabla1;
     
     bool _buscar_en_tabla (t_tabla_segmentos* tabla) {
@@ -184,8 +142,8 @@ void* buscar_en_tabla_id(int pid, int id){
     return tabla1;
 }
 int buscar_hueco_libre(int size){
-   int index = -2;
-   switch (config_memo.algoritmo_int)   {
+    int index = -2;
+    switch (config_memo.algoritmo_int)   {
     case FIRST_FIT:
     index = first_fit(size);
     log_info(mlogger,"El indice del hueco libre es: %d",index);

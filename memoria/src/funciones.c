@@ -27,3 +27,30 @@ void crear_seg(){
     imprimir_huecos();
     imprimir_tabla_gral();
 }
+void ejecutar_kernel_test(){
+    int conectar=config_memo.kernel;
+    log_trace(mlogger, "Por ejecutar las tareas del kernel");
+    int pid =221;
+    int tam = 250;
+    crear_proceso(pid);
+    
+    log_trace(klogger,"ejecute la creación del proceso %d",pid);
+    sleep(1);
+    sleep(1);
+    crear_proc();
+    crear_seg(); 
+    log_trace(klogger,"quiero eliminar el seg 3 %d",pid);
+    eliminar_segmento(121,3);
+    eliminar_segmento(121,1);
+    create_segment(221,50,2);
+   // liberar_proceso(122);
+    /* liberar_proceso(221);
+    loggear(FIN_PROCESO,221,NULL,0,0,0);
+    loggear(FIN_PROCESO,122,NULL,0,0,0);
+     */
+    //eliminar_segmento(121,2);
+    //liberar_proceso(122);
+   // log_trace(klogger,"quiero eliminar el seg 2 %d",pid);
+    imprimir_huecos();
+    imprimir_tabla_gral();
+}
