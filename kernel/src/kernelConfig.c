@@ -61,11 +61,15 @@ void leer_tabla_procesos()
     {
         char* key = string_from_format("%d", i+1);
         pcb* pcb = dictionary_get(tabla_de_procesos, key);
+        if(pcb == NULL)
+        {
+            continue;
+        }
         printf("Proceso: %d\n", pcb->pid);
         free(key);
     }
 }
-
+/*
 void destruir_tabla_de_procesos()
 {
     for(int i = 0; i < dictionary_size; i++)
@@ -75,7 +79,7 @@ void destruir_tabla_de_procesos()
         free(key);
     }
     dictionary_destroy(tabla_de_procesos);
-}
+}*/
 
 void crear_diccionario_recursos()
 {

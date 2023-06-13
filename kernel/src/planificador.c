@@ -74,6 +74,7 @@ void destruir_estructuras_planificacion()
     // Destruyo diccionarios;
     dictionary_destroy(diccionario_de_consolas);
     dictionary_destroy_and_destroy_elements(diccionario_recursos, liberar_recurso);
+    dictionary_destroy(tabla_de_procesos);
 
     // Termino los hilos
     pthread_exit(&hilo_corto_plazo);

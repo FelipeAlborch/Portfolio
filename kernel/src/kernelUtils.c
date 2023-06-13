@@ -137,28 +137,30 @@ void actualizar_tablas_segmentos(t_list* lista_de_valores)
 {
     int cantidad_de_procesos = *(int*) list_get(lista_de_valores, 0);
 
-    int base=  0;
+    int offset =  0;
     for(int i = 0; i < cantidad_de_procesos; i++)
     {
-        int cantidad_de_segmentos = *(int*) list_get(lista_de_valores, base + 1);
-        
+        int cantidad_de_segmentos = *(int*) list_get(lista_de_valores, offset + 1);
         char* key = string_from_format("%d", i+1);
         pcb* proceso = dictionary_get(tabla_de_procesos, key);
         free(key);
-        t_list* tabla_a_actualizar = proceso->tabla_de_segmentos;
+
+        if(proceso == NULL) // La idea es chequear que la entrada para la key este en NULL. Si es asi, el proceso ya fue eliminado
+        {                   // pero dejamos la entrada para que no joda en la iteracion del diccionario
+            continue;       // IMPORTANTE: Cuando se elimina un proceso, hay que liberar el pcb de la tabla, y hacer un put de null para esa key (el pid).
+        }                   // El continue hace que pase a la proxima iteracion
 
         for(int j = 0; j < cantidad_de_segmentos; j++)
         {
-            int base = *(int*) list_get(lista_de_valores, base + 2);
-            int tamanio = *(int*) list_get(lista_de_valores, base + 3);
-
-            t_segmento* segmento_a_actualizar = list_get(tabla_a_actualizar, j);
-            segmento_a_actualizar->base = base;
+            int base_seg = *(int*) list_get(lista_de_valores, offset + 2);
+            int tamanio = *(int*) list_get(lista_de_valores, offset + 3);
+            t_segmento* segmento_a_actualizar = list_get(proceso->tabla_de_segmentos, j);
+            segmento_a_actualizar->base = base_seg;
             segmento_a_actualizar->size = tamanio;
             
-            base += 2; 
+            offset += 2; 
         }
-        base++;
+        offset++;
     }
 }
 
@@ -188,25 +190,36 @@ void* esperar_tabla_segmentos(pcb* un_pcb)
 	}
 }
 
-//void serializar_tablas_de_segmentos(t_paquete* paquete,t_list* lista_general_de_segmentos)
-//{
-//    int cantidad_de_procesos = list_size(lista_general_de_segmentos);
-//    agregar_a_paquete(paquete, &cantidad_de_procesos, sizeof(int));
-//
-//    for(int i = 0; i < cantidad_de_procesos; i++)
-//    {
-//        t_list* tabla_del_proceso = list_get(lista_general_de_segmentos, i);
-//        int cantidad_de_segmentos = list_size(tabla_del_proceso);
-//        agregar_a_paquete(paquete, &cantidad_de_segmentos, sizeof(int));
-//        
-//        for(int j = 0; j < cantidad_de_procesos; j++)
-//        {
-//            t_segmento* segmento = list_Get(tabla_del_proceso, j);
-//            agregar_a_paquete(paquete, &(segmento->base), sizeof(int));
-//            agregar_a_paquete(paquete, &(segmento->size), sizeof(int));
-//        }
-//    }
-//}
+/*
+void serializar_tablas_de_segmentos(t_paquete *paquete)
+{
+  int cantidad_de_procesos = dictionary_size(tabla_de_segmentos_general);
+  agregar_a_paquete(paquete, &cantidad_de_procesos, sizeof(int));
+  for (int i = 0; i < cantidad_de_procesos; i++)
+  {
+
+    char *key = string_from_format("%d", i + 1);
+    t_list *tabla_del_proceso = dictionary_get(tabla_de_segmentos_general, key);
+    free(key);
+
+    if (tabla_del_proceso == NULL)
+    {
+      continue;
+    }
+
+    int cantidad_de_segmentos = list_size(tabla_del_proceso);
+    agregar_a_paquete(paquete, &cantidad_de_segmentos, sizeof(int));
+    for (int j = 0; j < cantidad_de_segmentos; j++)
+    {
+      t_segmento *segmento = list_get(tabla_del_proceso, j);
+      int base = segmento->base;
+      int tam = segmento->size;
+      agregar_a_paquete(paquete, &base, sizeof(int));
+      agregar_a_paquete(paquete, &tam, sizeof(int));
+    }
+  }
+}
+*/
 
 /*****************************************************************************
  *              FUNCIONES PARA EJECUCION
@@ -230,16 +243,27 @@ void terminar_proceso(pcb* un_pcb)
     t_paquete* paquete_a_consola = crear_paquete_operacion(EXIT);
     enviar_paquete(paquete_a_consola, socket_a_consola);  
     
-//    t_paquete* paquete_a_memoria = crear_paquete_operacion(FIN_PROCESO);
-//    int p_id = un_pcb->pid;
-//    agregar_a_paquete(paquete_a_memoria, &p_id, sizeof(int));
-//    enviar_paquete(paquete_a_memoria, socketMemoria);
+    //t_paquete* paquete_a_memoria = crear_paquete_operacion(FIN_PROCESO);
+    //int p_id = un_pcb->pid;
+    //agregar_a_paquete(paquete_a_memoria, &p_id, sizeof(int));
+    //enviar_paquete(paquete_a_memoria, socketMemoria);
     
-//    eliminar_paquete(paquete_a_memoria);
+    //eliminar_paquete(paquete_a_memoria);
     eliminar_paquete(paquete_a_consola); 
     agregar_proceso_terminated(un_pcb);
     liberar_recursos(un_pcb);
-    //liberar_pcb(un_pcb);
+    
+    char* key = string_from_format("%d", un_pcb->pid);
+    pcb* proceso = dictionary_remove(tabla_de_procesos, key);
+    // Este proceso, y el "un_pcb" son exactamente el mismo, pero la idea es remover la entrada de la tabla para poner un NULL despues.
+    // Cuando ponemos un null, podemos iterar el diccionario sin que rompa la logica de "cantidad de procesos", siempre y cuando hagamos el chequeo
+    // El proceso seguiria "existiendo" para la logica del cant_procesos = dictionary_size, entonces no nos tenemos que preocupar.
+    dictionary_put(tabla_de_procesos, key, NULL);
+    
+    free(key);
+    
+    // No hace falta hacer un free(proceso) porque un_pcb y proceso apuntan al mismo lugar.
+    liberar_pcb(un_pcb);
 }
 
 void wait_recurso(pcb* un_pcb, char* un_recurso) {
