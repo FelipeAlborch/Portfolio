@@ -167,16 +167,56 @@ Superbloque * superbloque_create_from_file(char *file_path);
  */
 void superbloque_destroy(Superbloque *superbloque);
 
-// int f_create(...);
+/**
+ * f_open - abre un archivo.
+ * 
+ * @param file_name: nombre del archivo
+ * @param fs: filesystem
+ * @return 0 si se abrió correctamente, -1 si ocurrió un error
+ */
+int f_open(char *file_name, FS *fs);
 
-// int f_close(...);
+/**
+ * f_create - crea un archivo.
+ * 
+ * @param file_name: nombre del archivo
+ * @param fs: filesystem
+ * @return 0 si se creó correctamente, -1 si ocurrió un error
+ */
+int f_create(char *file_name, FS *fs);
 
-// int f_seek(...);
+/**
+ * f_truncate - trunca un archivo.
+ * 
+ * @param file_name: nombre del archivo
+ * @param size: tamaño del archivo
+ * @param fs: filesystem
+ * @return 0 si se truncó correctamente, -1 si ocurrió un error
+ */
+int f_truncate(char *file_name, int size, FS *fs);
 
-// int f_truncate(...);
+/**
+ * f_read - lee un archivo.
+ * 
+ * @param file_name: nombre del archivo
+ * @param offset: offset del archivo
+ * @param size: tamaño del archivo
+ * @param buffer: buffer donde se almacenará el contenido del archivo
+ * @param fs: filesystem
+ * @return 0 si se leyó correctamente, -1 si ocurrió un error
+ */
+int f_read(char *file_name, int offset, int size, void **buffer, FS *fs);
 
-// int f_read(...);
-
-// int f_write(...);
+/**
+ * f_write - escribe un archivo.
+ * 
+ * @param file_name: nombre del archivo
+ * @param offset: offset del archivo
+ * @param size: tamaño del archivo
+ * @param buffer: buffer donde se almacenará el contenido del archivo
+ * @param fs: filesystem
+ * @return 0 si se escribió correctamente, -1 si ocurrió un error
+ */
+int f_write(char *file_name, int offset, int size, void *buffer, FS *fs);
 
 #endif

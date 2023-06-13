@@ -171,7 +171,7 @@ uintptr_t ptr_address(uint32_t local_adress, FS *fs) {
     return (uintptr_t)fs->bloques + local_adress;
 }
 
-uint32_t iptr_offset(int file_size, FS *fs) {
+uint32_t ptr_local_address(int file_size, FS *fs) {
     int count = block_count(file_size, fs);
     assert(count > 1); // because of the direct pointer block
     return (count - 2) * sizeof(uint32_t);
@@ -283,43 +283,133 @@ void superbloque_destroy(Superbloque *superbloque) {
     free(superbloque);
 }
 
-int f_open(char *file_name, FS *fs, FCB **fcb) {
-
-    int fd = open(file_name, O_RDWR | O_CREAT, 0775);
-    assert(fd != -1);
-
-    struct stat file_stat;
-// NOMBRE_ARCHIVO=Notas1erParcialK9999
-// TAMANIO_ARCHIVO=256
-// PUNTERO_DIRECTO=12
-// PUNTERO_INDIRECTO=45
-
-    assert(fstat(fd, &file_stat) != -1);
+int f_open(char *file_name, FS *fs) {
     
-    if (file_stat.st_size == 0) {
-        if (fcb_create(file_name, fs, fcb) == -1) {
-            perror("fcb_create");
-            return -1;
-        }
-        FILE *fp = fdopen(fd, "w");
-        fprintf(fp, "NOMBRE_ARCHIVO=%s\n", file_name);
-        fprintf(fp, "TAMANIO_ARCHIVO=%d\n", 0);
-        fprintf(fp, "PUNTERO_DIRECTO=%d\n", 0);
-        fprintf(fp, "PUNTERO_INDIRECTO=%d\n", 0);
-        fclose(fp);
-        (*fcb)->file_size = 0;
-        (*fcb)->dptr = 0;
-        (*fcb)->iptr = 0;
-    } else {
-        if (fcb_create(file_name, fs, fcb) == -1) {
-            perror("fcb_create");
-            return -1;
-        }
-        FILE *fp = fdopen(fd, "r");
-        fclose(fp);
+    log_info(fs->log, "Abrir Archivo: %s", file_name);
+    
+    char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
+    if (access(file_path, F_OK) == -1) {
+        log_warning(fs->log, "No existe el archivo: %s", file_name);
+        free(file_path);
+        return -1;
     }
+    free(file_path);
+    return 0;
+}
 
-    assert(close(fd) != -1);
+int f_create(char *file_name, FS *fs) {
+    
+    log_info(fs->log, "Crear Archivo: %s", file_name);
+    
+    char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
+    if (access(file_path, F_OK) == 0) {
+        log_warning(fs->log, "Ya existe el archivo: %s", file_name);
+        free(file_path);
+        // return -1;
+        return 0;
+    }
+    FCB *fcb;
+    fcb_create(file_path, fs, &fcb);
+    fcb_destroy(fcb);
+    free(file_path);
+    return 0;
+}
 
+int f_truncate(char *file_name, int size, FS *fs) {
+    
+    log_info(fs->log, "Truncar Archivo: %s", file_name);
+    
+    FCB *fcb;
+    char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
+    if (fcb_create_from_file(file_path, fs, &fcb) == -1) {
+        log_warning(fs->log, "No existe el archivo: %s", file_name);
+        free(file_path);
+        return -1;
+    }
+    fcb_realloc(size, fcb, fs);
+    fcb_destroy(fcb);
+    free(file_path);
+    return 0;
+}
+
+int f_read(char *file_name, int offset, int size, void **buffer, FS *fs) {
+
+    log_info(fs->log, "Leer Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, size, size);
+
+    FCB *fcb;
+    char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
+    if (fcb_create_from_file(file_path, fs, &fcb) == -1) {
+        log_warning(fs->log, "No existe el archivo: %s", file_name);
+        free(file_path);
+        return -1;
+    }
+    if (offset + size > fcb->file_size) {
+        log_warning(fs->log, "El archivo: %s no tiene %d bytes", file_name, offset + size);
+        fcb_destroy(fcb);
+        free(file_path);
+        return -1;
+    }
+    *buffer = malloc(size);
+    int blocks_required = block_count(size, fs);
+    int blocks_reserved = block_count(offset, fs);
+    int blocks_read = 0;
+    while (blocks_reserved > 0 && blocks_read < blocks_required) {
+        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_reserved - 1);
+        memcpy(*buffer + blocks_read * fs->superbloque->BLOCK_SIZE, (void *)ptr_address(local_adress, fs), fs->superbloque->BLOCK_SIZE);
+        blocks_reserved --;
+        blocks_read ++;
+    }
+    if (blocks_reserved == 0 && blocks_read < blocks_required) {
+        uint32_t local_adress = fcb->dptr;
+        memcpy(*buffer + blocks_read * fs->superbloque->BLOCK_SIZE, (void *)ptr_address(local_adress, fs), fs->superbloque->BLOCK_SIZE);
+        blocks_read ++;
+    }
+    while (blocks_reserved == 0 && blocks_read < blocks_required) {
+        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_read - 1);
+        memcpy(*buffer + blocks_read * fs->superbloque->BLOCK_SIZE, (void *)ptr_address(local_adress, fs), fs->superbloque->BLOCK_SIZE);
+        blocks_read ++;
+    }
+    fcb_destroy(fcb);
+    free(file_path);
+    return 0;
+}
+
+int f_write(char *file_name, int offset, int size, void *buffer, FS *fs) {
+    
+    log_info(fs->log, "Leer Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, size, size);
+    FCB *fcb;
+    char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
+    if (fcb_create_from_file(file_path, fs, &fcb) == -1) {
+        log_warning(fs->log, "No existe el archivo: %s", file_name);
+        free(file_path);
+        return -1;
+    }
+    if (offset + size > fcb->file_size) {
+        log_warning(fs->log, "El archivo: %s no tiene %d bytes", file_name, offset + size);
+        fcb_destroy(fcb);
+        free(file_path);
+        return -1;
+    }
+    int blocks_required = block_count(size, fs);
+    int blocks_reserved = block_count(offset, fs);
+    int blocks_written = 0;
+    while (blocks_reserved > 0 && blocks_written < blocks_required) {
+        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_reserved - 1);
+        memcpy((void *)ptr_address(local_adress, fs), buffer + blocks_written * fs->superbloque->BLOCK_SIZE, fs->superbloque->BLOCK_SIZE);
+        blocks_reserved --;
+        blocks_written ++;
+    }
+    if (blocks_reserved == 0 && blocks_written < blocks_required) {
+        uint32_t local_adress = fcb->dptr;
+        memcpy((void *)ptr_address(local_adress, fs), buffer + blocks_written * fs->superbloque->BLOCK_SIZE, fs->superbloque->BLOCK_SIZE);
+        blocks_written ++;
+    }
+    while (blocks_reserved == 0 && blocks_written < blocks_required) {
+        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_written - 1);
+        memcpy((void *)ptr_address(local_adress, fs), buffer + blocks_written * fs->superbloque->BLOCK_SIZE, fs->superbloque->BLOCK_SIZE);
+        blocks_written ++;
+    }
+    fcb_destroy(fcb);
+    free(file_path);
     return 0;
 }
