@@ -376,7 +376,8 @@ int f_read(char *file_name, int offset, int size, void **buffer, FS *fs) {
 
 int f_write(char *file_name, int offset, int size, void *buffer, FS *fs) {
     
-    log_info(fs->log, "Leer Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, size, size);
+    log_info(fs->log, "Escribit Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, size, size);
+    
     FCB *fcb;
     char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
     if (fcb_create_from_file(file_path, fs, &fcb) == -1) {
