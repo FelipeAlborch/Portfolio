@@ -44,6 +44,8 @@ void ejecutar_kernel_test(){
     eliminar_segmento(121,3);
     eliminar_segmento(121,1);
     create_segment(221,45,2);
+    eliminar_segmento(121,2);
+    create_segment(124,465,3);
    // liberar_proceso(122);
     /* liberar_proceso(221);
     loggear(FIN_PROCESO,221,NULL,0,0,0);
@@ -54,4 +56,5 @@ void ejecutar_kernel_test(){
    // log_trace(klogger,"quiero eliminar el seg 2 %d",pid);
     imprimir_huecos();
     imprimir_tabla_gral();
+    compactar();
 }

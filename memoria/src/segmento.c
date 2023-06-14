@@ -7,7 +7,8 @@ void crear_estructuras(){
     memoria=malloc(config_memo.tam_memo);
     huecos_libres = list_create();
     int cero= config_memo.tam_seg_0;
-    int tam = config_memo.tam_memo -1;
+    int tam = config_memo.tam_memo;
+    config_memo.bytes_libres = tam - cero;
     t_hueco_libre* seg = crear_hueco_libre(0,cero-1,OCUPADO);
 
     t_hueco_libre* seg2 = crear_hueco_libre(cero,tam-cero,LIBRE);
@@ -45,8 +46,25 @@ t_segmento* crear_segmento(int base, int size){
 
 
 void compactar(/* TO DO */){
-    recibir_operacion(config_memo.kernel);
     loggear(INICIO_COMPACTAR,0,NULL,0,0,0);
+ //   recibir_operacion(config_memo.kernel);
+   // sleep(config_memo.compactacion/1000);    
+    bool _es_libre(t_hueco_libre* hueco){
+        return hueco->estado == LIBRE;
+    }
+    /* t_list* lista = list_filter(huecos_libres,(void*)_es_libre);
+    list_destroy_and_destroy_elements(lista,(void*)free); */
+    
+    //printf("memoria libre: %d\n", config_memo.bytes_libres);
+    list_remove_and_destroy_all_by_condition(huecos_libres,(void*)_es_libre, (void*)free);
+    int tam = list_size(huecos_libres);
+    t_hueco_libre* hueco = list_get(huecos_libres,tam-1);
+    int inicio = hueco->inicio + hueco->tamanio + 1;
+    t_hueco_libre* nuevo =crear_hueco_libre(inicio,config_memo.bytes_libres,LIBRE);
+    list_add(huecos_libres,nuevo);
+    sleep(config_memo.compactacion/1000);
+    loggear(FIN_COMPACTAR,0,NULL,0,0,0);
+    imprimir_huecos();
 }
 
 t_tabla_segmentos* crear_tabla_segmentos(int pid, int index, int base, int size){
@@ -56,7 +74,10 @@ t_tabla_segmentos* crear_tabla_segmentos(int pid, int index, int base, int size)
     tabla_seg->pid = pid;
     tabla_seg->direcion_fisica=dir;
     tabla_seg->index=index;
-    tabla_seg->segmento = crear_segmento(base,size); 
+    tabla_seg->segmento = malloc(sizeof(t_segmento));
+    tabla_seg->segmento->base=base;
+    tabla_seg->segmento->size=size;  
+    //= crear_segmento(base,size); 
 
     return tabla_seg;
 }
@@ -239,7 +260,7 @@ void imprimir_tabla_gral(){
 
     while(list_iterator_has_next(iterador)){
        t_tabla_segmentos* tabla= list_iterator_next(iterador);
-        printf("%d pid: %d, dir: %d, index: %d, base: %d, size: %d\n",i,tabla->pid,tabla->direcion_fisica,tabla->index,tabla->segmento->base,tabla->segmento->size);
+        printf("%d- \tpid: %d, \tdir: %d, \tindex: %d,\tbase: %d,\t size: %d\n",i,tabla->pid,tabla->direcion_fisica,tabla->index,tabla->segmento->base,tabla->segmento->size);
         i++;
     
     }

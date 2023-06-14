@@ -52,7 +52,7 @@ void liberar_memoria(){
     log_destroy(mlogger);
 };
 void liberar_listas(){
-    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)free);
+    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)liberar_t_segmento);
     list_destroy_and_destroy_elements(huecos_libres,(void*)free);
     //list_destroy(huecos_libres);
     log_debug(mlogger,"listas liberadas");
@@ -65,7 +65,7 @@ void liberar_huecos(t_hueco_libre* hueco){
 };
 void liberar_t_segmento(t_tabla_segmentos* segmento){
     free(segmento->segmento);
-    //free(segmento);
+    free(segmento);
 };  
 void liberar_conexion_memoria(){
     
@@ -340,7 +340,7 @@ void imprimir_huecos(){
     inicio = hueco->inicio; 
     tam = hueco->tamanio;
     int estado = hueco->estado;
-    log_info(mlogger,"Hueco: %d - Base: %d  - Tamaño: %d - Estado: %d",list_iterator_index(iterador),inicio,tam,estado);
+    log_info(klogger,"Hueco: %d - Base: %d  - Tamaño: %d - Estado: %d",list_iterator_index(iterador),inicio,tam,estado);
     //free(hueco);
   }
   list_iterator_destroy(iterador);
