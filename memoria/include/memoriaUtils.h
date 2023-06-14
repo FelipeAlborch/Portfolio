@@ -35,6 +35,9 @@ extern pthread_mutex_t m_tabla_segmentos;
 extern pthread_mutex_t m_huecos_libres;
 extern void* memoria;
 
+extern sem_t sem_fs_conectado;
+extern sem_t sem_cpu_conectado;
+
 //extern t_tabla_segmentos* tabla_segmentos; //listado de t_segmentos de todos los procesos
 extern t_list* huecos_libres; //listado de t_hueco_libre
 extern t_list* tabla_segmentos_gral; //listado de t_segmentos de todos los procesos

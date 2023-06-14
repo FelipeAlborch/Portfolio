@@ -18,6 +18,9 @@ pthread_mutex_t m_config;
 pthread_mutex_t m_memoria;
 pthread_mutex_t m_tabla_segmentos;
 pthread_mutex_t m_huecos_libres;
+sem_t sem_fs_conectado;
+sem_t sem_cpu_conectado;
+
 void* memoria;
 
 
@@ -107,6 +110,8 @@ void inicializar_mutex(){
 void inicializar_configuracion(){
     obtener_valores_de_configuracion_memoria(memoriaConfig);
     mostrar_valores_de_configuracion_memoria();
+    sem_init(&sem_fs_conectado,0,0);
+    sem_init(&sem_cpu_conectado,0,0);
 };
 
 void inicializar_memoria(){

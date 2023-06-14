@@ -10,15 +10,14 @@ int main(int argc, char *argv[]) {
   log_info(loggerMemoria, "Esto es la memoria D:");  
  // ejecutar_kernel_test();
   
+  pthread_create(&hilo_fs, NULL, (void *)conectar_fs, NULL);
+  pthread_detach(hilo_fs);
   
+  sem_wait(&sem_fs_conectado);
   pthread_create(&hilo_cpu, NULL, (void *)conectar_cpu, NULL);
   pthread_detach(hilo_cpu);
   
-  
-  pthread_create(&hilo_fs, NULL, (void *)conectar_fs, NULL);
-  pthread_detach(hilo_fs);
-
-  
+  sem_wait(&sem_cpu_conectado);
   pthread_create(&hilo_kernel, NULL, (void *)conectar_kernel, NULL);
   //pthread_detach(hilo_kernel);
 
