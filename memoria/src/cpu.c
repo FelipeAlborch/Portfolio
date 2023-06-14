@@ -45,9 +45,10 @@ void ejecutar_cpu(){
 void move_in(){
     t_list* lista = _recibir_paquete(config_memo.cpu);
     int dir=*(int*)list_get(lista,0);
+    int size=*(int*)list_get(lista,1);
     int pid = buscar_pid(dir);
-    void* info = leer_dato(dir);
-    responder_cpu(dir,MOV_IN_INSTRUCTION,info);
+    void* info = leer_dato(dir,size);
+    responder_cpu(dir,MOV_IN_SUCCES,info);
     loggear(MOV_IN_INSTRUCTION,pid,"CPU",dir,strlen(info)+1,0);
     list_destroy_and_destroy_elements(lista,free);
 }
@@ -61,7 +62,7 @@ void move_out(){
     loggear(MOV_OUT_INSTRUCTION,pid,"CPU",dir,strlen(valor)+1,0);
     list_destroy_and_destroy_elements(lista,free);
 }
-void* leer_dato(int direccion){
+void* leer_dato(int direccion,int size){
     sleep(config_memo.retardo/1000);
     int pid = buscar_pid(direccion);
     t_segmento* segmento = buscar_segmento_dir(direccion);
@@ -71,9 +72,9 @@ void* leer_dato(int direccion){
         return NULL;
     }
     //memcpy(memoria+direccion,&valor,strlen(valor)+1);
-	void* info = malloc(segmento->size);
-    memcpy(info,memoria+direccion,segmento->size);
-    loggear(M_READ,pid,info,direccion,segmento->size,segmento->base);
+	void* info = malloc(size);
+    memcpy(info,memoria+direccion,size);
+    loggear(M_READ,pid,info,direccion,size,segmento->base);
     free(segmento);
 	return info;
 }

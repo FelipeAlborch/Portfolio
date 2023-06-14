@@ -52,7 +52,7 @@ void liberar_memoria(){
     log_destroy(mlogger);
 };
 void liberar_listas(){
-    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)free);
+    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)liberar_t_segmento);
     list_destroy_and_destroy_elements(huecos_libres,(void*)free);
     //list_destroy(huecos_libres);
     log_debug(mlogger,"listas liberadas");
@@ -65,7 +65,7 @@ void liberar_huecos(t_hueco_libre* hueco){
 };
 void liberar_t_segmento(t_tabla_segmentos* segmento){
     free(segmento->segmento);
-    //free(segmento);
+    free(segmento);
 };  
 void liberar_conexion_memoria(){
     
@@ -100,7 +100,7 @@ void inicializar_memoria(){
 
 void inicializar_logs(){
     loggerMemoria = log_create("logs/memoria.log","Memoria",true,LOG_LEVEL_TRACE);
-    mlogger = log_create("logs/info.log","Info Memoria",true,LOG_LEVEL_TRACE);
+    mlogger = log_create("logs/info.log","Info Memoria",false,LOG_LEVEL_TRACE);
     klogger = log_create("logs/kernel.log","Memoria -> Kernel",true,LOG_LEVEL_TRACE);
     clogger = log_create("logs/cpu.log","Memoria -> CPU",true,LOG_LEVEL_TRACE);
     flogger = log_create("logs/file_system.log","Memoria -> FileSystem",true,LOG_LEVEL_TRACE);
@@ -175,7 +175,7 @@ void mostrar_valores_de_configuracion_memoria (){
   
   void ejecutar_fs(){
     int conectar=config_memo.fs;
-    log_trace(flogger, "Por ejecutar las tareas del FileSystem");
+    log_info(flogger, "Por ejecutar las tareas del FileSystem");
 
     //t_paquete* paquete_cpu =malloc(size_of(t_paquete));
     while (running_fs)
@@ -204,38 +204,38 @@ void mostrar_valores_de_configuracion_memoria (){
     switch (code)
     {
       case CREATE_SEGMENT:
-        log_trace(loggerMemoria,"PID: %d - Crear Segmento: %d - Base: %d - TAMAÑO: %d",pid,id,base,size);
+        log_info(loggerMemoria,"PID: %d - Crear Segmento: %d - Base: %d - TAMAÑO: %d",pid,id,base,size);
         break;
       case DELETE_SEGMENT:
-        log_trace(loggerMemoria,"PID: %d - Eliminar Segmento: %d - Base: %d - TAMAÑO: %d",pid,id,base,size);
+        log_info(loggerMemoria,"PID: %d - Eliminar Segmento: %d - Base: %d - TAMAÑO: %d",pid,id,base,size);
         break;
       case INICIO_COMPACTAR:
-        log_trace(loggerMemoria,"Solicitud de Compactación");
+        log_info(loggerMemoria,"Solicitud de Compactación");
         break;
 
       case FIN_COMPACTAR:
             /*Por cada segmento de cada proceso se deberá imprimir una línea con el siguiente formato:*/
-        log_trace(loggerMemoria,"PID: %d - Segmento: %d - Base: %d - Tamaño %d",pid);
+        log_info(loggerMemoria,"PID: %d - Segmento: %d - Base: %d - Tamaño %d",pid);
         break;
 
       case M_READ:
-        log_trace(loggerMemoria,"PID: %d - Acción: <LEER> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
+        log_info(loggerMemoria,"PID: %d - Acción: <LEER> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
         break;
       case MOV_IN_INSTRUCTION:
-        log_trace(loggerMemoria,"PID: %d - Acción: <LEER> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
+        log_info(loggerMemoria,"PID: %d - Acción: <LEER> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
         break;
       case M_WRITE:
-        log_trace(loggerMemoria,"“PID: %d - Acción: <ESCRIBIR> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
+        log_info(loggerMemoria,"“PID: %d - Acción: <ESCRIBIR> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
         break;
       case MOV_OUT_INSTRUCTION:
-        log_trace(loggerMemoria,"PID: %d - Acción: <ESCRIBIR> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
+        log_info(loggerMemoria,"PID: %d - Acción: <ESCRIBIR> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
         break;
       case INICIO_PROCESO:
-        log_trace(loggerMemoria,"Creación de Proceso PID: %d",pid);
+        log_info(loggerMemoria,"Creación de Proceso PID: %d",pid);
         break;
 
       case FIN_PROCESO:
-        log_trace(loggerMemoria,"Eliminación de Proceso PID: %d",pid);
+        log_info(loggerMemoria,"Eliminación de Proceso PID: %d",pid);
         break;
       
       default:
@@ -274,7 +274,7 @@ void algoritmos(){
   else if(strcmp(config_memo.algoritmo,"BF")==0){
     config_memo.algoritmo_int=BEST_FIT;
   }
-  else if(strcmp(config_memo.algoritmo,"WF")==0){
+  else if(strcmp(config_memo.algoritmo,"WORST")==0){
     config_memo.algoritmo_int=WORST_FIT;
   }
   else if(strcmp(config_memo.algoritmo,"WORST")==0){
@@ -292,11 +292,11 @@ int first_fit(int size){
     t_hueco_libre* hueco = list_iterator_next(iterador);
     if (hueco->tamanio >= size && hueco->estado == LIBRE) {
       index = list_iterator_index(iterador);
-      free(hueco);
+      //free(hueco);
       list_iterator_destroy(iterador);
       return index;
     }
-    free(hueco);
+    //free(hueco);
   }
   list_iterator_destroy(iterador);
   return index;
@@ -346,7 +346,7 @@ void imprimir_huecos(){
     inicio = hueco->inicio; 
     tam = hueco->tamanio;
     int estado = hueco->estado;
-    log_info(mlogger,"Hueco: %d - Base: %d  - Tamaño: %d - Estado: %d",list_iterator_index(iterador),inicio,tam,estado);
+    log_info(klogger,"Hueco: %d - Base: %d  - Tamaño: %d - Estado: %d",list_iterator_index(iterador),inicio,tam,estado);
     //free(hueco);
   }
   list_iterator_destroy(iterador);

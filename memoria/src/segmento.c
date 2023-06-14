@@ -3,37 +3,23 @@ t_list* huecos_libres;
 t_list *tabla_segmentos_gral;
 //config_de_memoria config_memo;
 
-
 void crear_estructuras(){
     memoria=malloc(config_memo.tam_memo);
     huecos_libres = list_create();
     int cero= config_memo.tam_seg_0;
     int tam = config_memo.tam_memo;
-    t_hueco_libre* seg = malloc(sizeof(t_hueco_libre));
+    config_memo.bytes_libres = tam - cero;
+    t_hueco_libre* seg = crear_hueco_libre(0,cero-1,OCUPADO);
+
+    t_hueco_libre* seg2 = crear_hueco_libre(cero,tam-cero,LIBRE);
     
-    //log_warning(mlogger,"Hueco size %d",sizeof(t_hueco_libre));
+    list_add_in_index(huecos_libres,0,seg);
+    list_add_in_index(huecos_libres,1,seg2);
 
-    seg->estado = LIBRE;
-    seg->inicio = 0;
-    seg->tamanio = tam;  
-    log_debug(mlogger,"Hueco 0 -> tam %d",(seg->tamanio));  
-    list_add(huecos_libres,seg);
-
-    modificar_hueco(0,0,cero-1,OCUPADO);
     inicializar_segmentos();
     
-    imprimir_huecos();
-    imprimir_tabla_gral();
-    
-    /* log_debug(mlogger,"Hueco size %d",sizeof(hueco->estado));
-    log_debug(mlogger,"Hueco size %d",sizeof(hueco->inicio));
-    log_debug(mlogger,"Hueco size %d",sizeof(hueco->tamanio));
-    log_debug(mlogger,"Hueco size %d",sizeof(hueco)); */
-     
-
-    /* free(hueco->inicio);
-    free(hueco->tamanio);   
-    free(hueco); */
+    //imprimir_huecos();
+    //imprimir_tabla_gral();
 }
 void inicializar_segmentos(){
     t_tabla_segmentos* tabla = crear_tabla_segmentos(0,0,0,config_memo.tam_seg_0);
@@ -41,10 +27,6 @@ void inicializar_segmentos(){
     
     tabla->segmento->size = config_memo.tam_seg_0;
     list_add_in_index(tabla_segmentos_gral,0,tabla);
-    
-    
-    free(tabla->segmento);
-    free(tabla);
 }
 void modificar_tabla_segmentos(t_tabla_segmentos* tabla,int pid, int dir, int id,int base, int size){
     tabla->pid = pid;
@@ -63,46 +45,27 @@ t_segmento* crear_segmento(int base, int size){
 }
 
 
-
-
-
-void eliminar_segmento(int pid, int id){
-    
-    t_tabla_segmentos* tabla = buscar_en_tabla_id(pid,id);
-    if (tabla->index == M_ERROR){
-        t_paquete* paquete = crear_paquete_operacion(M_ERROR);
-        enviar_paquete(paquete,config_memo.kernel);
-        eliminar_paquete(paquete);
-        loggear(M_ERROR,pid,NULL,id,0,0);
-        return;
-    }
-    
-    int base = buscar_hueco_base(tabla->segmento->base);
-    modificar_hueco(base,tabla->segmento->base,tabla->segmento->size,LIBRE);
-    modificar_tabla_segmentos(tabla,pid,-1,id,-1,-1);
-
-    modificar_tabla_proceso(pid,id,0,0);  
-    t_list* nueva = tabla_proceso(pid);
-
-    if (list_size(nueva) > 1)
-    {
-        t_paquete* paquete = crear_paquete_operacion(DELETE_SEGMENT);
-        serializar_tabla_segmentos(paquete, nueva);
-        enviar_paquete(paquete,config_memo.kernel);
-        eliminar_paquete(paquete);
-        imprimir_tabla(nueva);
-    }
-    list_destroy(nueva);
-    free(tabla->segmento);
-    free(tabla);
-}
-
 void compactar(/* TO DO */){
-    recibir_operacion(config_memo.kernel);
     loggear(INICIO_COMPACTAR,0,NULL,0,0,0);
+ //   recibir_operacion(config_memo.kernel);
+   // sleep(config_memo.compactacion/1000);    
+    bool _es_libre(t_hueco_libre* hueco){
+        return hueco->estado == LIBRE;
+    }
+    /* t_list* lista = list_filter(huecos_libres,(void*)_es_libre);
+    list_destroy_and_destroy_elements(lista,(void*)free); */
+    
+    //printf("memoria libre: %d\n", config_memo.bytes_libres);
+    list_remove_and_destroy_all_by_condition(huecos_libres,(void*)_es_libre, (void*)free);
+    int tam = list_size(huecos_libres);
+    t_hueco_libre* hueco = list_get(huecos_libres,tam-1);
+    int inicio = hueco->inicio + hueco->tamanio + 1;
+    t_hueco_libre* nuevo =crear_hueco_libre(inicio,config_memo.bytes_libres,LIBRE);
+    list_add(huecos_libres,nuevo);
+    sleep(config_memo.compactacion/1000);
+    loggear(FIN_COMPACTAR,0,NULL,0,0,0);
+    imprimir_huecos();
 }
-
-
 
 t_tabla_segmentos* crear_tabla_segmentos(int pid, int index, int base, int size){
 	t_tabla_segmentos* tabla_seg = malloc(sizeof(t_tabla_segmentos));
@@ -111,7 +74,10 @@ t_tabla_segmentos* crear_tabla_segmentos(int pid, int index, int base, int size)
     tabla_seg->pid = pid;
     tabla_seg->direcion_fisica=dir;
     tabla_seg->index=index;
-    tabla_seg->segmento = crear_segmento(base,size); 
+    tabla_seg->segmento = malloc(sizeof(t_segmento));
+    tabla_seg->segmento->base=base;
+    tabla_seg->segmento->size=size;  
+    //= crear_segmento(base,size); 
 
     return tabla_seg;
 }
@@ -120,11 +86,10 @@ int buscar_en_tabla_index(int pid){
     for (int i = 0; i < list_size(tabla_segmentos_gral); i++) {
         t_tabla_segmentos* tabla = list_get(tabla_segmentos_gral, i);
         if (tabla->pid == pid) {
-            printf("El indice es: %d\n",i);
+            //printf("El indice es: %d\n",i);
             return i;
         }
     }
-
     return M_ERROR;
 }
 
@@ -135,7 +100,6 @@ t_segmento* buscar_segmento(int base, t_list* segmentos){
             return segmento;
         }
     }
-
     return NULL;
 }
 t_segmento* buscar_segmento_dir(int dir){
@@ -147,6 +111,7 @@ t_segmento* buscar_segmento_dir(int dir){
             segmento->size= tabla->segmento->size;
             return true;
         }
+        return false;
     }
     bool oki = list_any_satisfy(tabla_segmentos_gral, (void*)_buscar_en_tabla);
     if(oki){
@@ -176,10 +141,8 @@ void liberar_proceso(int pid) {
     
 }
 void* buscar_en_tabla_id(int pid, int id){
-     
     t_tabla_segmentos* tabla1;
     
-
     bool _buscar_en_tabla (t_tabla_segmentos* tabla) {
         if(tabla->pid == pid && tabla->index == id){
             tabla1= crear_tabla_segmentos(tabla->pid,tabla->index,tabla->segmento->base,tabla->segmento->size);
@@ -187,10 +150,11 @@ void* buscar_en_tabla_id(int pid, int id){
         }else{
             return false;
         }
-        
     }
     bool oki = list_any_satisfy(tabla_segmentos_gral, (void*)_buscar_en_tabla);
     //tabla1 = list_find(tabla_segmentos_gral, (void*) _buscar_en_tabla); 
+    //printf("El indice es: %d\n",tabla1->index);
+    //printf("El base es: %d\n",tabla1->segmento->base);
     if (!oki) {
         log_error(mlogger,"No se encontro el segmento");
         tabla1= crear_tabla_segmentos(M_ERROR,M_ERROR,M_ERROR,M_ERROR);
@@ -199,21 +163,27 @@ void* buscar_en_tabla_id(int pid, int id){
     return tabla1;
 }
 int buscar_hueco_libre(int size){
-   int index = -2;
-   switch (config_memo.algoritmo_int)
-   {
+    int index = -2;
+    switch (config_memo.algoritmo_int)   {
     case FIRST_FIT:
     index = first_fit(size);
     log_info(mlogger,"El indice del hueco libre es: %d",index);
+    return index;
     break;
     case BEST_FIT:
     index = best_fit(size);
+    log_info(mlogger,"El indice del hueco libre es: %d",index);
+    return index;
     case WORST_FIT:
     index = worst_fit(size);
-   default:
+    log_info(mlogger,"El indice del hueco libre es: %d",index);
+    return index;
+    default:
+    return index;
     break;
    }
 }
+
 t_hueco_libre* crear_hueco_libre(int inicio, int tam, int estado){
     t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
     hueco->inicio = inicio;
@@ -257,9 +227,9 @@ t_list* crear_tabla_proceso(int pid){
     segmento->size=0;
     list_replace(lista,1,segmento); */
     
-    free(tabla_seg->segmento);
-    free(tabla_seg);
-    free(segmento);   // Si liberas el segmento despues de crearlo, lo estas perdiendo por completo. Cuando lo intentes mandar al kernel, no va a existir.
+/*     free(tabla_seg->segmento);
+    free(tabla_seg); */
+   /*  free(segmento);  */  // Si liberas el segmento despues de crearlo, lo estas perdiendo por completo. Cuando lo intentes mandar al kernel, no va a existir.
     imprimir_tabla(lista);
     return lista;
 }
@@ -279,7 +249,7 @@ void imprimir_tabla(t_list* lista){
     for (size_t i = 0; i < size ; i++)
     {
         t_segmento* segmentos = list_get(lista,i);
-        printf("%d - base: %d, size: %d\n",i,segmentos->base,segmentos->size);
+        printf("%ld - base: %d, size: %d\n",i,segmentos->base,segmentos->size);
     } 
      
 }
@@ -290,48 +260,43 @@ void imprimir_tabla_gral(){
 
     while(list_iterator_has_next(iterador)){
        t_tabla_segmentos* tabla= list_iterator_next(iterador);
-        printf("%d pid: %d, dir: %d, index: %d, base: %d, size: %d\n",i,tabla->pid,tabla->direcion_fisica,tabla->index,tabla->segmento->base,tabla->segmento->size);
+        printf("%d- \tpid: %d, \tdir: %d, \tindex: %d,\tbase: %d,\t size: %d\n",i,tabla->pid,tabla->direcion_fisica,tabla->index,tabla->segmento->base,tabla->segmento->size);
         i++;
-       //free(tabla);
+    
     }
     list_iterator_destroy(iterador);
 }
 
 void modificar_tabla_proceso(int pid, int index, int base, int size){
-   /* 
-    t_tabla_segmentos* tabla1 = crear_tabla_segmentos(pid,index,base,size);
-    log_debug(mlogger,"pid: %d, dir: %d, index: %d, base: %d, size: %d",tabla1->pid,tabla1->direcion_fisica,tabla1->index,tabla1->segmento->base,tabla1->segmento->size);
-     */
+
     bool _buscar_en_tabla (t_tabla_segmentos* tabla) {
         if (tabla->pid == pid && tabla->index == index){
             tabla->direcion_fisica = base + size;
             tabla->segmento->base = base;
             tabla->segmento->size = size;
-
             return true;
         }else{
             return false;
         }
-        
     }
     
-    //list_remove_and_destroy_by_condition(tabla_segmentos_gral, (void*) _buscar_en_tabla , tabla1);  // No se si esto esta bien, pero es lo que se me ocurrio. Si no funciona, lo podemos cambiar.
     t_tabla_segmentos* tabla1 =list_find(tabla_segmentos_gral, (void*) _buscar_en_tabla);
     tabla1 = buscar_en_tabla_id(pid,index);
-    log_warning(mlogger,"pid: %d, dir: %d, index: %d, base: %d, size: %d",tabla1->pid,tabla1->direcion_fisica,tabla1->index,tabla1->segmento->base,tabla1->segmento->size);
-    
-    free(tabla1->segmento);
-    free(tabla1);
 }
 void modificar_hueco(int index, int inicio, int tam, int estado){
-
+    
     if(estado == OCUPADO){
-        t_hueco_libre* hueco =list_get(huecos_libres,index);
-        int base = hueco->inicio;
-        t_hueco_libre* huecoNuevo = crear_hueco_libre(base,tam,estado);
-        list_replace(huecos_libres,index,huecoNuevo);
+        t_hueco_libre* hueco =list_remove(huecos_libres,index);
 
-        if(hueco->tamanio - tam > 0){
+        int base = hueco->inicio;
+        int size = hueco->tamanio;
+       // log_info(mlogger,"Hueco: %d - Base: %d  - Tamaño: %d - Estado: %d",index,hueco->inicio,hueco->tamanio,hueco->estado);
+    
+        t_hueco_libre* huecoNuevo = crear_hueco_libre(base,tam,OCUPADO);
+        
+       // log_info(mlogger,"HuecoNuevo: %d - Base: %d  - Tamaño: %d - Estado: %d",index,huecoNuevo->inicio,huecoNuevo->tamanio,huecoNuevo->estado);
+        list_add_in_index(huecos_libres,index,huecoNuevo);
+        if(size - tam > 0){
             hueco->estado = LIBRE;
             hueco->inicio = huecoNuevo->inicio + huecoNuevo->tamanio + 1;
             hueco->tamanio -=  tam;
@@ -341,49 +306,85 @@ void modificar_hueco(int index, int inicio, int tam, int estado){
         actualizar_memoria(tam,OCUPADO);
         return;
     }
-    liberar_hueco(index);
+    
+    int indice = buscar_hueco_base(inicio);
+   
+    liberar_hueco(indice);
     actualizar_memoria(tam,LIBRE);
 }
 void liberar_hueco(int index){
-    t_hueco_libre* hueco = list_get(huecos_libres,index);
-    if (list_size(huecos_libres) >= index + 1)
+    if (index <= 0)
     {
-       t_hueco_libre* huecoSig = list_get(huecos_libres,index + 1);
-       if (huecoSig->estado == LIBRE)
-        {
-            
-            hueco->tamanio = hueco->tamanio + huecoSig->tamanio;
-            list_remove(huecos_libres,index + 1);
-        }
-        free(huecoSig);
+        log_error(mlogger,"No se puede liberar el hueco error índice");
+        return;
     }
     
+    t_hueco_libre* hueco = list_get(huecos_libres,index);
     hueco->estado = LIBRE;
     list_replace(huecos_libres,index,hueco);
-    free(hueco);
-    if (index > 1)
+
+    consolidar_hueco(index);
+}
+void consolidar_hueco(int indice){
+    int siguiente = indice + 1;
+    int anterior = indice - 1;
+    int size = list_size(huecos_libres);
+    
+    if(size >= siguiente){
+        t_hueco_libre* huecoSig = list_get(huecos_libres,siguiente);
+        
+        if (huecoSig->estado == LIBRE)
+        {
+            t_hueco_libre* hueco = list_get(huecos_libres,indice);
+            hueco->tamanio = hueco->tamanio + huecoSig->tamanio;
+            
+            list_replace(huecos_libres,indice,hueco);
+            list_remove(huecos_libres,siguiente);
+            log_info(mlogger,"Hueco consolidado con el siguiente");   
+        }else{
+            log_info(mlogger,"No se puede consolidar con el siguiente");
+        }
+    }
+
+    if (anterior > 0)
     {
-        t_hueco_libre* huecoAnt = list_get(huecos_libres,index - 1);
+        t_hueco_libre* huecoAnt = list_get(huecos_libres,anterior);
         if (huecoAnt->estado == LIBRE)
         {
-            liberar_hueco(index - 1);
+            t_hueco_libre* hueco = list_get(huecos_libres,indice);
+            hueco->tamanio = hueco->tamanio + huecoAnt->tamanio;
+            hueco->inicio = huecoAnt->inicio;
+            list_remove(huecos_libres,indice);
+            list_replace(huecos_libres,anterior,hueco);
+            log_info(mlogger,"Hueco consolidado con el anterior");   
+        }else{
+            log_info(mlogger,"No se puede consolidar con el anterior");
         }
-        free(huecoAnt);
     }
 }
 int buscar_hueco_base(int base){
-    for (int i = 0; i < list_size(huecos_libres); i++) {
-        t_hueco_libre* tabla = list_get(tabla_segmentos_gral, i);
-        if (tabla->inicio == base) {
+    t_list_iterator* iterador = list_iterator_create(huecos_libres);
+    int i = M_ERROR;
+    while (list_iterator_has_next(iterador)){
+        t_hueco_libre* hueco = list_iterator_next(iterador);
+        if (hueco->inicio == base){
+            i = list_iterator_index(iterador);
+            printf("i: %d\n",i);
+            list_iterator_destroy(iterador);
             return i;
         }
+        
     }
-    return M_ERROR;
+    
+    list_iterator_destroy(iterador);
+    return i;
 }
 int base_hueco(int index){
+    int base = -2;
     t_hueco_libre* hueco = list_get(huecos_libres,index);
-    printf("base hueco: %d\n",hueco->inicio);
-    return hueco->inicio;
+    base = hueco->inicio;
+    printf("base hueco: %d\n",base);
+    return base;
 }
 t_list* tabla_proceso(int pid){
     t_list* listar=list_create();

@@ -106,7 +106,7 @@ void crear_estructuras();
 void move_in();
 void move_out();
 
-void* leer_dato(int direccion);
+void* leer_dato(int direccion, int size);
 int escribir_dato(int direccion, char* valor);
 
 void eliminar_segmento(int pid, int direccion);
@@ -136,6 +136,7 @@ t_list* crear_tabla_proceso(int pid);
 t_list* tabla_proceso(int pid);
 
 void liberar_hueco(int index);
+void consolidar_hueco(int indice);
 void modificar_hueco(int index, int inicio, int tam, int estado);
 int buscar_hueco_libre(int size);
 int buscar_hueco_base(int base);
@@ -154,4 +155,6 @@ t_tabla_segmentos* crear_tabla_segmentos(int pid, int index, int base, int tam_s
 t_segmento* buscar_segmento(int id_seg, t_list* segmentos);
 t_segmento* crear_segmento(int pid, int size);
 
+void crear_seg();
+void crear_proc();
 #endif

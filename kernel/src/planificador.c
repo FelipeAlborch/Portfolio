@@ -452,15 +452,15 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             log_info(logger_planificador_extra, "DELETE_SEGMENT realizado con exito");
                     
-            //t_list* valores_tras_eliminacion = _recibir_paquete(socketMemoria);
-            //t_list* tabla_tras_eliminacion = deserializar_tabla_segmentos(valores_tras_eliminacion);
-            //list_destroy_and_destroy_elements(proceso_a_ejecutar->tabla_de_segmentos,free);
-            //proceso_a_ejecutar->tabla_de_segmentos = list_duplicate(tabla_tras_eliminacion);
+            t_list* valores_tras_eliminacion = _recibir_paquete(socketMemoria);
+            t_list* tabla_tras_eliminacion = deserializar_tabla_segmentos(valores_tras_eliminacion);
+            list_destroy_and_destroy_elements(proceso_a_ejecutar->tabla_de_segmentos,free);
+            proceso_a_ejecutar->tabla_de_segmentos = list_duplicate(tabla_tras_eliminacion);
 
             leer_segmentos(proceso_a_ejecutar);
             
 
-            //list_destroy(valores_tras_eliminacion);
+            list_destroy_and_destroy_elements(valores_tras_eliminacion,free);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
             //list_destroy(lista_recepcion_valores);
             liberar_contexto_ejecucion(contexto_ds);
