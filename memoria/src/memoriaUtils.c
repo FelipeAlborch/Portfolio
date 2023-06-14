@@ -4,16 +4,20 @@
 t_log* mlogger;
 t_log* klogger;
 extern t_log* clogger;
-t_log* flogger;
+extern t_log* flogger;
 t_log* loggerMemoria;
 int conexion;
 extern int running_cpu;
-int running_fs;
+//int running_fs;
 //int running_k;
 int server_m;
 int clientes[4];
 t_config* memoriaConfig;
 pthread_t hiloConexion;
+pthread_mutex_t m_config;
+pthread_mutex_t m_memoria;
+pthread_mutex_t m_tabla_segmentos;
+pthread_mutex_t m_huecos_libres;
 void* memoria;
 
 
@@ -38,6 +42,7 @@ void terminar_programa(t_log* milogger){
 	
   liberar_listas();
   liberar_t_config();
+  liberar_mutex();
   liberar_memoria();
 
   printf("----------FIN------------\n");
@@ -82,6 +87,23 @@ void liberar_t_config(){
   //free(config_memo.puerto);
   log_debug(mlogger,"config liberada");
 };
+
+void liberar_mutex(){
+    pthread_mutex_destroy(&m_config);
+    pthread_mutex_destroy(&m_memoria);
+    pthread_mutex_destroy(&m_tabla_segmentos);
+    pthread_mutex_destroy(&m_huecos_libres);
+    log_debug(mlogger,"mutex liberados");
+};
+
+void inicializar_mutex(){
+    pthread_mutex_init(&m_config,NULL);
+    pthread_mutex_init(&m_memoria,NULL);
+    pthread_mutex_init(&m_tabla_segmentos,NULL);
+    pthread_mutex_init(&m_huecos_libres,NULL);
+   // log_debug(mlogger,"mutex inicializados");
+};
+
 void inicializar_configuracion(){
     obtener_valores_de_configuracion_memoria(memoriaConfig);
     mostrar_valores_de_configuracion_memoria();
@@ -90,6 +112,7 @@ void inicializar_configuracion(){
 void inicializar_memoria(){
 
     inicializar_logs();
+    inicializar_mutex();
     inicializar_configuracion();
     
     crear_estructuras();   
@@ -100,33 +123,17 @@ void inicializar_memoria(){
 
 void inicializar_logs(){
     loggerMemoria = log_create("logs/memoria.log","Memoria",true,LOG_LEVEL_TRACE);
-    mlogger = log_create("logs/info.log","Info Memoria",false,LOG_LEVEL_TRACE);
+    mlogger = log_create("logs/info.log","Info Memoria",true,LOG_LEVEL_TRACE);
     klogger = log_create("logs/kernel.log","Memoria -> Kernel",true,LOG_LEVEL_TRACE);
     clogger = log_create("logs/cpu.log","Memoria -> CPU",true,LOG_LEVEL_TRACE);
     flogger = log_create("logs/file_system.log","Memoria -> FileSystem",true,LOG_LEVEL_TRACE);
 }
+
+
 // Lo del memoria conexion: 
 
 
-void conectar_fs(){
-  config_memo.fs=esperar_cliente(server_m);
-    t_paquete* paquete;// =malloc(TAM_PAQ);
-    paquete = recibir_paquete(config_memo.fs);
-    if(paquete->codigo_operacion != FILE_SYSTEM){
-      log_error(flogger,"Vos no sos el FS. Se cancela la conexión %d ",paquete->codigo_operacion);
-     // eliminar_paquete(paquete);
-      pthread_detach(hilo_fs);
-			pthread_exit(&hilo_fs);
-    }
-    log_info(flogger,"Se conectó el FileSystem: %d \n",config_memo.fs);
-		
 
-    free(paquete->buffer);
-    free(paquete);
-
-    running_fs=true;
-    ejecutar_fs();
-}
 void conectar(){
 
   server_m= iniciar_servidor_en(config_memo.ip,config_memo.puerto);
@@ -173,31 +180,7 @@ void mostrar_valores_de_configuracion_memoria (){
 
   
   
-  void ejecutar_fs(){
-    int conectar=config_memo.fs;
-    log_info(flogger, "Por ejecutar las tareas del FileSystem");
 
-    //t_paquete* paquete_cpu =malloc(size_of(t_paquete));
-    while (running_fs)
-    {
-      //printf("Por ejecutar las tareas del fileSystem\n");
-      /*paquete_cpu=recibir_paquete(conectar);
-      switch (paquete_cpu->codigo_operacion)
-      {
-          case :
-            
-            break;
-          
-          default:
-            break;
-      }
-      eliminar_paquete(paquete_cpu);*/
-      
-    }
-    running_fs=false;
-    log_info(flogger,"Terminando de ejecutar las tareas del FileSystem");
-    
-  }
 
   void loggear(int code, int pid, void* algo, int id, int size, int base){
     
@@ -252,12 +235,13 @@ void respuestas(int cliente, int code,void* algo){
 }
 
 void actualizar_memoria(int size, int estado){
-    
+    pthread_mutex_lock(&m_config);
     if(estado == LIBRE){
         config_memo.bytes_libres=config_memo.bytes_libres+size;
     }else{
         config_memo.bytes_libres=config_memo.bytes_libres-size;
     }
+    pthread_mutex_unlock(&m_config);
 }
 
 
@@ -337,9 +321,12 @@ int worst_fit(int size){
 }
 
 void imprimir_huecos(){
+  
   int inicio;
   int tam;
+  pthread_mutex_lock(&m_huecos_libres);
   t_list_iterator* iterador = list_iterator_create(huecos_libres);
+  pthread_mutex_unlock(&m_huecos_libres);
   t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
   while (list_iterator_has_next(iterador)) {
     hueco = list_iterator_next(iterador);

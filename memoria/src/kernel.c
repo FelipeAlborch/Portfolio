@@ -2,27 +2,36 @@
 //t_log* klogger;
 int running_k;
 void conectar_kernel(){
+    pthread_mutex_lock(&m_config);
     config_memo.kernel=esperar_cliente(server_m);
-    t_paquete* paquete; // =malloc(TAM_PAQ);
+    pthread_mutex_unlock(&m_config);
+
+    t_paquete* paquete; 
+    
+    pthread_mutex_lock(&m_config);
     paquete = recibir_paquete(config_memo.kernel);
+    pthread_mutex_unlock(&m_config);
+
     if(paquete->codigo_operacion != KERNEL){
         log_error(klogger,"Vos no sos el kernel. Se cancela la conexión %d",paquete->codigo_operacion);
-        //eliminar_paquete(paquete);
-       // pthread_detach(hilo_kernel);
-		  pthread_exit(&hilo_kernel);
+        paquete_destroy(paquete);
+       
+		pthread_exit(&hilo_kernel);
     }
     log_info(klogger,"Se conectó el kernel: %d \n",config_memo.kernel);
 		
-    eliminar_paquete(paquete);
+    paquete_destroy(paquete);
     running_k=true;
     ejecutar_kernel();        //DESCOMENTAR ESTA LINEA PARA EJECUTAR EL KERNEL
     //ejecutar_kernel_test();     //COMENTAR ESTA LINEA PARA EJECUTAR EL KERNEL
 }
 void ejecutar_kernel(){
+    pthread_mutex_lock(&m_config);
     int conectar=config_memo.kernel;
+    pthread_mutex_unlock(&m_config);
+
     log_trace(mlogger, "Por ejecutar las tareas del kernel");
 
-   
     t_list* lista;
     int pid = -1;
     int run = 6;
@@ -30,34 +39,31 @@ void ejecutar_kernel(){
     
         switch (recibir_operacion(conectar))
         {
-          case INICIO_PROCESO:
-            lista = _recibir_paquete(conectar); // Agregue esta linea
-            pid=*(int*)list_get(lista,0);   // Cambie el 1 por un 0
-            crear_proceso(pid);
-            
-          
-            break;
-          case FIN_PROCESO:
-            lista = _recibir_paquete(conectar);    // Agregue esta linea
-            pid=*(int*)list_get(lista,0);   // Cambie el 1 por un 0
-            eliminar_proceso(pid);
-
-            break;
-          case CREATE_SEGMENT:
-            lista = _recibir_paquete(conectar);    // Agregue esta linea
-            int id=*(int*)list_get(lista,0);    // Cambie los indices
-            pid=*(int*)list_get(lista,2);
-            int tam=*(int*)list_get(lista,1);
-            create_segment(pid,tam,id);
-            break;
-          case DELETE_SEGMENT:
-            lista = _recibir_paquete(conectar);    // Agregue esta linea
-            id=*(int*)list_get(lista,0);    // Cambie los indices
-            pid=*(int*)list_get(lista,1);
-             //printf("id: %d, pid: %d\n",id,pid);
-            eliminar_segmento(pid, id);
-            break;
-          default:
+            case INICIO_PROCESO:
+                lista = _recibir_paquete(conectar); // Agregue esta linea
+                pid=*(int*)list_get(lista,0);   // Cambie el 1 por un 0
+                crear_proceso(pid);
+                break;
+            case FIN_PROCESO:
+                lista = _recibir_paquete(conectar);    // Agregue esta linea
+                pid=*(int*)list_get(lista,0);   // Cambie el 1 por un 0
+                eliminar_proceso(pid);
+                break;
+            case CREATE_SEGMENT:
+                lista = _recibir_paquete(conectar);    // Agregue esta linea
+                int id=*(int*)list_get(lista,0);    // Cambie los indices
+                pid=*(int*)list_get(lista,2);
+                int tam=*(int*)list_get(lista,1);
+                create_segment(pid,tam,id);
+                break;
+            case DELETE_SEGMENT:
+                lista = _recibir_paquete(conectar);    // Agregue esta linea
+                id=*(int*)list_get(lista,0);    // Cambie los indices
+                pid=*(int*)list_get(lista,1);
+                //printf("id: %d, pid: %d\n",id,pid);
+                eliminar_segmento(pid, id);
+                break;
+            default:
             break;
       }
       run--;
@@ -83,7 +89,7 @@ void crear_proceso(int pid){
     enviar_paquete(paquete,config_memo.kernel);
     
     
-    eliminar_paquete(paquete); 
+    paquete_destroy(paquete); 
     //list_destroy(listaS);
 }
 
@@ -95,7 +101,7 @@ void eliminar_proceso(int pid){
         log_error(klogger,"No se encontro el proceso %d",pid);
         t_paquete* paquete = crear_paquete_operacion(FIN_PROCESO);
         respuestas(config_memo.kernel,FIN_PROCESO,paquete);
-        eliminar_paquete(paquete); 
+        paquete_destroy(paquete); 
         return;
     }
     liberar_proceso(pid);
@@ -105,7 +111,7 @@ void eliminar_proceso(int pid){
     
     enviar_paquete(paquete,config_memo.kernel);
     
-    eliminar_paquete(paquete); 
+    paquete_destroy(paquete); 
     loggear(FIN_PROCESO,pid,NULL,0,0,0);
 }
 
@@ -146,7 +152,7 @@ void eliminar_segmento(int pid, int id){
     if (tabla->index == M_ERROR){
         t_paquete* paquete = crear_paquete_operacion(M_ERROR);
         enviar_paquete(paquete,config_memo.kernel);
-        eliminar_paquete(paquete); 
+        paquete_destroy(paquete); 
         loggear(M_ERROR,pid,NULL,id,0,0);
         return;
     }
@@ -161,7 +167,7 @@ void eliminar_segmento(int pid, int id){
         t_paquete* paquete = crear_paquete_operacion(DELETE_SEGMENT);
         serializar_tabla_segmentos(paquete, nueva);
         enviar_paquete(paquete,config_memo.kernel);
-        eliminar_paquete(paquete);
+        paquete_destroy(paquete);
         imprimir_tabla(nueva);
     }
    // list_destroy(nueva);

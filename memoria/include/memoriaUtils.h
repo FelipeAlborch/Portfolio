@@ -16,16 +16,23 @@
 
 extern t_log* mlogger;
 extern t_log* klogger;
+extern t_log* flogger;
+extern t_log* clogger;
 extern t_log* loggerMemoria;
 extern int clientes[4];
 extern int conexion;
 extern int running_k;
+extern int running_fs;
 extern int server_m;
 extern t_config* memoriaConfig;
 extern pthread_t hilo_cpu;
 extern pthread_t hilo_kernel;
 extern pthread_t hilo_fs;
 extern pthread_t hiloConexion;
+extern pthread_mutex_t m_config;
+extern pthread_mutex_t m_memoria;
+extern pthread_mutex_t m_tabla_segmentos;
+extern pthread_mutex_t m_huecos_libres;
 extern void* memoria;
 
 //extern t_tabla_segmentos* tabla_segmentos; //listado de t_segmentos de todos los procesos
@@ -58,11 +65,13 @@ void liberar_conexion_memoria();
 void liberar_t_config();
 void liberar_huecos(t_hueco_libre* hueco);
 void liberar_t_segmento(t_tabla_segmentos* segmento);
+void liberar_mutex();
 
 void inicializar_configuracion();
 void inicializar_memoria();
 void inicializar_segmentos();
 void inicializar_logs();
+void inicializar_mutex();
 
 // Lo del conexion:
 void conectar();
@@ -103,8 +112,9 @@ void respuestas(int cliente, int code,void* algo);
 
 void crear_estructuras();
 
-void move_in();
-void move_out();
+void move_in(t_list* lista, int cod);
+void move_out(t_list* lista, int cod);
+void responder_cpu_fs(int pid, int cod, void* info, int dir);
 
 void* leer_dato(int direccion, int size);
 int escribir_dato(int direccion, char* valor);
