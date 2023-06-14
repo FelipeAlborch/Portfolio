@@ -106,7 +106,7 @@ void crear_estructuras();
 void move_in();
 void move_out();
 
-void* leer_dato(int direccion);
+void* leer_dato(int direccion, int size);
 int escribir_dato(int direccion, char* valor);
 
 void eliminar_segmento(int pid, int direccion);
