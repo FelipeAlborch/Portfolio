@@ -171,6 +171,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
     char* nombre_recurso;
     int operacion_de_cpu;
     int tamanio, direccion_fisica;
+    t_recurso *archivo;
 
     recibirOperacion:
     
@@ -492,7 +493,6 @@ void ejecutar(pcb* proceso_a_ejecutar)
             if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_recurso))
             {
                 // PEDIR AL FS
-                // archivo = obtener_archivo_de_fs();
                 t_paquete* paquete_a_fs = crear_paquete_operacion(CREAR_ARCHIVO);
                 agregar_a_paquete(paquete_a_fs, nombre_recurso, strlen(nombre_recurso)+1);
                 
@@ -512,7 +512,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 
 
                 // SI NO EXISTE, CREARLO
-                t_recurso* archivo = crear_recurso(nombre_recurso, 1);
+                archivo = crear_recurso(nombre_recurso, 1);
                 archivo->posicion = 0;
 
                 dictionary_put(tabla_global_archivos_abiertos, nombre_recurso, archivo);
@@ -560,7 +560,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             if(!archivo_esta_abierto(nombre_recurso))
             {
                 // REMOVER DE LA TABLA DE ARCHIVOS ABIERTOS
-                t_recurso* archivo = dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
+                archivo = dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
                 liberar_recurso(archivo);
             }
 
@@ -630,7 +630,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
-                t_recurso* archivo = dictionary_get(tabla_global_archivos_abiertos, un_recurso);
+                archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
                 t_paquete* paquete_fread = crear_paquete_operacion(LEER_ARCHIVO);
                 
                 agregar_a_paquete(paquete_fread, nombre_recurso, strlen(nombre_recurso)+1);
@@ -667,7 +667,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
-                t_recurso* archivo = dictionary_get(tabla_global_archivos_abiertos, un_recurso);
+                archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
                 t_paquete* paquete_fwrite = crear_paquete_operacion(ESCRIBIR_ARCHIVO);
 
                 agregar_a_paquete(paquete_fwrite, nombre_recurso, strlen(nombre_recurso)+1);
