@@ -122,7 +122,8 @@ void create_segment(int pid,int tam,int id){
 
     log_debug(klogger,"Por crear el segmento %d del proceso %d de %d",id,pid,tam);
     if ( bytes < tam){
-        respuestas(config_memo.kernel,OUT_OF_MEMORY,M_ERROR);
+        //respuestas(config_memo.kernel,OUT_OF_MEMORY,M_ERROR);
+        enviar_operacion(config_memo.kernel, OUT_OF_MEMORY);
         log_error(klogger,"No hay memoria suficiente para crear el segmento");
         loggear(OUT_OF_MEMORY,pid,NULL,tam,0,0);
         return;
