@@ -502,8 +502,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 
                 int rta1;
                 int rta2;
-                recv(socketFS, &rta1, sizeof(int), MSG_WAITALL );
-                recv(socketFS, &rta2, sizeof(int), MSG_WAITALL );
+                recv(socketFS, &rta1, sizeof(int), MSG_WAITALL); // 0 = OK, 1 = ERROR
+                recv(socketFS, &rta2, sizeof(int), MSG_WAITALL); // 0 = ARCHIVO CREADO, 1 = ARCHIVO EXISTENTE
+
+                log_info(logger_planificador_extra, "Respuesta de FS: %d", rta1);
+                log_info(logger_planificador_extra, "Respuesta de FS: %d", rta2);
 
                 pthread_mutex_unlock(&mutex_fs);
                 
@@ -627,8 +630,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
+                t_recurso* archivo = dictionary_get(tabla_global_archivos_abiertos, un_recurso);
                 t_paquete* paquete_fread = crear_paquete_operacion(LEER_ARCHIVO);
+                
                 agregar_a_paquete(paquete_fread, nombre_recurso, strlen(nombre_recurso)+1);
+                agregar_a_paquete(paquete_fread, &archivo->posicion, sizeof(int));
                 agregar_a_paquete(paquete_fread, &direccion_fisica, sizeof(int));
                 agregar_a_paquete(paquete_fread, &tamanio, sizeof(int));
                 
@@ -661,8 +667,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
+                t_recurso* archivo = dictionary_get(tabla_global_archivos_abiertos, un_recurso);
                 t_paquete* paquete_fwrite = crear_paquete_operacion(ESCRIBIR_ARCHIVO);
+
                 agregar_a_paquete(paquete_fwrite, nombre_recurso, strlen(nombre_recurso)+1);
+                agregar_a_paquete(paquete_fwrite, &archivo->posicion, sizeof(int));
                 agregar_a_paquete(paquete_fwrite, &direccion_fisica, sizeof(int));
                 agregar_a_paquete(paquete_fwrite, &tamanio, sizeof(int));
                 
