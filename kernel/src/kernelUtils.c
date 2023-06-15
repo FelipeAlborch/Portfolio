@@ -285,8 +285,12 @@ void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictiona
 
     recurso->instancias--;
     log_info(logger_kernel_util_obligatorio, "PID: < %d > - %s: < %s > - Instancias < %d >", un_pcb->pid, operacion, recurso->nombre, recurso->instancias);
-    list_add(un_pcb->recursos_asignados, recurso);
-    
+
+    if (strcmp(operacion, "F_OPEN") == 0)
+        list_add(un_pcb->tabla_archivos_abiertos, recurso);
+    else
+        list_add(un_pcb->recursos_asignados, recurso);
+
     if(recurso->instancias < 0)
     {
         pcb* proceso_en_ejecucion = desalojar_proceso_en_exec();
@@ -333,7 +337,13 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
 
     recurso->instancias++;
     log_info(logger_kernel_util_obligatorio, "PID: < %d > - %s: < %s > - Instancias < %d >", un_pcb->pid, operacion, recurso->nombre, recurso->instancias);
-    remover_recurso_si_esta(un_pcb->recursos_asignados, recurso);
+
+
+    if (strcmp(operacion, "F_CLOSE") == 0)
+        remover_recurso_si_esta(un_pcb->tabla_archivos_abiertos, recurso);
+    else
+        remover_recurso_si_esta(un_pcb->recursos_asignados, recurso);
+
 
     if(!queue_is_empty(recurso->cola_bloqueados))
     {
