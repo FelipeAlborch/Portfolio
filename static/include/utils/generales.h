@@ -51,8 +51,8 @@ typedef enum
 	DELETE_SEGMENT,	//	se envia el pid y el id del segmento
 	INICIO_COMPACTAR,	
 	FIN_COMPACTAR,
-	M_READ,		//se envia el pid, el id del segmento y el offset
-	M_WRITE,	//se envia el pid, el id del segmento, el offset y el valor a escribir
+	M_READ,		//se envia el pid, dir fisica y el offset
+	M_WRITE,	//se envia el pid, dir fisica, el offset y el valor a escribir
 	INICIO_PROCESO,
 	FIN_PROCESO,
 	OK,
@@ -79,6 +79,12 @@ typedef struct{
 
 }t_proceso;
 
+typedef enum{
+	CREAR_ARCHIVO,
+	TRUNCAR_ARCHIVO,
+	LEER_ARCHIVO,
+	ESCRIBIR_ARCHIVO
+}msj_fs;
 
 /**
 * @NAME: iniciar_logger_modulo

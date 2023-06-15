@@ -18,10 +18,12 @@ config_de_kernel obtener_valores_de_configuracion_kernel(Config* kernelConfig){
     configuracionKernel.GRADO_MAX_MULTIPROGRAMACION = config_get_int_value(kernelConfig,"GRADO_MAX_MULTIPROGRAMACION");
     configuracionKernel.RECURSOS = config_get_array_value(kernelConfig,"RECURSOS");
     configuracionKernel.INSTANCIAS_RECURSOS = config_get_array_value(kernelConfig,"INSTANCIAS_RECURSOS");
+    configuracionKernel.IP_SERVER = string_duplicate("127.0.0.1");
     crear_diccionario_recursos();
     return configuracionKernel;
 }
 void mostrar_valores_de_configuracion_kernel(config_de_kernel configuracion_kernel){
+    printf("IP_SERVER = %s\n", configuracionKernel.IP_SERVER);
     printf("IP_MEMORIA = %s\n", configuracionKernel.IP_MEMORIA);
     printf("PUERTO_MEMORIA = %s\n", configuracionKernel.PUERTO_MEMORIA);
     printf("IP_FILESYSTEM = %s\n", configuracionKernel.IP_FILESYSTEM);
@@ -50,6 +52,7 @@ void agregar_proceso_a_tabla(pcb* un_pcb)
 {
     char* key = string_from_format("%d", un_pcb->pid);
     dictionary_put(tabla_de_procesos, key, un_pcb);
+    free(key);
 }
 
 void leer_tabla_procesos()

@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
   mostrar_valores_de_configuracion_cpu(configuracionCPU);
 
   log_info(logger_cpu, "Iniciando Servidor CPU...");
-  int socketCpuDispatch = iniciar_servidor_en("127.0.0.1", configuracionCPU.PUERTO_ESCUCHA);
+  int socketCpuDispatch = iniciar_servidor_en(configuracionCPU.IP_SERVER, configuracionCPU.PUERTO_ESCUCHA);
 
   if (socketCpuDispatch < 0)
   {
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
   pthread_create(&hiloKernelDispatch, NULL, (void *)esperar_kernel_dispatch, (void *)socketCpuDispatch);
   pthread_join(hiloKernelDispatch, NULL);
 
-
+  free(configuracionCPU.IP_SERVER);
   log_destroy(logger_cpu);
   config_destroy(cpuConfig);
 
