@@ -13,5 +13,7 @@ pthread_t hilo_fs;
 //pthread_t hiloConexion;
 int resto_memoria;
 
+extern sem_t sem_fs_conectado;
+extern sem_t sem_cpu_conectado;
 
 #endif

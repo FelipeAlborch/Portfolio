@@ -17,6 +17,8 @@ int socketFS;
 bool resultado_recurso = true;
 bool proceso_bloqueado_por_recurso = false;
 
+pthread_mutex_t mutex_fs;
+
 
 /*****************************************************************************
  *              FUNCIONES UTILES PARA ADMINISTRATIVAS
@@ -26,7 +28,9 @@ void agregar_socket_a_diccionario(int pcb_pid, int socket_consola)
 {
     //int *p = malloc(sizeof(int));
 	//*p=socket_consola;
-	dictionary_put(diccionario_de_consolas, string_from_format("%d", pcb_pid), socket_consola);
+    char* key = string_from_format("%d", pcb_pid);
+	dictionary_put(diccionario_de_consolas, key, socket_consola);
+    free(key);
 }
 
 void leer_diccionario_consolas()
@@ -101,6 +105,16 @@ double estimar_proxima_rafaga(pcb* un_pcb)
     return nuevo_estimado;
 }
 
+void loguear_rr_de_procesos(t_log* logger)
+{
+    pcb* proceso;
+    for(int i = 0; i < list_size(lista_ready_hrrn); i++)
+    {
+        proceso = list_get(lista_ready_hrrn, i);
+        double rr = calcular_response_ratio(proceso);
+        log_info(logger, "El RR de %d, es %f\n", proceso->pid, rr);
+    }
+}
 /*****************************************************************************
  *              FUNCIONES UTILES PARA COMUNICACION
 ******************************************************************************/
@@ -212,6 +226,7 @@ void terminar_proceso(pcb* un_pcb)
 {
     char* lugar_en_diccionario = string_from_format("%d", un_pcb->pid);
     int socket_a_consola = dictionary_get(diccionario_de_consolas, lugar_en_diccionario);
+    free(lugar_en_diccionario);
     t_paquete* paquete_a_consola = crear_paquete_operacion(EXIT);
     enviar_paquete(paquete_a_consola, socket_a_consola);  
     
@@ -228,14 +243,14 @@ void terminar_proceso(pcb* un_pcb)
 }
 
 void wait_recurso(pcb* un_pcb, char* un_recurso) {
-    wait_recurso_generico(un_pcb, un_recurso, diccionario_recursos);
+    wait_recurso_generico(un_pcb, un_recurso, diccionario_recursos, "WAIT");
 }
 
 void fopen_recurso(pcb* un_pcb, char* un_recurso) {
-    wait_recurso_generico(un_pcb, un_recurso, tabla_global_archivos_abiertos);
+    wait_recurso_generico(un_pcb, un_recurso, tabla_global_archivos_abiertos, "F_OPEN");
 }
 
-void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictionary){
+void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictionary, char* operacion){
    t_recurso* recurso = dictionary_get(dictionary, un_recurso);
     if(recurso == NULL)
     {
@@ -245,9 +260,9 @@ void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictiona
     } 
 
     recurso->instancias--;
-    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Wait: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
+    log_info(logger_kernel_util_obligatorio, "PID: < %d > - %s: < %s > - Instancias < %d >", un_pcb->pid, operacion, recurso->nombre, recurso->instancias);
     list_add(un_pcb->recursos_asignados, recurso);
-
+    
     if(recurso->instancias < 0)
     {
         pcb* proceso_en_ejecucion = desalojar_proceso_en_exec();
@@ -275,14 +290,14 @@ void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictiona
 
 
 void signal_recurso(pcb* un_pcb, char* un_recurso) {
-    signal_recurso_generico(un_pcb, un_recurso, diccionario_recursos);
+    signal_recurso_generico(un_pcb, un_recurso, diccionario_recursos, "SIGNAL");
 }
 
 void fclose_recurso(pcb* un_pcb, char* un_recurso) {
-    signal_recurso_generico(un_pcb, un_recurso, tabla_global_archivos_abiertos);
+    signal_recurso_generico(un_pcb, un_recurso, tabla_global_archivos_abiertos, "F_CLOSE");
 }
 
-void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictionary){
+void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictionary, char* operacion){
 
     t_recurso* recurso = dictionary_get(dictionary, un_recurso);
     if(recurso == NULL)
@@ -293,7 +308,7 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
     } 
 
     recurso->instancias++;
-    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Signal: < %s > - Instancias < %d >", un_pcb->pid, recurso->nombre, recurso->instancias);
+    log_info(logger_kernel_util_obligatorio, "PID: < %d > - %s: < %s > - Instancias < %d >", un_pcb->pid, operacion, recurso->nombre, recurso->instancias);
     remover_recurso_si_esta(un_pcb->recursos_asignados, recurso);
 
     if(!queue_is_empty(recurso->cola_bloqueados))
@@ -311,6 +326,33 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
     return;
 }
 
+
+bool archivo_esta_abierto(char* archivo)
+{
+    // contador de procesos que tienen el archivo abierto
+    int contador = 0;
+
+    // devuelve true si el nombre del recurso matchea con el del archivo
+    void _recurso_es_el_archivo(t_recurso* recurso) {
+        return string_equals_ignore_case(recurso->nombre, archivo);
+    }
+
+    // suma 1 a contador si el pcb tiene el archivo abierto
+    void _pcb_tiene_el_archivo(char* ___, pcb* iteration) {
+        int recursos_asignados = list_size(iteration->recursos_asignados);
+
+        bool found = list_any_satisfy(iteration->recursos_asignados, (void*) _recurso_es_el_archivo);
+        if(found)
+            contador++;   
+    }
+
+    dictionary_iterator(tabla_de_procesos, (void*) _pcb_tiene_el_archivo);
+
+    return contador != 0;
+}
+
+
+
 void fseek_archivo(pcb* un_pcb, char* un_recurso, int posicion) {
      t_recurso* archivo = dictionary_get(tabla_global_archivos_abiertos, un_recurso);
     if(archivo == NULL)
@@ -320,6 +362,30 @@ void fseek_archivo(pcb* un_pcb, char* un_recurso, int posicion) {
     }
 
     archivo->posicion = posicion;
+}
+
+void esperar_listo_de_fs(char* nombre_recurso)
+{
+    pcb* proceso_desalojado = desalojar_proceso_en_exec();
+    if(!es_fifo)
+    {
+        proceso_desalojado->estimado_prox_rafaga = estimar_proxima_rafaga(proceso_desalojado);
+        temporal_destroy(proceso_desalojado->tiempo_ejecucion);
+    }
+    proceso_desalojado->estado = BLOCKED;
+
+    log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_desalojado->pid, nombre_recurso);    
+
+    int rtafs;
+    
+    /*
+    *   ESTO PUEDE GENERAR QUILOMBO
+    */
+    recv(socketFS, &rtafs, sizeof(int), MSG_WAITALL);
+
+    pthread_mutex_unlock(&mutex_fs);    // Se desbloquea el socket
+    
+    agregar_proceso_ready(proceso_desalojado);
 }
 
 void solicitar_creacion_segmento(int nro_segmento, int tam_segmento, int pid_proceso)

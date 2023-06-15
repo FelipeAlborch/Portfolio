@@ -3,7 +3,7 @@
 
 #include <commons/config.h>
 #include <utils/conexion.h>
-
+#include <MMU.h>
 
 
 typedef struct{
@@ -12,6 +12,7 @@ typedef struct{
     char* PUERTO_MEMORIA;
     char* PUERTO_ESCUCHA;
     int TAM_MAX_SEGMENTO;
+    char* IP_SERVER;
 }config_de_cpu;
 
 extern config_de_cpu configuracionCPU;

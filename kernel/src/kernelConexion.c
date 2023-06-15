@@ -3,7 +3,7 @@
 int iniciar_servidor_para_consolas(config_de_kernel configuracionKernel)
 {
     Logger* logger = iniciar_logger_modulo(KERNEL_LOGGER);
-    int socketServidorConsolas = iniciar_servidor_en("127.0.0.1", configuracionKernel.PUERTO_ESCUCHA);
+    int socketServidorConsolas = iniciar_servidor_en(configuracionKernel.IP_SERVER, configuracionKernel.PUERTO_ESCUCHA);
 
     if(socketServidorConsolas < 0)
     {
@@ -47,7 +47,7 @@ void escuchar_consola(int socketConsola)
 {
 	
 	t_list* lista_de_consola;
-	t_log* logger = iniciar_logger_modulo(KERNEL_LOGGER);
+	//t_log* logger = iniciar_logger_modulo(KERNEL_LOGGER);
     
 	while(true)
     {
@@ -56,13 +56,13 @@ void escuchar_consola(int socketConsola)
         switch(recibir_operacion(socketConsola))
         {
             case MENSAJE:
-                recibir_mensaje(socketConsola, logger);
+                recibir_mensaje(socketConsola, logger_kernel_util_extra);
 				
             break;
 			
 			
             case LISTA_INSTRUCCIONES:
-            log_info(logger, "Me llego una lista de instrucciones");
+            log_info(logger_kernel_util_extra, "Me llego una lista de instrucciones");
 			
 			t_list* lista_instrucciones = list_create();
 			lista_de_consola = _recibir_paquete(socketConsola);
@@ -71,18 +71,17 @@ void escuchar_consola(int socketConsola)
 			pid_global++;
 			pcb* nuevo_pcb = crear_pcb(lista_instrucciones, pid_global, configuracionKernel.ESTIMACION_INICIAL/1000);
 			
-			log_info(logger, "Se crea el proceso < %d > en NEW", pid_global);
+			log_info(logger_kernel_util_extra, "Se crea el proceso < %d > en NEW", pid_global);
 			
 			agregar_socket_a_diccionario(nuevo_pcb->pid, socketConsola);
 			leer_diccionario_consolas();
 			
 			agregar_proceso_a_tabla(nuevo_pcb);
 
-			loguear_pcb(nuevo_pcb,logger);
-			
+			loguear_pcb(nuevo_pcb,logger_kernel_util_extra);
 			agregar_proceso_new(nuevo_pcb);
-
 			list_destroy_and_destroy_elements(lista_de_consola, free);
+
 			return;
             break;
 
@@ -92,11 +91,11 @@ void escuchar_consola(int socketConsola)
 
 		   
             default:
-                log_warning(logger, "Operacion Desconocida");
+                log_warning(logger_kernel_util_extra, "Operacion Desconocida");
                 return;
             break;
         }
-        log_destroy(logger);
+        //log_destroy(logger);
 
     }
 }
