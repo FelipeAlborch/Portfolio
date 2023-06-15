@@ -134,7 +134,8 @@ void actualizar_memoria(int size, int estado);
 void modificar_tabla_proceso(int pid, int index, int base, int size);
 void modificar_tabla_segmentos(t_tabla_segmentos* tabla,int pid, int dir, int index,int base, int size);
 void modificar_segmento(t_segmento* segmento, int base, int size);
-
+void mover_bases(int dir, int base);
+void mover_bases_huecos();
 
 void imprimir_tabla(t_list* lista);
 void imprimir_tabla_gral();
@@ -155,6 +156,7 @@ int buscar_hueco_libre(int size);
 int buscar_hueco_base(int base);
 int base_hueco(int index);
 int buscar_pid(int dir);
+int buscar_base_dir(int dir);
 t_hueco_libre* crear_hueco_libre(int inicio, int tam,int estado);
 
 int first_fit(int size);

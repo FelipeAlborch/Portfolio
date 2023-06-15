@@ -134,7 +134,13 @@ void inicializar_logs(){
     flogger = log_create("logs/file_system.log","Memoria -> FileSystem",true,LOG_LEVEL_TRACE);
 }
 
-
+void inicializar_segmentos(){
+    t_tabla_segmentos* tabla = crear_tabla_segmentos(0,0,0,config_memo.tam_seg_0);
+    tabla_segmentos_gral = list_create();
+    
+    tabla->segmento->size = config_memo.tam_seg_0;
+    list_add_in_index(tabla_segmentos_gral,0,tabla);
+}
 // Lo del memoria conexion: 
 
 
@@ -324,7 +330,27 @@ int worst_fit(int size){
 
     return index;
 }
+void imprimir_tabla(t_list* lista){
+    int size = list_size(lista);
+    for (size_t i = 0; i < size ; i++)
+    {
+        t_segmento* segmentos = list_get(lista,i);
+        log_info(mlogger,"%ld - base: %d, size: %d\n",i,segmentos->base,segmentos->size);
+    } 
+}
 
+void imprimir_tabla_gral(){
+    t_list_iterator* iterador = list_iterator_create(tabla_segmentos_gral);
+    int i = 0;
+
+    while(list_iterator_has_next(iterador)){
+       t_tabla_segmentos* tabla= list_iterator_next(iterador);
+        printf("%d- \tpid: %d, \tdir: %d, \tindex: %d,\tbase: %d,\t size: %d\n",i,tabla->pid,tabla->direcion_fisica,tabla->index,tabla->segmento->base,tabla->segmento->size);
+        i++;
+    
+    }
+    list_iterator_destroy(iterador);
+}
 void imprimir_huecos(){
   
   int inicio;
@@ -343,4 +369,65 @@ void imprimir_huecos(){
   }
   list_iterator_destroy(iterador);
   
+}
+void compactar(/* TO DO */){
+    loggear(INICIO_COMPACTAR,0,NULL,0,0,0);
+ //   recibir_operacion(config_memo.kernel);
+   // sleep(config_memo.compactacion/1000);    
+    bool _es_libre(t_hueco_libre* hueco){
+        return hueco->estado == LIBRE;
+    }
+    list_remove_and_destroy_all_by_condition(huecos_libres,(void*)_es_libre, (void*)free);
+    int tam = list_size(huecos_libres);
+    t_hueco_libre* hueco = list_get(huecos_libres,tam-1);
+    int inicio = hueco->inicio + hueco->tamanio;
+
+    t_hueco_libre* nuevo =crear_hueco_libre(inicio,config_memo.bytes_libres,LIBRE);
+    list_add(huecos_libres,nuevo);
+    
+    sleep(config_memo.compactacion/1000);
+    
+    mover_bases_huecos();
+    
+    loggear(FIN_COMPACTAR,0,NULL,0,0,0);
+}
+void mover_bases(int dir, int base){
+    printf(" dir: %d, base: %d\n",dir,base);
+    bool _es_dir(t_tabla_segmentos* tabla){
+        if (tabla->pid !=0 && dir == tabla->direcion_fisica){
+          modificar_tabla_proceso(tabla->pid,tabla->index,base,tabla->segmento->size);
+          return true;
+        }
+        return false;
+    }
+    bool i =list_any_satisfy(tabla_segmentos_gral,(void*)_es_dir);
+    //if(i){printf("se movio la base\n");}
+      
+}
+void mover_bases_huecos(){
+  t_list_iterator* iterador = list_iterator_create(huecos_libres);
+  t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
+  int inicio;
+  int tam=0;
+  int baseNueva = config_memo.tam_seg_0;
+  int dir =tam + baseNueva; 
+  while (list_iterator_has_next(iterador)) {
+    hueco = list_iterator_next(iterador);
+    inicio = hueco->inicio; 
+    tam = hueco->tamanio;
+    if (inicio >= baseNueva){
+      pthread_mutex_lock(&m_memoria);
+        memcpy(memoria+baseNueva, memoria+inicio, tam);
+      pthread_mutex_unlock(&m_memoria);
+      dir = tam + inicio;
+      mover_bases(dir,baseNueva);
+      hueco->inicio = baseNueva;
+      baseNueva = baseNueva + tam;
+      
+    }
+    
+    //free(hueco);
+  }
+  list_iterator_destroy(iterador);
+  imprimir_huecos();
 }

@@ -71,10 +71,11 @@ void move_out(t_list* lista, int code){
 }
 void* leer_dato(int direccion,int size){
     sleep(config_memo.retardo/1000);
-    int pid = buscar_pid(direccion);
+    
+    int base = buscar_base_dir(direccion);
 	void* info = malloc(size);
     pthread_mutex_lock(&m_memoria);
-        memcpy(info,memoria+direccion,size);
+        memcpy(info,memoria+base,size);
     pthread_mutex_unlock(&m_memoria);
     
 	return info;
@@ -83,14 +84,14 @@ void* leer_dato(int direccion,int size){
 int escribir_dato(int direccion,char* valor){
     sleep(config_memo.retardo/1000);
     
-
     int pid = buscar_pid(direccion);
+    int base = buscar_base_dir(direccion);
     int cero = M_ERROR;
     if (pid != M_ERROR)
     {
         pthread_mutex_lock(&m_memoria);
-        memcpy(memoria+direccion,&valor,strlen(valor)+1);
-        cero = memcmp(memoria+direccion,valor,strlen(valor)+1);
+            memcpy(memoria+base,&valor,strlen(valor)+1);
+            cero = memcmp(memoria+base,valor,strlen(valor)+1);
         pthread_mutex_unlock(&m_memoria);
         if (cero == 0 ){
             return pid;
