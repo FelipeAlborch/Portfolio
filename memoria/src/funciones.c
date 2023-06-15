@@ -56,7 +56,9 @@ void ejecutar_kernel_test(){
     //eliminar_segmento(121,2);
     //liberar_proceso(122);
    // log_trace(klogger,"quiero eliminar el seg 2 %d",pid);
-    imprimir_huecos();
-   // imprimir_tabla_gral();
+   // imprimir_huecos();
+    
     compactar();
+    imprimir_tabla_gral();
+    tablas_compactadas();
 }

@@ -209,7 +209,7 @@ void mostrar_valores_de_configuracion_memoria (){
 
       case FIN_COMPACTAR:
             /*Por cada segmento de cada proceso se deberá imprimir una línea con el siguiente formato:*/
-        log_info(loggerMemoria,"PID: %d - Segmento: %d - Base: %d - Tamaño %d",pid);
+        log_info(loggerMemoria,"PID: %d - Segmento: %d - Base: %d - Tamaño %d",pid,id,base,size);
         break;
 
       case M_READ:
@@ -335,7 +335,9 @@ void imprimir_tabla(t_list* lista){
     for (size_t i = 0; i < size ; i++)
     {
         t_segmento* segmentos = list_get(lista,i);
-        log_info(mlogger,"%ld - base: %d, size: %d\n",i,segmentos->base,segmentos->size);
+       // log_info(mlogger,"%ld - base: %d, size: %d\n",i,segmentos->base,segmentos->size);
+        printf("%ld - base: %d, size: %d\n",i,segmentos->base,segmentos->size);
+    
     } 
 }
 
@@ -370,10 +372,12 @@ void imprimir_huecos(){
   list_iterator_destroy(iterador);
   
 }
-void compactar(/* TO DO */){
-    loggear(INICIO_COMPACTAR,0,NULL,0,0,0);
- //   recibir_operacion(config_memo.kernel);
-   // sleep(config_memo.compactacion/1000);    
+void compactar(){
+    
+    recibir_operacion(config_memo.kernel);
+    loggear(INICIO_COMPACTAR,0,NULL,0,0,0); 
+    sleep(config_memo.compactacion/1000);
+    
     bool _es_libre(t_hueco_libre* hueco){
         return hueco->estado == LIBRE;
     }
@@ -385,14 +389,14 @@ void compactar(/* TO DO */){
     t_hueco_libre* nuevo =crear_hueco_libre(inicio,config_memo.bytes_libres,LIBRE);
     list_add(huecos_libres,nuevo);
     
-    sleep(config_memo.compactacion/1000);
+    //sleep(config_memo.compactacion/1000);
     
     mover_bases_huecos();
     
-    loggear(FIN_COMPACTAR,0,NULL,0,0,0);
+    //loggear(FIN_COMPACTAR,0,NULL,0,0,0);
 }
 void mover_bases(int dir, int base){
-    printf(" dir: %d, base: %d\n",dir,base);
+    
     bool _es_dir(t_tabla_segmentos* tabla){
         if (tabla->pid !=0 && dir == tabla->direcion_fisica){
           modificar_tabla_proceso(tabla->pid,tabla->index,base,tabla->segmento->size);
@@ -401,7 +405,6 @@ void mover_bases(int dir, int base){
         return false;
     }
     bool i =list_any_satisfy(tabla_segmentos_gral,(void*)_es_dir);
-    //if(i){printf("se movio la base\n");}
       
 }
 void mover_bases_huecos(){
@@ -425,9 +428,8 @@ void mover_bases_huecos(){
       baseNueva = baseNueva + tam;
       
     }
-    
-    //free(hueco);
   }
+  //free(hueco);
   list_iterator_destroy(iterador);
   imprimir_huecos();
 }

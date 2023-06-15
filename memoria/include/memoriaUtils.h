@@ -128,6 +128,7 @@ void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos);
 
 
 void compactar();
+void tablas_compactadas();
 void actualizar_memoria(int size, int estado);
 
 

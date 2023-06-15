@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
   
   inicializar_memoria();
   log_info(loggerMemoria, "Esto es la memoria D:");  
-  ejecutar_kernel_test();
+  //ejecutar_kernel_test();
   
   pthread_create(&hilo_fs, NULL, (void *)conectar_fs, NULL);
   pthread_detach(hilo_fs);

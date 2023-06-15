@@ -132,7 +132,7 @@ void create_segment(int pid,int tam,int id){
         respuestas(config_memo.kernel,INICIO_COMPACTAR,NULL);
         log_warning(klogger,"No hay hueco para crear el segmento, hay que compactar");
         compactar();
-        
+        tablas_compactadas();
         return;
     }else{
         modificar_hueco(indice,M_ERROR,tam,OCUPADO);
@@ -173,4 +173,30 @@ void eliminar_segmento(int pid, int id){
    // list_destroy(nueva);
     loggear(DELETE_SEGMENT,pid,NULL,id,0,0);
     log_info(klogger,"Se elimino el segmento %d",id);
+}
+void tablas_compactadas(){
+    t_list* lista = list_create();
+    t_paquete* paquete;
+    //t_list* list_slice(t_list* self, int start, int count);
+    int size = list_size(tabla_segmentos_gral);
+    int i = 1;
+    int n = config_memo.cant_seg;
+    int pid;
+    while(i < size){
+        for(int j = 0; j < n; j++){
+            t_tabla_segmentos* tabla = list_get(tabla_segmentos_gral,i+j);
+            list_add(lista,tabla->segmento);
+            loggear(FIN_COMPACTAR,tabla->pid,NULL,tabla->index,tabla->segmento->size,tabla->segmento->base);
+           pid = tabla->pid;
+        }
+       // printf("\n pid %d \n",pid);
+        paquete = crear_paquete_operacion(INICIO_COMPACTAR);
+        agregar_a_paquete(paquete,&pid,sizeof(int));
+        serializar_tabla_segmentos(paquete,lista);
+        enviar_paquete(paquete,config_memo.kernel);
+        paquete_destroy(paquete); 
+       // imprimir_tabla(lista);
+        i = i + n; 
+        list_clean_and_destroy_elements(lista,free); 
+    }
 }
