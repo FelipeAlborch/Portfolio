@@ -3,6 +3,8 @@
 #include <commons/config.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
 #include <string.h>
 
 typedef struct fs_config {
@@ -17,12 +19,10 @@ typedef struct fs_config {
     int RETARDO_ACCESO_BLOQUE;
 } fs_config;
 
-fs_config *config_create_fs();
+fs_config *config_create_fs_from_file(char *file_path);
 
-fs_config *config_create_fs_from_file(char *);
+void config_print_fs(fs_config *config);
 
-void config_print_fs(fs_config *);
-
-void config_destroy_fs(fs_config *);
+void config_destroy_fs(fs_config *config);
 
 #endif

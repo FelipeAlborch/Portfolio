@@ -4,32 +4,41 @@
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
 #include <commons/string.h>
+#include <commons/log.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <config.h>
 #include <fun.h>
 
 typedef struct FCB {
+    char *file_path;
     char *file_name;
     int file_size;
-    char *direct_ptr;
-    char *indirect_ptr;
+    uint32_t dptr;
+    uint32_t iptr;
 } FCB;
 
-typedef struct FCB_table {
-    char *block_store;
-    int bit_count;
-    int byte_count;
-    int block_size;
-    int block_count;
+typedef struct Superbloque {
+    int BLOCK_SIZE;
+    int BLOCK_COUNT;
+} Superbloque;
+
+typedef struct FS {
+    t_log *log;
+    fs_config *config;
+    char *bloques;
     t_bitarray *bitmap;
-    t_dictionary *index;
-} FCB_table;
+    Superbloque *superbloque;
+} FS;
 
 /**
  * print_cwd - imprime el directorio actual de trabajo.
@@ -37,93 +46,176 @@ typedef struct FCB_table {
 void print_cwd();
 
 /**
- * fcb_table_init - inicializa campos de tabla de control de archivos.
+ * data_byte_count - devuelve la cantidad de bytes que ocupa el almacenamiento de datos.
  * 
- * @param fcb_table: tabla de control de archivos
- * @param block_store_file: archivo de almacenamiento de bloques
- * @param block_size: tamaño de bloque
- * @param block_count: cantidad de bloques
- * @return 0 si se creó correctamente, -1 si ocurrió un error
+ * @param superbloque: superbloque 
+ * @return cantidad de bytes que ocupa el almacenamiento de datos
  */
- int fcb_table_init(FCB_table *fcb_table, char *block_store_file, int block_size, int block_count);
+int data_byte_count(Superbloque *superbloque);
+
+/**
+ * bitmap_byte_count - devuelve la cantidad de bytes que ocupa el bitmap.
+ * 
+ * @param superbloque: superbloque
+ * @return cantidad de bytes que ocupa el bitmap
+ */
+int bitmap_byte_count(Superbloque *superbloque);
+
+/**
+ * fs_create - crea un filesystem.
+ * 
+ * @param config_path: archivo de configuración del sistema de archivos
+ * @return filesystem
+ */
+FS * fs_create(char *config_path);
+
+/**
+ * fs_destroy - destruye un filesystem.
+ * 
+ * @param fs: filesystem
+ */
+void fs_destroy(FS *fs);
 
 /**
  * mmap_file - mapea un archivo en memoria.
  * 
- * @param file_name: nombre del archivo
+ * @param file_path: ruta del archivo
  * @param length: longitud del archivo en bytes
  * @param file_pointer: contenido del archivo
  * @return 0 si se creó correctamente, -1 si ocurrió un error
  */
-int mmap_file_sync(char *file_name, int length, char **file_pointer);
+int mmap_file_sync(char *file_path, int length, char **file_pointer);
 
 /**
- * f_open - busca el archivo recibido por parámetro en la tabla global de archivos abiertos.
- * Si lo encuentra, agrega una entrada a la tabla de archivos abiertos del proceso.
- * Si no lo encuentra, lo crea y agrega una entrada a la tabla global de archivos abiertos
- * y a la tabla de archivos abiertos del proceso.
- *
- * @param global_table: tabla global de archivos abiertos
- * @param process_table: tabla de archivos abiertos del proceso
+ * fcb_create - crea un file control block (FCB) y el archivo asociado.
+ * 
  * @param file_name: nombre del archivo
- * @param flags: banderas de apertura
- * @param mode: modo de apertura
- * @return descriptor de archivo si se abrió o creó correctamente, -1 si ocurrió un error
+ * @param fs: filesystem
+ * @param fcb: puntero al FCB creado
+ * @return 0 si se creó correctamente, -1 si ocurrió un error
  */
-// int f_open(global_table* global_table, process_table* process_table, char* file_name, int flags, mode_t mode);
+int fcb_create(char *file_name, FS *fs, FCB **fcb);
 
 /**
- * f_close - quita la entrada correspondiente al archivo recibido por parámetro
- * de la tabla de archivos abiertos del proceso
- *
- * @param global_table: tabla global de archivos abiertos
- * @param process_table: tabla de archivos abiertos del proceso
- * @param fd: descriptor de archivo
- * @return 0 si se cerró el archivo correctamente, -1 si ocurrió un error
+ * fcb_update - actualiza un file control block (FCB).
+ * 
+ * @param fcb: archivo a actualizar
+ * @return 0 si se actualizó correctamente, -1 si ocurrió un error
  */
-// int f_close(global_table* global_table, process_table* process_table, int fd);
+int fcb_update(FCB *fcb);
 
 /**
- * f_read - lee datos de un archivo
- *
- * @param process_table: tabla de archivos abiertos del proceso
- * @param fd: descriptor de archivo
- * @param buffer: buffer donde se almacenarán los datos leídos
- * @param count: cantidad de bytes a leer
- * @return cantidad de bytes leídos, -1 si ocurrió un error
+ * fcb_create_from_file - crea un file control block (FCB) a partir de un archivo.
+ * 
+ * @param path: ruta del archivo
+ * @param fs: filesystem
+ * @param fcb: puntero al FCB creado
+ * @return 0 si se creó correctamente, -1 si ocurrió un error
  */
-// int f_seek(process_table* process_table, int fd, off_t offset, int whence);
+int fcb_create_from_file(char *path, FS *fs, FCB **fcb);
 
 /**
- * f_truncate - solicita al módulo File System que actualice el tamaño del archivo al nuevo tamaño pasado por parámetro
- *
- * @param process_table: tabla de archivos abiertos del proceso
- * @param fd: descriptor de archivo
- * @param length: nuevo tamaño del archivo
- * @return 0 si la operación se realizó correctamente, -1 si ocurrió un error
+ * fcb_destroy - destruye un file control block (FCB) y el archivo asociado.
+ * 
+ * @param fcb: archivo a destruir
  */
-// int f_truncate(process_table* process_table, int fd, off_t length);
+void fcb_destroy(FCB *fcb);
 
 /**
- * f_read - solicita al módulo File System que lea desde el archivo y guarde los datos leídos en el buffer pasado por parámetro
- *
- * @param process_table: tabla de archivos abiertos del proceso
- * @param fd: descriptor de archivo
- * @param buffer: buffer donde se guardarán los datos leídos
- * @param count: cantidad de bytes a leer
- * @return la cantidad de bytes leídos si la operación se realizó correctamente, -1 si ocurrió un error
+ * fcb_alloc - asigna bloques a un archivo.
+ * 
+ * @param size: tamaño a reservar en archivo
+ * @param fcb: archivo a asignar bloques
+ * @param fs: filesystem
+ * @return 0 si se asignaron correctamente, -1 si ocurrió un error
  */
-// int f_read(process_table* process_table, int fd, void* buffer, size_t count);
+int fcb_alloc(int size, FCB *fcb, FS *fs);
 
 /**
- * f_write - solicita al módulo File System que escriba en el archivo los datos pasados por parámetro
+ * fcb_realloc - redimensiona un archivo
  *
- * @param process_table: tabla de archivos abiertos del proceso
- * @param fd: descriptor de archivo
- * @param buffer: buffer con los datos a escribir
- * @param count: cantidad de bytes a escribir
- * @return la cantidad de bytes escritos si la operación se realizó correctamente, -1 si ocurrió un error
+ * @param new_size: nuevo tamaño del archivo
+ * @param fcb: archivo a redimensionar
+ * @param fs: filesystem
+ * @return 0 si se redimensionó correctamente, -1 si ocurrió un error
  */
-// int f_write(process_table* process_table, int fd, const void* buffer, size_t count);
+int fcb_realloc(int new_size, FCB *fcb, FS *fs);
+
+/**
+ * fcb_dealloc - libera los bloques de un archivo
+ *
+ * @param size: tamaño a liberar en archivo
+ * @param fcb: archivo a liberar
+ * @param fs: filesystem
+ * @return 0 si se liberó correctamente, -1 si ocurrió un error
+ */
+int fcb_dealloc(int size, FCB *fcb, FS *fs);
+
+/**
+ * superbloque_create_from_file - crea un superbloque a partir de un archivo.
+ * 
+ * @param file_path: ruta del archivo
+ * @return puntero al superbloque creado
+ */
+Superbloque * superbloque_create_from_file(char *file_path);
+
+/**
+ * superbloque_destroy - destruye un superbloque.
+ * 
+ * @param superbloque: superbloque
+ */
+void superbloque_destroy(Superbloque *superbloque);
+
+/**
+ * f_open - abre un archivo.
+ * 
+ * @param file_name: nombre del archivo
+ * @param fs: filesystem
+ * @return 0 si se abrió correctamente, -1 si ocurrió un error
+ */
+int f_open(char *file_name, FS *fs);
+
+/**
+ * f_create - crea un archivo.
+ * 
+ * @param file_name: nombre del archivo
+ * @param fs: filesystem
+ * @return 0 si se creó correctamente, -1 si ocurrió un error
+ */
+int f_create(char *file_name, FS *fs);
+
+/**
+ * f_truncate - trunca un archivo.
+ * 
+ * @param file_name: nombre del archivo
+ * @param size: tamaño del archivo
+ * @param fs: filesystem
+ * @return 0 si se truncó correctamente, -1 si ocurrió un error
+ */
+int f_truncate(char *file_name, int size, FS *fs);
+
+/**
+ * f_read - lee un archivo.
+ * 
+ * @param file_name: nombre del archivo
+ * @param offset: offset del archivo
+ * @param size: tamaño del archivo
+ * @param buffer: buffer donde se almacenará el contenido del archivo
+ * @param fs: filesystem
+ * @return 0 si se leyó correctamente, -1 si ocurrió un error
+ */
+int f_read(char *file_name, int offset, int size, void **buffer, FS *fs);
+
+/**
+ * f_write - escribe un archivo.
+ * 
+ * @param file_name: nombre del archivo
+ * @param offset: offset del archivo
+ * @param size: tamaño del archivo
+ * @param buffer: buffer donde se almacenará el contenido del archivo
+ * @param fs: filesystem
+ * @return 0 si se escribió correctamente, -1 si ocurrió un error
+ */
+int f_write(char *file_name, int offset, int size, void *buffer, FS *fs);
 
 #endif
