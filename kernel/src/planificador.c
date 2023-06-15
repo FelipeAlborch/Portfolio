@@ -510,8 +510,6 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 pthread_mutex_unlock(&mutex_fs);
                 
-
-                // SI NO EXISTE, CREARLO
                 archivo = crear_recurso(nombre_recurso, 1);
                 archivo->posicion = 0;
 
