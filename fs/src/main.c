@@ -37,8 +37,8 @@ int main(int argc, char **argv)
 void *kernel_handler(void *arg)
 {
     FS *fs = (FS *)arg;
-
     t_paquete *paquete;
+
     while((fs->socket_accept = conn_accept(fs->socket_listen)) != -1)
     {
         socket_recv(fs->socket_accept, &paquete);
@@ -69,17 +69,25 @@ void init_fs(char *config_path, FS **fs)
 void init_sockets(FS *fs)
 {
     fs->socket_memory = conn_create(CLIENT, fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
+    
+    if (fs->socket_memory == -1) {
+        log_error(fs->log, "No se pudo conectar a memoria en %s:%s", fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
+        // exit(1);
+    } else {
+        t_paquete *paquete = paquete_create(FILE_SYSTEM);
+        write_socket_paquete(fs->socket_memory, paquete);
+        paquete_destroy(paquete);
 
-    t_paquete *paquete = paquete_create(FILE_SYSTEM);
-
-    write_socket_paquete(fs->socket_memory, paquete);
-
-    paquete_destroy(paquete);
-
-    log_info(fs->log, "Conectado a memoria en %s:%s", fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
+        log_info(fs->log, "Conectado a memoria en %s:%s", fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
+    }
 
     fs->socket_listen = conn_create(SERVER, fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
 
+    if (fs->socket_listen == -1) {
+        log_error(fs->log, "No se pudo crear el socket de escucha en %s:%s", fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
+        exit(1);
+    }
+     
     log_info(fs->log, "Escuchando kernel en %s:%s", fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
 }
 
@@ -88,11 +96,9 @@ void init_threads(FS *fs)
     pthread_t thread_id;
 
     int status = pthread_create(&thread_id, NULL, kernel_handler, (void *)fs);
-    if (status != 0) perror("pthread_create");
     assert(status == 0);
 
     pthread_join(thread_id, (void **)&status);
-    if (status != 0) perror("pthread_join");
     assert(status == 0);
 }
 

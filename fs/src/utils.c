@@ -20,7 +20,7 @@ FS *fs_create(char *config_path) {
     fs->config = config_create_fs_from_file(config_path);
 
     print_cwd();
-    // config_print_fs(fs->config);
+    config_print_fs(fs->config);
 
     fs->superbloque = superbloque_create_from_file(fs->config->PATH_SUPERBLOQUE);
     fs->bloques = malloc(data_byte_count(fs->superbloque));

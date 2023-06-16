@@ -5,6 +5,7 @@
 #include <commons/collections/dictionary.h>
 #include <commons/string.h>
 #include <commons/log.h>
+#include <utils/paquete.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
