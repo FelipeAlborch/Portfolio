@@ -423,7 +423,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
 
             list_destroy_and_destroy_elements(lista_contexto_cs, free);
-            //list_destroy(lista_contexto_cs);
+            list_destroy_and_destroy_elements(lista_recepcion_valores, free);
             liberar_contexto_ejecucion(contexto_cs);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);

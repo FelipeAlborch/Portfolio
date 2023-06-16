@@ -181,6 +181,7 @@ void* esperar_tabla_segmentos(pcb* un_pcb)
 			t_list* tabla_de_segmentos = deserializar_tabla_segmentos(segmentos_recibidos);
 			un_pcb->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
 			list_destroy_and_destroy_elements(segmentos_recibidos, free);
+            list_destroy(tabla_de_segmentos);
 		break;
 
 		default:

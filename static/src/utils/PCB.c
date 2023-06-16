@@ -134,8 +134,8 @@ void liberar_pcb(pcb* un_pcb)
     //free(un_pcb->RCX);
     //free(un_pcb->RDX);
     list_destroy_and_destroy_elements(un_pcb->lista_de_instrucciones, (void*)liberar_instruccion);
-    //list_destroy_and_destroy_elements(un_pcb->tabla_de_segmentos, (void*)liberar_segmento);
-    //list_destroy_and_destroy_elements(un_pcb->tabla_archivos_abiertos, (void*)liberar_archivo);
+    list_destroy_and_destroy_elements(un_pcb->tabla_de_segmentos, free);
+    list_destroy_and_destroy_elements(un_pcb->tabla_archivos_abiertos, free);
     list_destroy(un_pcb->recursos_asignados);
 
     //temporal_destroy(un_pcb->llegada_ready);      Estos temporals despues se destruyen
@@ -410,6 +410,9 @@ pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
     list_destroy(lista_de_instrucciones);
     list_destroy(tabla_de_segmentos);
 
+    //list_destroy_and_destroy_elements(lista_de_instrucciones,free);
+    //list_destroy_and_destroy_elements(tabla_de_segmentos,free);        
+
     return contexto_recibido;
 }
 
@@ -446,11 +449,11 @@ void loguear_lista_de_instrucciones(t_list* lista_de_instrucciones, t_log* logge
 
 void* liberar_instruccion(LineaInstruccion* una_instruccion)
 {
-    //free(una_instruccion->identificador);
+    free(una_instruccion->identificador);
     free(una_instruccion->parametros[0]);
     free(una_instruccion->parametros[1]);
     free(una_instruccion->parametros[2]);
-    //free(una_instruccion);
+    free(una_instruccion);
     return NULL;
 }
 

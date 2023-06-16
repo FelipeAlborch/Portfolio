@@ -264,7 +264,53 @@ int main(int argc, char *argv[]) {
     printf("Orden 2 : %d\n", p2->pid);
     printf("Orden 3 : %d\n", p3->pid);
     */
+/*
+    LineaInstruccion* instr1 = malloc(sizeof(LineaInstruccion));
+    instr1->identificador = "WAIT";
+    instr1->parametros[0] = "DISCO";
+    instr1->parametros[1] = "-1";
+    instr1->parametros[2] = "-1";
+    LineaInstruccion* instr2 = malloc(sizeof(LineaInstruccion));
+    instr2->identificador = "SIGNAL";
+    instr2->parametros[0] = "DISCO";
+    instr2->parametros[1] = "-1";
+    instr2->parametros[2] = "-1";
+    LineaInstruccion* instr3 = malloc(sizeof(LineaInstruccion));
+    instr3->identificador = "WAIT";
+    instr3->parametros[0] = "DISCO";
+    instr3->parametros[1] = "-1";
+    instr3->parametros[2] = "-1";
+    t_list* lista_ej = list_create();
+    list_add(lista_ej, instr1);
+    list_add(lista_ej, instr2);
+    list_add(lista_ej, instr3);
+    
+    pcb* pcb_ej = crear_pcb(lista_ej, 1, 10);
+    loguear_pcb(pcb_ej, logger_kernel_util_extra);
 
+    enviar_contexto_ejecucion(pcb_ej, socketCPU, CONTEXTO_EJECUCION);
+
+    switch(recibir_operacion(socketCPU))
+    {
+        t_list* lista_recepcion_valores;
+        pcb* contexto_recibido;
+
+        case WAIT:
+            lista_recepcion_valores = _recibir_paquete(socketCPU);
+            char* nombre_recurso = list_get(lista_recepcion_valores, 0);
+            log_info(logger_planificador_extra,"Nombre de archivo para realizar F_OPEN: %s", nombre_recurso);
+
+            int operacion_fopen = recibir_operacion(socketCPU);
+            t_list* lista_contexto_fopen = _recibir_paquete(socketCPU);
+            pcb* contexto_de_fopen = recibir_contexto_ejecucion(lista_contexto_fopen);
+
+            list_destroy_and_destroy_elements(lista_recepcion_valores,free);
+            list_destroy_and_destroy_elements(lista_contexto_fopen, free);
+            liberar_contexto_ejecucion(contexto_de_fopen);
+        break;
+    
+    }
+*/
 
     pthread_t hiloConsolas; 
     pthread_create(&hiloConsolas, NULL, (void*)esperar_consolas, (void*)socketServicioConsolas);
