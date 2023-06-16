@@ -7,7 +7,7 @@
 void init_fs(char *config_path, FS **fs);
 void init_sockets(FS *fs);
 void init_threads(FS *fs);
-void cleanup(FS *fs);
+void teardown(FS *fs);
 void * kernel_handler(void *fs);
 
 int main(int argc, char **argv)
@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 
     init_threads(fs);
 
-    cleanup(fs);
+    teardown(fs);
     
     return 0;
 }
@@ -104,7 +104,7 @@ void init_threads(FS *fs)
     assert(status == 0);
 }
 
-void cleanup(FS *fs)
+void teardown(FS *fs)
 {
     conn_close(fs->socket_listen);
 
