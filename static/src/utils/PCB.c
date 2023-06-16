@@ -68,14 +68,14 @@ void loguear_pcb(pcb* un_pcb, t_log* logger)
     log_info(logger, "BX = %08x = %s", *un_pcb->BX, BX);
     log_info(logger, "CX = %08x = %s", *un_pcb->CX, CX);
     log_info(logger, "DX = %08x = %s", *un_pcb->DX, DX);
-    log_info(logger, "EAX = %016llx = %s", *un_pcb->EAX, EAX);
-    log_info(logger, "EBX = %016llx = %s", *un_pcb->EBX, EBX);
-    log_info(logger, "ECX = %016llx = %s", *un_pcb->ECX, ECX);
-    log_info(logger, "EDX = %016llx = %s", *un_pcb->EDX, EDX);
-    log_info(logger, "RAX = %016llx = %s", *un_pcb->RAX, RAX);
-    log_info(logger, "RBX = %016llx = %s", *un_pcb->RBX, RBX);
-    log_info(logger, "RCX = %016llx = %s", *un_pcb->RCX, RCX);
-    log_info(logger, "RDX = %016llx = %s", *un_pcb->RDX, RDX);
+    log_info(logger, "EAX = %016llx = %s", (unsigned long long int)*un_pcb->EAX, EAX);
+    log_info(logger, "EBX = %016llx = %s", (unsigned long long int)*un_pcb->EBX, EBX);
+    log_info(logger, "ECX = %016llx = %s", (unsigned long long int)*un_pcb->ECX, ECX);
+    log_info(logger, "EDX = %016llx = %s", (unsigned long long int)*un_pcb->EDX, EDX);
+    log_info(logger, "RAX = %016llx = %s", (unsigned long long int)*un_pcb->RAX, RAX);
+    log_info(logger, "RBX = %016llx = %s", (unsigned long long int)*un_pcb->RBX, RBX);
+    log_info(logger, "RCX = %016llx = %s", (unsigned long long int)*un_pcb->RCX, RCX);
+    log_info(logger, "RDX = %016llx = %s", (unsigned long long int)*un_pcb->RDX, RDX);
 
     free(AX);
     free(BX);
@@ -301,8 +301,8 @@ void serializar_contexto_ejecucion(t_paquete* paquete, pcb* un_pcb)
     int cantidad_de_segmentos = list_size(un_pcb->tabla_de_segmentos);
     agregar_a_paquete(paquete, &cantidad_de_segmentos, sizeof(int));
 
-    int i = 0;
-    for(i; i < cantidad_de_instrucciones; i++)
+    int i;
+    for(i = 0; i < cantidad_de_instrucciones; i++)
     {
         LineaInstruccion* una_instruccion = list_get(un_pcb->lista_de_instrucciones, i);
         agregar_a_paquete(paquete, una_instruccion->identificador, strlen(una_instruccion->identificador)+1);
@@ -485,7 +485,7 @@ void liberar_contexto_ejecucion(pcb* un_contexto)
     //free(un_contexto->RCX);
     //free(un_contexto->RDX);
     list_destroy_and_destroy_elements(un_contexto->lista_de_instrucciones, (void*)liberar_instruccion);
-    list_destroy_and_destroy_elements(un_contexto->tabla_de_segmentos, liberar_segmento);
+    list_destroy_and_destroy_elements(un_contexto->tabla_de_segmentos, (void*)liberar_segmento);
     free(un_contexto);
 }
 

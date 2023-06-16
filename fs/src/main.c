@@ -1,59 +1,62 @@
 #include <commons/memory.h>
-#include <ipc.h>
-#include <utils.h>
-#include <config.h>
 #include <pthread.h>
+#include <config.h>
+#include <utils.h>
+#include <ipc.h>
 
 void init_fs(char *config_path, FS **fs);
-void init_sockets(FS *fs, int *fs_socket, int *mem_socket);
-void init_threads(FS *fs, int fs_socket, int mem_socket);
-void cleanup(FS *fs, int fs_socket, int mem_socket);
-void * kernel_handler(void *socket_fd);
+void init_sockets(FS *fs);
+void init_threads(FS *fs);
+void cleanup(FS *fs);
+void * kernel_handler(void *fs);
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
     FS *fs;
-    int fs_socket;
-    int mem_socket;
 
-    init_fs("fs.config", &fs);
+    if (argc < 2) {
+        if (access("fs.config", F_OK) == 0) {
+            argv[1] = "fs.config";
+        } else {
+            printf("No se encontró el archivo de configuración\n");
+            return 1;
+        }
+    }
 
-    init_sockets(fs, &fs_socket, &mem_socket);
+    init_fs(argv[1], &fs);
 
-    init_threads(fs, fs_socket, mem_socket);
+    init_sockets(fs);
 
-    cleanup(fs, fs_socket, mem_socket);
-        
+    init_threads(fs);
+
+    cleanup(fs);
+    
     return 0;
 }
 
 void *kernel_handler(void *arg)
 {
-    int fs_socket = *(int *)arg;
-    free(arg);
+    FS *fs = (FS *)arg;
 
-    t_log *log = log_create("fs.log", "FS", 1, LOG_LEVEL_INFO);
-
-    int kr_socket;
-    while((kr_socket = conn_accept(fs_socket)) != -1)
+    t_paquete *paquete;
+    while((fs->socket_accept = conn_accept(fs->socket_listen)) != -1)
     {
-        char buf[100] = {0};
+        socket_recv(fs->socket_accept, &paquete);
 
-        read_socket(kr_socket, buf, sizeof(buf));
+        switch (paquete->codigo_operacion)
+        {
+            case PAQUETE:
+                // TODO: Implementar
+                break;
+            
+            default:
+                break;
+        }
 
-        log_info(log, "Unknown data from kernel:%s\n", mem_hexstring(buf, sizeof(buf)));
+        conn_close(fs->socket_accept);
 
-        // TODO: recibir paquetes de kernel
-        // dispatchear instrucciones kernel
-        // segun la instruccion crear thread
-        // para manejar memoria y responder al kernel
-
-        conn_close(kr_socket);
-
-        if (!conn_is_open(fs_socket)) break;
+        if (!conn_is_open(fs->socket_listen)) break;
     }
-
-    log_destroy(log);
 
     pthread_exit((void *) 0);
 }
@@ -63,28 +66,28 @@ void init_fs(char *config_path, FS **fs)
     *fs = fs_create(config_path);
 }
 
-void init_sockets(FS *fs, int *fs_socket, int *mem_socket)
+void init_sockets(FS *fs)
 {
-    *mem_socket = conn_create(CLIENT, fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
+    fs->socket_memory = conn_create(CLIENT, fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
 
     t_paquete *paquete = paquete_create(FILE_SYSTEM);
 
-    write_socket_paquete(*mem_socket, paquete);
+    write_socket_paquete(fs->socket_memory, paquete);
 
     paquete_destroy(paquete);
 
     log_info(fs->log, "Conectado a memoria en %s:%s", fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
 
-    *fs_socket = conn_create(SERVER, fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
+    fs->socket_listen = conn_create(SERVER, fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
 
     log_info(fs->log, "Escuchando kernel en %s:%s", fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
 }
 
-void init_threads(FS *fs, int fs_socket, int mem_socket)
+void init_threads(FS *fs)
 {
     pthread_t thread_id;
 
-    int status = pthread_create(&thread_id, NULL, kernel_handler, (void *)alloc_int(fs_socket));
+    int status = pthread_create(&thread_id, NULL, kernel_handler, (void *)fs);
     if (status != 0) perror("pthread_create");
     assert(status == 0);
 
@@ -93,11 +96,11 @@ void init_threads(FS *fs, int fs_socket, int mem_socket)
     assert(status == 0);
 }
 
-void cleanup(FS *fs, int fs_socket, int mem_socket)
+void cleanup(FS *fs)
 {
-    conn_close(fs_socket);
+    conn_close(fs->socket_listen);
 
-    conn_close(mem_socket);
+    conn_close(fs->socket_memory);
 
     fs_destroy(fs);
 }

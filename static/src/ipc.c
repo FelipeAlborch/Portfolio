@@ -164,6 +164,19 @@ t_paquete *read_socket_paquete(int socket_fd)
     return paquete;
 }
 
+int socket_recv(int socket_fd, t_paquete **paquete) {
+    *paquete = crear_paquete();
+    int n = recv(socket_fd, &(*paquete)->codigo_operacion, sizeof((*paquete)->codigo_operacion), MSG_WAITALL);
+    if(n == -1) return -1;
+    (*paquete)->buffer = malloc(sizeof(t_buffer));
+    n = recv(socket_fd, &(*paquete)->buffer->size, sizeof((*paquete)->buffer->size), MSG_WAITALL);
+    if(n == -1) return -1;
+    (*paquete)->buffer->stream = malloc((*paquete)->buffer->size);
+    n = recv(socket_fd, (*paquete)->buffer->stream, (*paquete)->buffer->size, MSG_WAITALL);
+    if(n == -1) return -1;
+    return 0;
+}
+
 t_list *read_socket_tlv_list(int socket_fd)
 {
     t_list *tlv_list = list_create();

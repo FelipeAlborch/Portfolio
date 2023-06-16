@@ -38,6 +38,9 @@ typedef struct FS {
     char *bloques;
     t_bitarray *bitmap;
     Superbloque *superbloque;
+    int socket_listen;
+    int socket_accept;
+    int socket_memory;
 } FS;
 
 /**
