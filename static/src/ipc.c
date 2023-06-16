@@ -150,7 +150,7 @@ char* read_socket_string(int socket_fd)
 
 t_paquete *read_socket_paquete(int socket_fd)
 {
-    t_paquete *paquete = crear_paquete();
+    t_paquete *paquete = paquete_create(PAQUETE);
     int n = recv(socket_fd, &paquete->codigo_operacion, sizeof(paquete->codigo_operacion), MSG_WAITALL);
     assert(n >= 0);
 
@@ -165,7 +165,7 @@ t_paquete *read_socket_paquete(int socket_fd)
 }
 
 int socket_recv(int socket_fd, t_paquete **paquete) {
-    *paquete = crear_paquete();
+    *paquete = paquete_create(PAQUETE);
     int n = recv(socket_fd, &(*paquete)->codigo_operacion, sizeof((*paquete)->codigo_operacion), MSG_WAITALL);
     if(n == -1) return -1;
     (*paquete)->buffer = malloc(sizeof(t_buffer));
