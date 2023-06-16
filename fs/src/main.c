@@ -53,6 +53,8 @@ void *kernel_handler(void *arg)
                 break;
         }
 
+        paquete_destroy(paquete);
+
         conn_close(fs->socket_accept);
 
         if (!conn_is_open(fs->socket_listen)) break;
