@@ -167,7 +167,8 @@ int conectar_con_memoria(config_de_kernel configuracion_kernel){
 	enviar_paquete(conectar, socketMemoria);
     log_info(logger, "Mensaje enviado!");
     
-	eliminar_paquete(conectar);
+	free(conectar->buffer);
+	free(conectar);
 	log_destroy(logger);
 	
 	return socketMemoria;

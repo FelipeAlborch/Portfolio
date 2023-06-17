@@ -234,6 +234,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
             contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
             proceso_en_ejecucion = desalojar_proceso_en_exec();
 
+            if(!es_fifo)
+            {
+                temporal_destroy(proceso_en_ejecucion->tiempo_ejecucion);
+            }
+
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
             loguear_pcb(proceso_en_ejecucion,logger_planificador_extra);
             log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < SUCCESS >", proceso_en_ejecucion->pid);
