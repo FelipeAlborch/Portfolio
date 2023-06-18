@@ -405,11 +405,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 case INICIO_COMPACTAR:
                     
                     enviar_operacion(socketMemoria, INICIO_COMPACTAR);
-                    int rta_memoria = recibir_operacion(socketMemoria);
-                    t_list* valores_de_todos_segmentos = _recibir_paquete(socketMemoria);
-                    actualizar_tablas_segmentos(valores_de_todos_segmentos);
-
-                    list_destroy(valores_de_todos_segmentos);
+                    log_info(logger_planificador_extra, "Compactacion: ");
+                    log_info(logger_kernel_util_obligatorio, "< Se solicitó compactación >");
+                    // ACA HAY QUE PONER ALGO PARA SABER SI HAY OPERACION ENTRE FILESYSTEM Y MEMORIA
+                    
+                    actualizar_tablas_segmentos();
 
                     goto crear_segmento;
 
