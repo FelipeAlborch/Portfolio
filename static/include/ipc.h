@@ -57,6 +57,8 @@ int write_socket_string(int, char *);
 
 int write_socket_paquete(int, t_paquete *);
 
+int socket_send(int socket_fd, t_paquete *paquete);
+
 int write_socket_tlv_list(int, t_list *);
 
 t_paquete *paquete_create(int);

@@ -4,6 +4,7 @@
 #include <utils.h>
 #include <ipc.h>
 
+void validate_args(int argc, char **argv);
 void init_fs(char *config_path, FS **fs);
 void init_sockets(FS *fs);
 void init_threads(FS *fs);
@@ -14,14 +15,7 @@ int main(int argc, char **argv)
 {
     FS *fs;
 
-    if (argc < 2) {
-        if (access("fs.config", F_OK) == 0) {
-            argv[1] = "fs.config";
-        } else {
-            printf("No se encontró el archivo de configuración\n");
-            return 1;
-        }
-    }
+    validate_args(argc, argv);
 
     init_fs(argv[1], &fs);
 
@@ -39,9 +33,18 @@ void *kernel_handler(void *arg)
     FS *fs = (FS *)arg;
     t_paquete *paquete;
 
-    while((fs->socket_accept = conn_accept(fs->socket_listen)) != -1)
+    fs->socket_accept = conn_accept(fs->socket_listen);
+    if (fs->socket_accept == -1) {
+        log_error(fs->log, "Error al aceptar conexión");
+        pthread_exit((void *) 1);
+    }
+
+    while(conn_is_open(fs->socket_accept))
     {
-        socket_recv(fs->socket_accept, &paquete);
+        if (socket_recv(fs->socket_accept, &paquete) == -1) {
+            log_error(fs->log, "Error al recibir paquete");
+            continue;
+        }
 
         switch (paquete->codigo_operacion)
         {
@@ -54,13 +57,21 @@ void *kernel_handler(void *arg)
         }
 
         paquete_destroy(paquete);
-
-        conn_close(fs->socket_accept);
-
-        if (!conn_is_open(fs->socket_listen)) break;
     }
 
     pthread_exit((void *) 0);
+}
+
+void validate_args(int argc, char **argv)
+{
+    if (argc < 2) {
+        if (access("fs.config", F_OK) == 0) {
+            argv[1] = "fs.config";
+        } else {
+            printf("No se encontró el archivo de configuración\n");
+            exit(1);
+        }
+    }
 }
 
 void init_fs(char *config_path, FS **fs)
