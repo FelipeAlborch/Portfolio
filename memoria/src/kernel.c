@@ -129,11 +129,13 @@ void create_segment(int pid,int tam,int id){
     }
     int indice =buscar_hueco_libre(tam);
     if(indice == -2){
-        respuestas(config_memo.kernel,INICIO_COMPACTAR,NULL);
+        //respuestas(config_memo.kernel,INICIO_COMPACTAR,NULL);
+        enviar_operacion(config_memo.kernel, INICIO_COMPACTAR);
         log_warning(klogger,"No hay hueco para crear el segmento, hay que compactar");
         compactar();
         tablas_compactadas();
-        respuestas(config_memo.kernel,FIN_COMPACTAR,NULL);
+        //respuestas(config_memo.kernel,FIN_COMPACTAR,NULL);
+        enviar_operacion(config_memo.kernel, FIN_COMPACTAR);
         return;
     }else{
         modificar_hueco(indice,M_ERROR,tam,OCUPADO);
