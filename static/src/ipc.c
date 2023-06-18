@@ -95,9 +95,9 @@ int conn_close(int socket_fd)
 int conn_is_open(int socket_fd) {
     int error = 0;
     socklen_t len = sizeof(error);
-    getsockopt(socket_fd, SOL_SOCKET, SO_ERROR, &error, &len);
-    if (error == -1) return false;
-    return true;
+    int ret = getsockopt(socket_fd, SOL_SOCKET, SO_ERROR, &error, &len);
+    if (ret != 0) return 0;
+    return error == 0;
 }
 
 void conn_close_sockets(t_queue *sockets)

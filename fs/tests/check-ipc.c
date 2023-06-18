@@ -22,15 +22,17 @@ void *clients_handler_fs(void *arg)
     if (accept_socket == -1) perror("conn_accept");
     queue_push(g_sockets, (void *)alloc_int(accept_socket));
     
-    while(conn_is_open(accept_socket) && conn_is_open(listen_socket))
+    while(conn_is_open(accept_socket))
     {
         if (socket_recv(accept_socket, &paquete) == -1) perror("socket_recv paquete");
 
         if (socket_send(accept_socket, paquete) == -1) perror("socket_send paquete");
 
         if (paquete != NULL) paquete_destroy(paquete);
+
+        if (!conn_is_open(listen_socket)) break;
     }
-    // if (conn_close(accept_socket) == -1) perror("conn_close accept_socket");
+    if (conn_close(accept_socket) == -1) perror("conn_close accept_socket");
 
     pthread_exit((void *) 0);
 }
@@ -68,13 +70,13 @@ void ipc_unchecked_setup(void)
     int *server_socket = malloc(sizeof(int));
     g_sockets = queue_create();
 
-    // *server_socket = conn_create(SERVER, LOCALHOST, PORT_5000);
+    *server_socket = conn_create(SERVER, LOCALHOST, PORT_5000);
 
-    // queue_push(g_sockets, (void *)server_socket);
+    queue_push(g_sockets, (void *)server_socket);
 
-    // pthread_create(&thread, NULL, clients_handler, (void *)server_socket);
+    pthread_create(&thread, NULL, clients_handler, (void *)server_socket);
 
-    // pthread_detach(thread);
+    pthread_detach(thread);
 
     *server_socket = conn_create(SERVER, LOCALHOST, PORT_6000);
 
@@ -194,7 +196,7 @@ Suite *ipc_test_suite(void)
     Suite *s = suite_create(__FILE__);
     TCase *tc = tcase_create(__FILE__);
     tcase_add_test(tc, test_client_server_connection);
-    // tcase_add_test(tc, test_client_server_echo);
+    tcase_add_test(tc, test_client_server_echo);
     tcase_add_test(tc, test_socket_recv_paquete);
     tcase_add_unchecked_fixture(tc, ipc_unchecked_setup, ipc_unchecked_teardown);
     suite_add_tcase(s, tc);
