@@ -30,7 +30,7 @@ int conn_create(Host host_type, char *ip, char *port)
             perror("socket error");
             continue;
         }
-
+        setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int));
         if (host_type == CLIENT)
         {
             status = connect(socket_fd, p->ai_addr, p->ai_addrlen);
