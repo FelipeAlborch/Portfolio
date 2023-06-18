@@ -122,24 +122,24 @@ void create_segment(int pid,int tam,int id){
 
     log_debug(klogger,"Por crear el segmento %d del proceso %d de %d",id,pid,tam);
     if ( bytes < tam){
-        respuestas(config_memo.kernel,OUT_OF_MEMORY,NULL);
+        //respuestas(config_memo.kernel,OUT_OF_MEMORY,NULL);
         log_error(klogger,"No hay memoria suficiente para crear el segmento");
         loggear(OUT_OF_MEMORY,pid,NULL,tam,0,0);
         return;
     }
     int indice =buscar_hueco_libre(tam);
     if(indice == -2){
-        respuestas(config_memo.kernel,INICIO_COMPACTAR,NULL);
+        //respuestas(config_memo.kernel,INICIO_COMPACTAR,NULL);
         log_warning(klogger,"No hay hueco para crear el segmento, hay que compactar");
         compactar();
-        tablas_compactadas();
-        respuestas(config_memo.kernel,FIN_COMPACTAR,NULL);
+/*         tablas_compactadas();
+        respuestas(config_memo.kernel,FIN_COMPACTAR,NULL); */
         return;
     }else{
         modificar_hueco(indice,M_ERROR,tam,OCUPADO);
         int base = base_hueco(indice);
         modificar_tabla_proceso(pid,id,base,tam);
-        respuestas(config_memo.kernel,CREATE_SEGMENT,base);
+        //respuestas(config_memo.kernel,CREATE_SEGMENT,base);
         log_info(klogger,"Se creo el segmento %d",id);
     
         loggear(CREATE_SEGMENT,pid,NULL,id,tam,base);
@@ -171,7 +171,8 @@ void eliminar_segmento(int pid, int id){
         paquete_destroy(paquete);
         imprimir_tabla(nueva);
     }
-   // list_destroy(nueva);
+    //list_destroy_and_destroy_elements(nueva,(void*)liberar_t_segmento);
+    list_clean(nueva);
     loggear(DELETE_SEGMENT,pid,NULL,id,0,0);
     log_info(klogger,"Se elimino el segmento %d",id);
 }

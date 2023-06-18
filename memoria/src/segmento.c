@@ -37,13 +37,13 @@ t_segmento* crear_segmento(int base, int size){
 }
 
 t_tabla_segmentos* crear_tabla_segmentos(int pid, int index, int base, int size){
-	t_tabla_segmentos* tabla_seg = malloc(sizeof(t_tabla_segmentos));
+	t_tabla_segmentos* tabla_seg = calloc(1,sizeof(t_tabla_segmentos));
     int dir= base + size;
     
     tabla_seg->pid = pid;
     tabla_seg->direcion_fisica=dir;
     tabla_seg->index=index;
-    tabla_seg->segmento = malloc(sizeof(t_segmento));
+    tabla_seg->segmento = calloc(1,sizeof(t_segmento));
     tabla_seg->segmento->base=base;
     tabla_seg->segmento->size=size;  
     //= crear_segmento(base,size); 
@@ -76,7 +76,7 @@ t_list* crear_tabla_proceso(int pid){
 }
 
 t_hueco_libre* crear_hueco_libre(int inicio, int tam, int estado){
-    t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
+    t_hueco_libre* hueco = calloc(1,sizeof(t_hueco_libre));
     hueco->inicio = inicio;
     hueco->tamanio = tam;
     hueco->estado = estado;
@@ -143,7 +143,8 @@ void* buscar_en_tabla_id(int pid, int id){
     
     bool _buscar_en_tabla (t_tabla_segmentos* tabla) {
         if(tabla->pid == pid && tabla->index == id){
-            tabla1= crear_tabla_segmentos(tabla->pid,tabla->index,tabla->segmento->base,tabla->segmento->size);
+            //tabla1= crear_tabla_segmentos(tabla->pid,tabla->index,tabla->segmento->base,tabla->segmento->size);
+            tabla1= tabla;
             return true;
         }else{
             return false;
@@ -155,8 +156,9 @@ void* buscar_en_tabla_id(int pid, int id){
     //printf("El base es: %d\n",tabla1->segmento->base);
     if (!oki) {
         log_error(mlogger,"No se encontro el segmento");
-        tabla1= crear_tabla_segmentos(M_ERROR,M_ERROR,M_ERROR,M_ERROR);
-        return tabla1;
+        //tabla1= crear_tabla_segmentos(M_ERROR,M_ERROR,M_ERROR,M_ERROR);
+        return NULL;
+        //return tabla1;
     }
     return tabla1;
 }

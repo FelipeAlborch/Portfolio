@@ -60,7 +60,7 @@ void liberar_memoria(){
     log_destroy(mlogger);
 };
 void liberar_listas(){
-    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)liberar_t_segmento);
+    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)free);
     list_destroy_and_destroy_elements(huecos_libres,(void*)free);
     //list_destroy(huecos_libres);
     log_debug(mlogger,"listas liberadas");
@@ -128,7 +128,7 @@ void inicializar_memoria(){
 
 void inicializar_logs(){
     loggerMemoria = log_create("logs/memoria.log","Memoria",true,LOG_LEVEL_TRACE);
-    mlogger = log_create("logs/info.log","Info Memoria",true,LOG_LEVEL_TRACE);
+    mlogger = log_create("logs/info.log","Info Memoria",false,LOG_LEVEL_TRACE);
     klogger = log_create("logs/kernel.log","Memoria -> Kernel",true,LOG_LEVEL_TRACE);
     clogger = log_create("logs/cpu.log","Memoria -> CPU",true,LOG_LEVEL_TRACE);
     flogger = log_create("logs/file_system.log","Memoria -> FileSystem",true,LOG_LEVEL_TRACE);
@@ -365,6 +365,7 @@ void imprimir_huecos(){
   t_list_iterator* iterador = list_iterator_create(huecos_libres);
   pthread_mutex_unlock(&m_huecos_libres);
   t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
+  log_debug(klogger,"Listado de Huecos libres: %d\n",list_size(huecos_libres));
   while (list_iterator_has_next(iterador)) {
     hueco = list_iterator_next(iterador);
     inicio = hueco->inicio; 
@@ -373,14 +374,15 @@ void imprimir_huecos(){
     log_info(klogger,"Hueco: %d - Base: %d  - Tamaño: %d - Estado: %d",list_iterator_index(iterador),inicio,tam,estado);
     //free(hueco);
   }
+  printf("\n");
   list_iterator_destroy(iterador);
   
 }
 void compactar(){
-    
-    recibir_operacion(config_memo.kernel);
+    imprimir_huecos();
+/*     recibir_operacion(config_memo.kernel);
     loggear(INICIO_COMPACTAR,0,NULL,0,0,0); 
-    sleep(config_memo.compactacion/1000);
+    sleep(config_memo.compactacion/1000); */
     
     bool _es_libre(t_hueco_libre* hueco){
         return hueco->estado == LIBRE;
@@ -413,7 +415,7 @@ void mover_bases(int dir, int base){
 }
 void mover_bases_huecos(){
   t_list_iterator* iterador = list_iterator_create(huecos_libres);
-  t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
+  t_hueco_libre* hueco = calloc(0,sizeof(t_hueco_libre));
   int inicio;
   int tam=0;
   int baseNueva = config_memo.tam_seg_0;

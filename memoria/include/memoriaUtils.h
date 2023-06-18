@@ -81,6 +81,7 @@ void conectar();
 void conectar_cpu();
 void conectar_kernel();
 void conectar_fs();
+int esperar_clienteM(int socket_servidor);
 
 void ejecutar_kernel();
 void ejecutar_cpu();
