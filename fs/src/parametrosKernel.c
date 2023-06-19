@@ -64,7 +64,7 @@ t_parametros_kernel *deserializar_parametros_fread(t_buffer *buffer)
     return params;
 }
 
-t_parametros_kernel *deserializar_parametros_write(t_buffer *buffer)
+t_parametros_kernel *deserializar_parametros_fwrite(t_buffer *buffer)
 {
     int offset = 0;
     int tamanio_nombre;

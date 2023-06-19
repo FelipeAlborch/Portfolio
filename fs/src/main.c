@@ -3,6 +3,7 @@
 #include <config.h>
 #include <utils.h>
 #include <ipc.h>
+#include <parametrosKernel.h>
 
 void validate_args(int argc, char **argv);
 void init_fs(char *config_path, FS **fs);
@@ -32,6 +33,7 @@ void *kernel_handler(void *arg)
 {
     FS *fs = (FS *)arg;
     t_paquete *paquete;
+    t_parametros_kernel *parametros;
 
     fs->socket_accept = conn_accept(fs->socket_listen);
     if (fs->socket_accept == -1)
@@ -51,29 +53,75 @@ void *kernel_handler(void *arg)
         switch (paquete->codigo_operacion)
         {
         case ABRIR_ARCHIVO:
+        {
             log_info(fs->log, "[ABRIR_ARCHIVO]");
-            int detalle = 0; // 0 = ARCHIVO EXISTE, -1 = ARCHIVO NO EXISTE
-            // TODO: handle crear archivo
-            send(fs->socket_accept, &detalle, sizeof(int), 0);
+
+            int res = -1; // 0 = ARCHIVO EXISTE, -1 = ARCHIVO NO EXISTE
+            parametros = deserializar_parametros_fopen(paquete->buffer);
+            res = f_open(parametros->nombre_archivo, fs);
+
+            send(fs->socket_accept, &res, sizeof(int), 0);
 
             break;
+        }
         case CREAR_ARCHIVO:
+        {
             log_info(fs->log, "[CREAR_ARCHIVO]");
 
-            // TODO: handle crear archivo
+            int res = -1; // 0 = OK, -1 = ERROR
+            parametros = deserializar_parametros_fcreate(paquete->buffer);
+            res = f_create(parametros->nombre_archivo, fs);
 
-            int ack = 0; // 0 = OK, -1 = ERROR
-            send(fs->socket_accept, &ack, sizeof(int), 0);
+            send(fs->socket_accept, &res, sizeof(int), 0);
+
             break;
+        }
         case TRUNCAR_ARCHIVO:
+        {
             log_info(fs->log, "[TRUNCAR_ARCHIVO]");
+
+            int res = -1; // 0 = OK, -1 = ERROR
+            parametros = deserializar_parametros_ftruncate(paquete->buffer);
+            res = f_truncate(parametros->nombre_archivo, parametros->tamanio, fs);
+
+            send(fs->socket_accept, &res, sizeof(int), 0);
+
             break;
+        }
         case LEER_ARCHIVO:
+        {
             log_info(fs->log, "[LEER_ARCHIVO]");
+
+            int res_fs = -1;  // 0 = OK, -1 = ERROR
+            int res_mem = -1; // 0 = OK, -1 = ERROR
+            parametros = deserializar_parametros_fread(paquete->buffer);
+            char *buff = malloc(parametros->tamanio);
+            res_fs = f_read(parametros->nombre_archivo, parametros->posicion, parametros->tamanio, buff, fs);
+            send(fs->socket_accept, &res_fs, sizeof(int), 0);
+
+            // TODO: escribir el contenido de buff en direccion de memoria
+            // res_mem = escribir_memoria(&buff, parametros->posicion, parametros->tamanio);
+            send(fs->socket_accept, &res_mem, sizeof(int), 0);
+
             break;
+        }
         case ESCRIBIR_ARCHIVO:
+        {
             log_info(fs->log, "[ESCRIBIR_ARCHIVO]");
+
+            int res_fs = -1;  // 0 = OK, -1 = ERROR
+            int res_mem = -1; // 0 = OK, -1 = ERROR
+            parametros = deserializar_parametros_fwrite(paquete->buffer);
+            char *buff = malloc(parametros->tamanio);
+            // TODO: leer de direccion de memoria y guardar en buff
+            // res_mem = leer_memoria(&buff, parametros->posicion, parametros->tamanio);
+            send(fs->socket_accept, &res_mem, sizeof(int), 0);
+
+            res_fs = f_write(parametros->nombre_archivo, parametros->posicion, parametros->tamanio, buff, fs);
+            send(fs->socket_accept, &res_fs, sizeof(int), 0);
+
             break;
+        }
         default:
             log_info(fs->log, "[OPERACION_DESCONOCIDA]");
             break;
@@ -81,6 +129,8 @@ void *kernel_handler(void *arg)
 
         paquete_destroy(paquete);
     }
+
+    parametros_destroy(parametros);
 
     pthread_exit((void *)0);
 }
