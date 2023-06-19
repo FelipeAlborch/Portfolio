@@ -417,7 +417,6 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
     return;
 }
 
-
 bool archivo_esta_abierto(char* archivo)
 {
     // contador de procesos que tienen el archivo abierto
