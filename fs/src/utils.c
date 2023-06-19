@@ -306,8 +306,7 @@ int f_create(char *file_name, FS *fs) {
     if (access(file_path, F_OK) == 0) {
         log_warning(fs->log, "Ya existe el archivo: %s", file_name);
         free(file_path);
-        // return -1;
-        return 0;
+        return -1;
     }
     FCB *fcb;
     fcb_create(file_path, fs, &fcb);
