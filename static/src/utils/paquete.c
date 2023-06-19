@@ -54,7 +54,9 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente)
 
 	send(socket_cliente, a_enviar, bytes, 0);
 
-	free(a_enviar);
+	// FIXME: probablemente haya memleaks por comentar esta linea. 
+	// la comenté para evitar un double-free al correr cpu.
+	// free(a_enviar);
 }
 
 t_list* _recibir_paquete(int socket_cliente)

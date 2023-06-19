@@ -50,33 +50,32 @@ void *kernel_handler(void *arg)
 
         switch (paquete->codigo_operacion)
         {
-            log_info(log, "Operacion de kernel: %d", operacion_de_cpu);
         case ABRIR_ARCHIVO:
-            log_info(log, "[ABRIR_ARCHIVO]");
+            log_info(fs->log, "[ABRIR_ARCHIVO]");
             int detalle = 0; // 0 = ARCHIVO EXISTE, -1 = ARCHIVO NO EXISTE
             // TODO: handle crear archivo
-            send(kr_socket, &detalle, sizeof(int), 0);
+            send(fs->socket_accept, &detalle, sizeof(int), 0);
 
             break;
         case CREAR_ARCHIVO:
-            log_info(log, "[CREAR_ARCHIVO]");
+            log_info(fs->log, "[CREAR_ARCHIVO]");
 
             // TODO: handle crear archivo
 
             int ack = 0; // 0 = OK, -1 = ERROR
-            send(kr_socket, &ack, sizeof(int), 0);
+            send(fs->socket_accept, &ack, sizeof(int), 0);
             break;
         case TRUNCAR_ARCHIVO:
-            log_info(log, "[TRUNCAR_ARCHIVO]");
+            log_info(fs->log, "[TRUNCAR_ARCHIVO]");
             break;
         case LEER_ARCHIVO:
-            log_info(log, "[LEER_ARCHIVO]");
+            log_info(fs->log, "[LEER_ARCHIVO]");
             break;
         case ESCRIBIR_ARCHIVO:
-            log_info(log, "[ESCRIBIR_ARCHIVO]");
+            log_info(fs->log, "[ESCRIBIR_ARCHIVO]");
             break;
         default:
-            log_info(log, "[OPERACION_DESCONOCIDA]");
+            log_info(fs->log, "[OPERACION_DESCONOCIDA]");
             break;
         }
 
