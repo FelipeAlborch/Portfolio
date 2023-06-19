@@ -25,7 +25,7 @@ pcb* crear_pcb(t_list* lista_de_instrucciones, int p_id, int estimado_rafaga)
 
     proceso->estimado_prox_rafaga = estimado_rafaga;
     proceso->tiempo_io = 0;
-    proceso->lista_de_instrucciones = list_duplicate(lista_de_instrucciones);
+    proceso->lista_de_instrucciones = lista_de_instrucciones;
     proceso->tabla_de_segmentos = list_create();
     proceso->tabla_archivos_abiertos = list_create();
     proceso->recursos_asignados = list_create();
@@ -403,12 +403,12 @@ pcb* recibir_contexto_ejecucion(t_list* valores_contexto_enviado)
 
     contexto_recibido->tiempo_io = *(int*)list_get(valores_contexto_enviado, valores_restantes + 14);
 
-    contexto_recibido->lista_de_instrucciones = list_duplicate(lista_de_instrucciones);
+    contexto_recibido->lista_de_instrucciones = lista_de_instrucciones;/*list_duplicate(lista_de_instrucciones);*/
 
-    contexto_recibido->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
+    contexto_recibido->tabla_de_segmentos = tabla_de_segmentos; /*list_duplicate(tabla_de_segmentos);*/
 
-    list_destroy(lista_de_instrucciones);
-    list_destroy(tabla_de_segmentos);
+    //list_destroy(lista_de_instrucciones);
+    //list_destroy(tabla_de_segmentos);
 
     //list_destroy_and_destroy_elements(lista_de_instrucciones,free);
     //list_destroy_and_destroy_elements(tabla_de_segmentos,free);        

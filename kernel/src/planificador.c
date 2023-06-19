@@ -462,14 +462,14 @@ void ejecutar(pcb* proceso_a_ejecutar)
             t_list* valores_tras_eliminacion = _recibir_paquete(socketMemoria);
             t_list* tabla_tras_eliminacion = deserializar_tabla_segmentos(valores_tras_eliminacion);
             list_destroy_and_destroy_elements(proceso_a_ejecutar->tabla_de_segmentos,free);
-            proceso_a_ejecutar->tabla_de_segmentos = list_duplicate(tabla_tras_eliminacion);
+            proceso_a_ejecutar->tabla_de_segmentos = tabla_tras_eliminacion;
 
             leer_segmentos(proceso_a_ejecutar);
             
-
+            //list_destroy_and_destroy_elements(tabla_tras_eliminacion, free);
             list_destroy_and_destroy_elements(valores_tras_eliminacion,free);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
-            //list_destroy(lista_recepcion_valores);
+            list_destroy_and_destroy_elements(lista_contexto_ds, free);
             liberar_contexto_ejecucion(contexto_ds);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
@@ -504,6 +504,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 pthread_mutex_lock(&mutex_fs);
                 
                 enviar_paquete(paquete_a_fs, socketFS);
+                eliminar_paquete(paquete_a_fs);
                 
                 int rta1;
                 int rta2;
@@ -644,6 +645,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
 
                 enviar_paquete(paquete_fread, socketFS);
+                eliminar_paquete(paquete_fread);
 
                 pthread_t* hilo_fread;
                 pthread_create(&hilo_fread, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
@@ -681,6 +683,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 
                 enviar_paquete(paquete_fwrite, socketFS);
+                eliminar_paquete(paquete_fwrite);
 
                 pthread_t* hilo_fwrite;
                 pthread_create(&hilo_fwrite, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
@@ -713,6 +716,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 
                 enviar_paquete(paquete_ftruncate, socketFS);
+                eliminar_paquete(paquete_ftruncate);
 
                 pthread_t* hilo_ftruncate;
                 pthread_create(&hilo_ftruncate, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
