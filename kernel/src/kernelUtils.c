@@ -466,12 +466,16 @@ void esperar_listo_de_fs(char* nombre_recurso)
 
     log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_desalojado->pid, nombre_recurso);    
 
-    int rtafs;
+    int rta_fs_1;
+    int rta_fs_2;
     
     /*
     *   ESTO PUEDE GENERAR QUILOMBO
     */
-    recv(socketFS, &rtafs, sizeof(int), MSG_WAITALL);
+    recv(socketFS, &rta_fs_1, sizeof(int), MSG_WAITALL);
+    log_info(logger_planificador_extra, "Respuesta (1/2) de FS: %d", rta_fs_1);
+    recv(socketFS, &rta_fs_2, sizeof(int), MSG_WAITALL);
+    log_info(logger_planificador_extra, "Respuesta (2/2) de FS: %d", rta_fs_2);
 
     pthread_mutex_unlock(&mutex_fs);    // Se desbloquea el socket
     
