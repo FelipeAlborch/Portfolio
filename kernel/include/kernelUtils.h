@@ -91,7 +91,9 @@ void avisar_cpu(int);
 
 void avisar_memoria(int);
 
-void actualizar_tablas_segmentos(t_list*);
+//void actualizar_tablas_segmentos(t_list*);
+
+void actualizar_tablas_segmentos();
 
 void* esperar_tabla_segmentos(pcb*);
 
