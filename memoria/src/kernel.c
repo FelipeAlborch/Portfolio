@@ -107,11 +107,11 @@ void eliminar_proceso(int pid){
     liberar_proceso(pid);
     log_trace(klogger,"Se elimino el proceso %d",pid);
     
-    t_paquete* paquete = crear_paquete_operacion(FIN_PROCESO);
+    //t_paquete* paquete = crear_paquete_operacion(FIN_PROCESO);
     
-    enviar_paquete(paquete,config_memo.kernel);
+    //enviar_paquete(paquete,config_memo.kernel);
     
-    paquete_destroy(paquete); 
+    //paquete_destroy(paquete); 
     loggear(FIN_PROCESO,pid,NULL,0,0,0);
 }
 
@@ -122,7 +122,7 @@ void create_segment(int pid,int tam,int id){
 
     log_debug(klogger,"Por crear el segmento %d del proceso %d de %d",id,pid,tam);
     if ( bytes < tam){
-        //respuestas(config_memo.kernel,OUT_OF_MEMORY,NULL);
+        respuestas(config_memo.kernel,OUT_OF_MEMORY,NULL);
         log_error(klogger,"No hay memoria suficiente para crear el segmento");
         loggear(OUT_OF_MEMORY,pid,NULL,tam,0,0);
         return;
@@ -141,7 +141,7 @@ void create_segment(int pid,int tam,int id){
         modificar_hueco(indice,M_ERROR,tam,OCUPADO);
         int base = base_hueco(indice);
         modificar_tabla_proceso(pid,id,base,tam);
-        //respuestas(config_memo.kernel,CREATE_SEGMENT,base);
+        respuestas(config_memo.kernel,CREATE_SEGMENT,base);
         log_info(klogger,"Se creo el segmento %d",id);
     
         loggear(CREATE_SEGMENT,pid,NULL,id,tam,base);

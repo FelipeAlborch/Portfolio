@@ -239,7 +239,7 @@ void liberar_proceso(int pid) {
             
             list_remove_element(tabla_segmentos_gral, tabla);
         }
-        free(tabla);
+        //free(tabla);
     }
     
     list_iterator_destroy(iterator);
