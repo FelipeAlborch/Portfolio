@@ -88,7 +88,6 @@ int mmap_file_sync(char *file_path, int length, char **file_content){
 
 int fcb_create(char *file_name, FS *fs, FCB **fcb) {
     char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
-    // FIXME: @pablomartinfranco - me tira error en la siguiente linea (fd == -1):
     int fd = open(file_path, O_RDWR | O_CREAT, 0775);
     if (fd == -1) {
         perror("open");
@@ -309,7 +308,7 @@ int f_create(char *file_name, FS *fs) {
         return -1;
     }
     FCB *fcb;
-    fcb_create(file_path, fs, &fcb);
+    fcb_create(file_name, fs, &fcb);
     fcb_destroy(fcb);
     free(file_path);
     return 0;
