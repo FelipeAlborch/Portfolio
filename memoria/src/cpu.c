@@ -57,16 +57,17 @@ void move_in(t_list* lista, int code){
     int size=*(int*)list_get(lista,1);
     int pid = buscar_pid(dir);
     void* info = leer_dato(dir,size);
-    responder_cpu_fs(pid, code, info, dir);
+    responder_cpu_fs(pid, code, info, dir, size);
     //list_destroy_and_destroy_elements(lista,free);
 }
 void move_out(t_list* lista, int code){
 
     int dir=*(int*)list_get(lista,0);
     char* valor = (char*)list_get(lista,1);
+    int size=*(int*)list_get(lista,2);
     int pid = buscar_pid(dir);
-    int info = escribir_dato(dir,valor);
-    responder_cpu_fs(pid, code, info, dir);
+    int info = escribir_dato(dir,valor,size);
+    responder_cpu_fs(pid, code, info, dir, size);
     
 }
 void* leer_dato(int direccion,int size){
@@ -81,17 +82,19 @@ void* leer_dato(int direccion,int size){
 	return info;
 }
 
-int escribir_dato(int direccion,char* valor){
+int escribir_dato(int direccion,char* valor, int size){
     sleep(config_memo.retardo/1000);
     
+
+
     int pid = buscar_pid(direccion);
     int base = buscar_base_dir(direccion);
     int cero = M_ERROR;
     if (pid != M_ERROR)
     {
         pthread_mutex_lock(&m_memoria);
-            memcpy(memoria+base,&valor,strlen(valor)+1);
-            cero = memcmp(memoria+base,valor,strlen(valor)+1);
+            memcpy(memoria+base,&valor,size);
+            cero = memcmp(memoria+base,valor,size);
         pthread_mutex_unlock(&m_memoria);
         if (cero == 0 ){
             return pid;
@@ -100,7 +103,7 @@ int escribir_dato(int direccion,char* valor){
     if (cero == M_ERROR || pid == M_ERROR)
     {
         
-        loggear(M_ERROR,pid,valor,direccion,strlen(valor)+1,0);
+        loggear(M_ERROR,pid,valor,direccion,size,0);
         return M_ERROR;
     }
 
@@ -190,7 +193,7 @@ void ejecutar_fs(){
     //running_fs=false;
     log_info(flogger,"Terminando de ejecutar las tareas del FileSystem");
 }
-void responder_cpu_fs(int pid, int cod, void* info, int dir){
+void responder_cpu_fs(int pid, int cod, void* info, int dir, int size){
     pthread_mutex_lock(&m_config);
     switch (cod){
         case M_ERROR:
@@ -199,19 +202,19 @@ void responder_cpu_fs(int pid, int cod, void* info, int dir){
             break;
         case MOV_IN_INSTRUCTION:
             respuestas(config_memo.cpu,MOV_IN_SUCCES,info);
-            loggear(MOV_IN_INSTRUCTION,pid,"CPU",dir,strlen(info)+1,0);
+            loggear(MOV_IN_INSTRUCTION,pid,"CPU",dir,size,0);
             break;
         case MOV_OUT_INSTRUCTION:
             respuestas(config_memo.cpu,cod,info);
-            loggear(MOV_OUT_INSTRUCTION,pid,"CPU",dir,strlen(info)+1,0);
+            loggear(MOV_OUT_INSTRUCTION,pid,"CPU",dir,size,0);
             break;
         case M_READ:
             respuestas(config_memo.fs,cod,info);
-            loggear(M_READ,pid,info,dir,strlen(info)+1,0);
+            loggear(M_READ,pid,info,dir,size,0);
             break;
         case M_WRITE:
             respuestas(config_memo.fs,cod,info);
-            loggear(M_WRITE,pid,info,dir,strlen(info)+1,0);
+            loggear(M_WRITE,pid,info,dir,size,0);
             break;
         default:
             loggear(M_ERROR,pid,"",0,0,0);

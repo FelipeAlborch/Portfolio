@@ -118,10 +118,10 @@ void crear_estructuras();
 
 void move_in(t_list* lista, int cod);
 void move_out(t_list* lista, int cod);
-void responder_cpu_fs(int pid, int cod, void* info, int dir);
+void responder_cpu_fs(int pid, int cod, void* info, int dir, int size);
 
 void* leer_dato(int direccion, int size);
-int escribir_dato(int direccion, char* valor);
+int escribir_dato(int direccion, char* valor, int size);
 
 void eliminar_segmento(int pid, int direccion);
 void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos);
