@@ -637,6 +637,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
+
+                log_info(logger_kernel_util_obligatorio, "PID: < %d > - Leer Archivo: < %s > - Puntero < %d > - Dirección Memoria < %d > - Tamaño < %d >", proceso_a_ejecutar->pid, nombre_recurso, archivo->posicion, direccion_fisica, tamanio);
+
                 t_paquete* paquete_fread = crear_paquete_operacion(LEER_ARCHIVO);
                 
                 agregar_a_paquete(paquete_fread, nombre_recurso, strlen(nombre_recurso)+1);
@@ -675,6 +678,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
+
+                log_info(logger_kernel_util_obligatorio, "PID: < %d > - Escribir Archivo: < %s > - Puntero < %d > - Dirección Memoria < %d > - Tamaño < %d >", proceso_a_ejecutar->pid, nombre_recurso, archivo->posicion, direccion_fisica, tamanio);
+
                 t_paquete* paquete_fwrite = crear_paquete_operacion(ESCRIBIR_ARCHIVO);
 
                 agregar_a_paquete(paquete_fwrite, nombre_recurso, strlen(nombre_recurso)+1);
@@ -706,14 +712,17 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 pcb* contexto_de_ftruncate = recibir_contexto_ejecucion(lista_contexto_truncate);
 
                 log_info(logger_planificador_extra, "Contexto recibido por F_TRUNCATE");
+                
+                log_info(logger_kernel_util_obligatorio, "PID: < %d > - Archivo: < %s > - Tamaño: < %d >", proceso_a_ejecutar->pid, nombre_recurso, tamanio);
 
                 actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_ftruncate);
 
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 t_paquete* paquete_ftruncate = crear_paquete_operacion(TRUNCAR_ARCHIVO);
+                int tam = tamanio;
                 agregar_a_paquete(paquete_ftruncate, nombre_recurso, strlen(nombre_recurso)+1);
-                agregar_a_paquete(paquete_ftruncate, &tamanio, sizeof(int));
+                agregar_a_paquete(paquete_ftruncate, &tam, sizeof(int));
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 

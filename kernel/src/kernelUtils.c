@@ -423,10 +423,12 @@ void fseek_archivo(pcb* un_pcb, char* un_recurso, int posicion) {
     if(archivo == NULL)
     {
         resultado_recurso = false;
+        log_error(logger_kernel_util_extra, "No existe el archivo para hacer fseek");
         return;
     }
 
     archivo->posicion = posicion;
+    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Actualizar puntero Archivo: < %s > - Puntero < %d >", un_pcb->pid, archivo->nombre, archivo->posicion);
 }
 
 void esperar_listo_de_fs(char* nombre_recurso)
