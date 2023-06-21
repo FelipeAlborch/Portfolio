@@ -13,6 +13,7 @@
 #define LIBRE true
 #define OCUPADO 505
 #define M_ERROR -100
+#define LOCALHOST "127.0.0.1"
 
 extern t_log* mlogger;
 extern t_log* klogger;
