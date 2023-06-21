@@ -309,6 +309,7 @@ void terminar_proceso(pcb* un_pcb)
     eliminar_paquete(paquete_a_consola); 
     agregar_proceso_terminated(un_pcb);
     liberar_recursos(un_pcb);
+    liberar_archivos_de_proceso(un_pcb);
     
     char* key = string_from_format("%d", un_pcb->pid);
     pcb* proceso = dictionary_remove(tabla_de_procesos, key);
@@ -416,32 +417,6 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
 
     return;
 }
-
-bool archivo_esta_abierto(char* archivo)
-{
-    // contador de procesos que tienen el archivo abierto
-    int contador = 0;
-
-    // devuelve true si el nombre del recurso matchea con el del archivo
-    void _recurso_es_el_archivo(t_recurso* recurso) {
-        return string_equals_ignore_case(recurso->nombre, archivo);
-    }
-
-    // suma 1 a contador si el pcb tiene el archivo abierto
-    void _pcb_tiene_el_archivo(char* ___, pcb* iteration) {
-        int recursos_asignados = list_size(iteration->recursos_asignados);
-
-        bool found = list_any_satisfy(iteration->recursos_asignados, (void*) _recurso_es_el_archivo);
-        if(found)
-            contador++;   
-    }
-
-    dictionary_iterator(tabla_de_procesos, (void*) _pcb_tiene_el_archivo);
-
-    return contador != 0;
-}
-
-
 
 void fseek_archivo(pcb* un_pcb, char* un_recurso, int posicion) {
      t_recurso* archivo = dictionary_get(tabla_global_archivos_abiertos, un_recurso);

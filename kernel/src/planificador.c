@@ -242,7 +242,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
             loguear_pcb(proceso_en_ejecucion,logger_planificador_extra);
             log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < SUCCESS >", proceso_en_ejecucion->pid);
-            
+
             //agregar_proceso_terminated(proceso_en_ejecucion);
             terminar_proceso(proceso_en_ejecucion);
             //TODO
@@ -544,12 +544,6 @@ void ejecutar(pcb* proceso_a_ejecutar)
             //list_destroy(lista_recepcion_valores);
             //list_destroy(lista_contexto_fopen);
             
-            if(proceso_bloqueado_por_recurso)
-            {
-                proceso_bloqueado_por_recurso = false;
-                return;
-            }
-
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
             
             goto recibirOperacion;
@@ -587,12 +581,6 @@ void ejecutar(pcb* proceso_a_ejecutar)
             list_destroy_and_destroy_elements(lista_contexto_fclose,free);
             //list_destroy(lista_recepcion_valores);
             //list_destroy(lista_contexto_fclose);
-            
-            if(proceso_bloqueado_por_recurso)
-            {
-                proceso_bloqueado_por_recurso = false;
-                return;
-            }
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
             
