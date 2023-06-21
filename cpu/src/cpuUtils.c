@@ -440,6 +440,7 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
   
   agregar_a_paquete(paquete, &DF, sizeof(int));
   agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar)-1);
+  agregar_a_paquete(paquete, &cantidadDeBytes, sizeof(int));
   enviar_paquete(paquete, socketMemoria);
 
   free(valorACopiar);
