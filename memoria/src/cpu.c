@@ -57,15 +57,19 @@ void move_in(t_list* lista, int code){
     int size=*(int*)list_get(lista,1);
     int pid = buscar_pid(dir);
     void* info = leer_dato(dir,size);
-    responder_cpu_fs(pid, code, info, dir, size);
+   // responder_cpu_fs(pid, code, info, dir, size);
     //list_destroy_and_destroy_elements(lista,free);
 }
 void move_out(t_list* lista, int code){
 
     int dir=*(int*)list_get(lista,0);
     char* valor = (char*)list_get(lista,1);
-    int size=*(int*)list_get(lista,2);
+    int size=*(int*)list_get(lista,2); 
+/*     int dir=list_get(lista,0);
+    char* valor =list_get(lista,1);
+    int size=list_get(lista,2); */
     int pid = buscar_pid(dir);
+
     int info = escribir_dato(dir,valor,size);
     responder_cpu_fs(pid, code, info, dir, size);
     
@@ -85,18 +89,23 @@ void* leer_dato(int direccion,int size){
 int escribir_dato(int direccion,char* valor, int size){
     sleep(config_memo.retardo/1000);
     
-
-
+   // log_debug(clogger,"Direccion: %d  Info: %s  Tamanio: %d",direccion,valor,size);
     int pid = buscar_pid(direccion);
+
+  //  log_info(clogger,"PID: %d",pid);
     int base = buscar_base_dir(direccion);
+
+  //  log_info(clogger,"Base: %d",base);  
     int cero = M_ERROR;
     if (pid != M_ERROR)
     {
         pthread_mutex_lock(&m_memoria);
             memcpy(memoria+base,&valor,size);
-            cero = memcmp(memoria+base,valor,size);
+            cero = memcmp(memoria+base,&valor,size);
         pthread_mutex_unlock(&m_memoria);
+        printf("Cero: %d\n",cero);
         if (cero == 0 ){
+            //loggear(MOV_OUT_INSTRUCTION,pid,valor,direccion,size,0);
             return pid;
         }
     }

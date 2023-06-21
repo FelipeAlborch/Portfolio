@@ -285,7 +285,11 @@ void modificar_tabla_proceso(int pid, int index, int base, int size){
     }
     
     t_tabla_segmentos* tabla1 =list_find(tabla_segmentos_gral, (void*) _buscar_en_tabla);
-    tabla1 = buscar_en_tabla_id(pid,index);
+   // tabla1 = buscar_en_tabla_id(pid,index);
+    if (tabla1 == NULL){
+        log_error(mlogger,"No se encontro el segmento");
+        return;
+    }
 }
 void modificar_hueco(int index, int inicio, int tam, int estado){
     

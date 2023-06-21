@@ -32,7 +32,7 @@ void crear_seg(){
     imprimir_tabla_gral();
 }
 void ejecutar_kernel_test(){
-    int conectar=config_memo.kernel;
+    /* int conectar=config_memo.kernel;
     log_trace(mlogger, "Por ejecutar las tareas del kernel");
     int pid =121;
     int tam = 250;
@@ -42,17 +42,16 @@ void ejecutar_kernel_test(){
     sleep(1);
     sleep(1);
     
-    crear_seg(); 
+    crear_seg();  */
 
-    log_trace(klogger,"quiero eliminar el seg 2 %d\n",pid);
+    log_trace(klogger,"quiero eliminar el seg 2 %d\n",121);
     eliminar_segmento(121,2);
-    log_trace(klogger,"quiero eliminar el seg 4 %d\n",pid);
+    log_trace(klogger,"quiero eliminar el seg 4 %d\n",121);
     eliminar_segmento(121,4);
-    log_trace(klogger,"quiero crear el seg 10 %d\n",pid);
-    create_segment(121,100,10);
+
     //imprimir_huecos();
     //compactar();
-    create_segment(121,100,10);
+    //create_segment(121,100,10);
     /* 
     eliminar_segmento(121,2);
     eliminar_segmento(124,1);
@@ -70,6 +69,33 @@ void ejecutar_kernel_test(){
     
     
     imprimir_tabla_gral();
-    tablas_compactadas();
+   // tablas_compactadas();
     
+}
+void ejecuteTest(){
+
+
+    crear_proc();
+    crear_seg();
+    ejecutar_kernel_test();
+
+    t_list* listaS3 = list_create();
+    list_add(listaS3,640);
+    list_add(listaS3,"hola como estassss");
+    list_add(listaS3,string_length("hola como estassss"));
+    int size = list_get(listaS3,2);
+    int dir=list_get(listaS3,0);
+    char* dato = list_get(listaS3,1);
+    log_debug(klogger,"por escribir en memoria %d",dir);
+    int i = escribir_dato(dir,dato,size);
+   // move_out(listaS3,MOV_OUT);
+
+    log_trace(klogger,"quiero crear el seg 10 %d\n",121);
+    create_segment(121,100,10);
+    dir =512;
+    char * info =string_duplicate("");
+    void* info1 = leer_dato(dir,size);
+    memcpy(&info,info1,size);
+     
+    log_debug(klogger,"el dato leido es %s",info);
 }

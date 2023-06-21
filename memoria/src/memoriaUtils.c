@@ -405,6 +405,7 @@ void mover_bases(int dir, int base){
     
     bool _es_dir(t_tabla_segmentos* tabla){
         if (tabla->pid !=0 && dir == tabla->direcion_fisica){
+          
           modificar_tabla_proceso(tabla->pid,tabla->index,base,tabla->segmento->size);
           return true;
         }

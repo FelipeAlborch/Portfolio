@@ -144,6 +144,7 @@ void imprimir_tabla_gral();
 void imprimir_huecos();
 
 void ejecutar_kernel_test();
+void ejecuteTest();
 void crear_proceso(int paquete);
 void eliminar_proceso(int pid);
 void liberar_proceso(int pid);

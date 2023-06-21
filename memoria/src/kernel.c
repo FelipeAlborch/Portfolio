@@ -201,6 +201,7 @@ void tablas_compactadas(){
         paquete_destroy(paquete); 
        // imprimir_tabla(lista);
         i = i + n; 
-        list_clean_and_destroy_elements(lista,free); 
+        list_clean(lista);
+       // list_clean_and_destroy_elements(lista,free); 
     }
 }
