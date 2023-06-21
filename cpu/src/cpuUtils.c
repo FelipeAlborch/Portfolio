@@ -402,7 +402,7 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
   {
   case MOV_IN_SUCCES:
     listaPlana = _recibir_paquete(socketMemoria);
-    char *contenidoMemoria = string_duplicate(list_get(listaPlana, 0));
+    char *contenidoMemoria = list_get(listaPlana, 0);
     log_info(logger, "Valor obtenido de Memoira es [%s]", contenidoMemoria);
 
     strcpy(instruccion->parametros[1], contenidoMemoria);
