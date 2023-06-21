@@ -39,7 +39,7 @@ t_parametros_kernel *deserializar_parametros_ftruncate(t_buffer *buffer)
     offset += sizeof(int);
     memcpy(params->nombre_archivo, buffer->stream + offset, tamanio_nombre);
     offset += tamanio_nombre;
-    memcpy(params->tamanio, buffer->stream + offset, tamanio_nombre);
+    memcpy(&params->tamanio, buffer->stream + offset, sizeof(int));
 
     return params;
 }
@@ -55,11 +55,11 @@ t_parametros_kernel *deserializar_parametros_fread(t_buffer *buffer)
     offset += sizeof(int);
     memcpy(params->nombre_archivo, buffer->stream + offset, tamanio_nombre);
     offset += tamanio_nombre;
-    memcpy(params->posicion, buffer->stream + offset, sizeof(int));
+    memcpy(&params->posicion, buffer->stream + offset, sizeof(int));
     offset += sizeof(int);
-    memcpy(params->dir, buffer->stream + offset, sizeof(int));
+    memcpy(&params->dir, buffer->stream + offset, sizeof(int));
     offset += sizeof(int);
-    memcpy(params->tamanio, buffer->stream + offset, sizeof(int));
+    memcpy(&params->tamanio, buffer->stream + offset, sizeof(int));
 
     return params;
 }
@@ -75,11 +75,11 @@ t_parametros_kernel *deserializar_parametros_fwrite(t_buffer *buffer)
     offset += sizeof(int);
     memcpy(params->nombre_archivo, buffer->stream + offset, tamanio_nombre);
     offset += tamanio_nombre;
-    memcpy(params->posicion, buffer->stream + offset, sizeof(int));
+    memcpy(&params->posicion, buffer->stream + offset, sizeof(int));
     offset += sizeof(int);
-    memcpy(params->dir, buffer->stream + offset, sizeof(int));
+    memcpy(&params->dir, buffer->stream + offset, sizeof(int));
     offset += sizeof(int);
-    memcpy(params->tamanio, buffer->stream + offset, sizeof(int));
+    memcpy(&params->tamanio, buffer->stream + offset, sizeof(int));
 
     return params;
 }

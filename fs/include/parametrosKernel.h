@@ -1,6 +1,7 @@
 #ifndef PARAMETROS_KERNEL
 #define PARAMETROS_KERNEL
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <utils.h>
 
