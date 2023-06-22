@@ -116,7 +116,7 @@ int fcb_update(FCB *fcb) {
         perror("open");
         return -1;
     }
-    // ftruncate(fd, 0);
+    ftruncate(fd, 0);
     FILE *fp = fdopen(fd, "w");
     fprintf(fp, "NOMBRE_ARCHIVO=%s\n", fcb->file_name);
     fprintf(fp, "TAMANIO_ARCHIVO=%d\n", fcb->file_size);
