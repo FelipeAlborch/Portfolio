@@ -96,7 +96,7 @@ void *kernel_handler(void *arg)
             int res_mem = -1; // 0 = OK, -1 = ERROR
             parametros = deserializar_parametros_fread(paquete->buffer);
             char *buff = malloc(parametros->tamanio);
-            res_fs = f_read(parametros->nombre_archivo, parametros->posicion, parametros->tamanio, buff, fs);
+            res_fs = f_read(parametros->nombre_archivo, parametros->posicion, parametros->tamanio, (void **)&buff, fs);
             send(fs->socket_accept, &res_fs, sizeof(int), 0);
 
             // TODO: escribir el contenido de buff en direccion de memoria
