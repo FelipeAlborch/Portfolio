@@ -336,16 +336,13 @@ int f_read(char *file_name, int offset, int size, void **buffer, FS *fs) {
     log_info(fs->log, "Leer Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, size, size);
 
     FCB *fcb;
-    char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
-    if (fcb_create_from_file(file_path, fs, &fcb) == -1) {
+    if (fcb_create_from_file(file_name, fs, &fcb) == -1) {
         log_warning(fs->log, "No existe el archivo: %s", file_name);
-        free(file_path);
         return -1;
     }
     if (offset + size > fcb->file_size) {
         log_warning(fs->log, "El archivo: %s no tiene %d bytes", file_name, offset + size);
         fcb_destroy(fcb);
-        free(file_path);
         return -1;
     }
     *buffer = malloc(size);
@@ -369,7 +366,6 @@ int f_read(char *file_name, int offset, int size, void **buffer, FS *fs) {
         blocks_read ++;
     }
     fcb_destroy(fcb);
-    free(file_path);
     return 0;
 }
 
@@ -378,16 +374,13 @@ int f_write(char *file_name, int offset, int size, void *buffer, FS *fs) {
     log_info(fs->log, "Escribit Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, size, size);
     
     FCB *fcb;
-    char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
-    if (fcb_create_from_file(file_path, fs, &fcb) == -1) {
+    if (fcb_create_from_file(file_name, fs, &fcb) == -1) {
         log_warning(fs->log, "No existe el archivo: %s", file_name);
-        free(file_path);
         return -1;
     }
     if (offset + size > fcb->file_size) {
         log_warning(fs->log, "El archivo: %s no tiene %d bytes", file_name, offset + size);
         fcb_destroy(fcb);
-        free(file_path);
         return -1;
     }
     int blocks_required = block_count(size, fs);
@@ -410,6 +403,5 @@ int f_write(char *file_name, int offset, int size, void *buffer, FS *fs) {
         blocks_written ++;
     }
     fcb_destroy(fcb);
-    free(file_path);
     return 0;
 }
