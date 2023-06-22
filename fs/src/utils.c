@@ -319,15 +319,13 @@ int f_truncate(char *file_name, int size, FS *fs) {
     log_info(fs->log, "Truncar Archivo: %s", file_name);
     
     FCB *fcb;
-    char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
-    if (fcb_create_from_file(file_path, fs, &fcb) == -1) {
+    if (fcb_create_from_file(file_name, fs, &fcb) == -1) {
         log_warning(fs->log, "No existe el archivo: %s", file_name);
-        free(file_path);
         return -1;
     }
     fcb_realloc(size, fcb, fs);
     fcb_destroy(fcb);
-    free(file_path);
+
     return 0;
 }
 
