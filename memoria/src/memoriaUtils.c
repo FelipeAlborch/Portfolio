@@ -37,6 +37,12 @@ void sigHandler_sigint(int signo) {
 	exit(-1);
 }
 
+
+/**
+ * 
+ *          FUNCIONES PARA TERMINAR EL PROGRAMA
+ * 
+*/
 void terminar_programa(t_log* milogger){
     /*LEAKS*/
 	log_destroy(milogger);
@@ -60,7 +66,7 @@ void liberar_memoria(){
     log_destroy(mlogger);
 };
 void liberar_listas(){
-    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)liberar_t_segmento);
+    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)free);
     list_destroy_and_destroy_elements(huecos_libres,(void*)free);
     //list_destroy(huecos_libres);
     log_debug(mlogger,"listas liberadas");
@@ -90,7 +96,6 @@ void liberar_t_config(){
   //free(config_memo.puerto);
   log_debug(mlogger,"config liberada");
 };
-
 void liberar_mutex(){
     pthread_mutex_destroy(&m_config);
     pthread_mutex_destroy(&m_memoria);
@@ -99,6 +104,11 @@ void liberar_mutex(){
     log_debug(mlogger,"mutex liberados");
 };
 
+/**
+ * 
+ *          FUNCIONES PARA INICIAR PROGRAMA
+ * 
+*/
 void inicializar_mutex(){
     pthread_mutex_init(&m_config,NULL);
     pthread_mutex_init(&m_memoria,NULL);
@@ -106,14 +116,12 @@ void inicializar_mutex(){
     pthread_mutex_init(&m_huecos_libres,NULL);
    // log_debug(mlogger,"mutex inicializados");
 };
-
 void inicializar_configuracion(){
     obtener_valores_de_configuracion_memoria(memoriaConfig);
     mostrar_valores_de_configuracion_memoria();
     sem_init(&sem_fs_conectado,0,0);
     sem_init(&sem_cpu_conectado,0,0);
 };
-
 void inicializar_memoria(){
 
     inicializar_logs();
@@ -124,36 +132,51 @@ void inicializar_memoria(){
     conectar();
     config_destroy(memoriaConfig);
 };
-
-
 void inicializar_logs(){
     loggerMemoria = log_create("logs/memoria.log","Memoria",true,LOG_LEVEL_TRACE);
-    mlogger = log_create("logs/info.log","Info Memoria",true,LOG_LEVEL_TRACE);
+    mlogger = log_create("logs/info.log","Info Memoria",false,LOG_LEVEL_TRACE);
     klogger = log_create("logs/kernel.log","Memoria -> Kernel",true,LOG_LEVEL_TRACE);
     clogger = log_create("logs/cpu.log","Memoria -> CPU",true,LOG_LEVEL_TRACE);
     flogger = log_create("logs/file_system.log","Memoria -> FileSystem",true,LOG_LEVEL_TRACE);
 }
+void inicializar_segmentos(){
+    t_tabla_segmentos* tabla = crear_tabla_segmentos(0,0,0,config_memo.tam_seg_0);
+    tabla_segmentos_gral = list_create();
+    
+    tabla->segmento->size = config_memo.tam_seg_0;
+    list_add_in_index(tabla_segmentos_gral,0,tabla);
+}
 
-
-// Lo del memoria conexion: 
-
-
-
+/**
+ * 
+ *          CONEXION
+ * 
+*/
 void conectar(){
 
   server_m= iniciar_servidor_en(config_memo.ip,config_memo.puerto);
-  if(server_m < 0)
-  {
+  if(server_m < 0){
     log_error(mlogger,"Error creando el servicio de memoria");
     return EXIT_FAILURE;
   }
   log_info(mlogger, "El servidor Memoria se inició correctamente");
   
 }
-
-
-// Lo del memoriaConfig:
-
+void respuestas(int cliente, int code,void* algo){
+  t_paquete* paquete=crear_paquete_operacion(code);
+  if (algo != NULL || algo != M_ERROR)
+  {
+    agregar_a_paquete(paquete,&algo,sizeof(algo)+1);
+  }
+  
+  enviar_paquete(paquete,cliente);
+  paquete_destroy(paquete);
+}
+/**
+ * 
+ *          CONFIGURACION
+ * 
+*/
 config_de_memoria config_memo;
 
 void obtener_valores_de_configuracion_memoria(t_config* memoriaConfig){
@@ -165,11 +188,10 @@ void obtener_valores_de_configuracion_memoria(t_config* memoriaConfig){
     config_memo.compactacion = config_get_int_value(memoriaConfig,"RETARDO_COMPACTACION");
     config_memo.algoritmo = config_get_string_value(memoriaConfig,"ALGORITMO_ASIGNACION");
     config_memo.cant_seg_max = config_memo.tam_memo / config_memo.tam_seg_0;
-    config_memo.ip = string_duplicate("127.0.0.1");
+    config_memo.ip = string_duplicate(LOCALHOST);
     config_memo.bytes_libres=config_memo.tam_memo;
     algoritmos();
 }
-
 void mostrar_valores_de_configuracion_memoria (){
     printf("puerto = %s\n", config_memo.puerto);
     printf("tam_memo = %d\n" , config_memo.tam_memo);
@@ -182,15 +204,14 @@ void mostrar_valores_de_configuracion_memoria (){
 
 }
 
-
-  
-  
-
-
-  void loggear(int code, int pid, void* algo, int id, int size, int base){
+/**
+ * 
+ *          AUXILIARES
+ * 
+*/
+void loggear(int code, int pid, void* algo, int id, int size, int base){
     
-    switch (code)
-    {
+    switch (code){
       case CREATE_SEGMENT:
         log_info(loggerMemoria,"PID: %d - Crear Segmento: %d - Base: %d - TAMAÑO: %d",pid,id,base,size);
         break;
@@ -200,12 +221,10 @@ void mostrar_valores_de_configuracion_memoria (){
       case INICIO_COMPACTAR:
         log_info(loggerMemoria,"Solicitud de Compactación");
         break;
-
       case FIN_COMPACTAR:
             /*Por cada segmento de cada proceso se deberá imprimir una línea con el siguiente formato:*/
-        log_info(loggerMemoria,"PID: %d - Segmento: %d - Base: %d - Tamaño %d",pid);
+        log_info(loggerMemoria,"PID: %d - Segmento: %d - Base: %d - Tamaño %d",pid,id,base,size);
         break;
-
       case M_READ:
         log_info(loggerMemoria,"PID: %d - Acción: <LEER> - Dirección física: %d - Tamaño: %d - Origen: %s",pid,id,size,algo);
         break;
@@ -221,24 +240,14 @@ void mostrar_valores_de_configuracion_memoria (){
       case INICIO_PROCESO:
         log_info(loggerMemoria,"Creación de Proceso PID: %d",pid);
         break;
-
       case FIN_PROCESO:
         log_info(loggerMemoria,"Eliminación de Proceso PID: %d",pid);
         break;
-      
       default:
         log_error(loggerMemoria,"Error en la operación, código de error: %d",code);
         break;
     }
   }
-
-void respuestas(int cliente, int code,void* algo){
-  t_paquete* paquete=crear_paquete_operacion(code);
-  agregar_a_paquete(paquete,&algo,sizeof(algo)+1);
-  enviar_paquete(paquete,cliente);
-  eliminar_paquete(paquete);
-}
-
 void actualizar_memoria(int size, int estado){
     pthread_mutex_lock(&m_config);
     if(estado == LIBRE){
@@ -248,8 +257,55 @@ void actualizar_memoria(int size, int estado){
     }
     pthread_mutex_unlock(&m_config);
 }
+void imprimir_tabla(t_list* lista){
+    int size = list_size(lista);
+    for (size_t i = 0; i < size ; i++)
+    {
+        t_segmento* segmentos = list_get(lista,i);
+        log_info(mlogger,"%ld - base: %d, size: %d\n",i,segmentos->base,segmentos->size);
+        //printf("%ld - base: %d, size: %d\n",i,segmentos->base,segmentos->size);
+    
+    } 
+}
+void imprimir_tabla_gral(){
+  pthread_mutex_lock(&m_tabla_segmentos);
+    t_list_iterator* iterador = list_iterator_create(tabla_segmentos_gral);
+  pthread_mutex_unlock(&m_tabla_segmentos);  
+    int i = 0;
 
-
+    while(list_iterator_has_next(iterador)){
+        t_tabla_segmentos* tabla= list_iterator_next(iterador);
+        //printf("%d- \tpid: %d, \tdir: %d, \tindex: %d,\tbase: %d,\t size: %d\n",i,tabla->pid,tabla->direcion_fisica,tabla->index,tabla->segmento->base,tabla->segmento->size);
+        log_info(mlogger,"%d- \tpid: %d, \tdir: %d, \tindex: %d,\tbase: %d,\t size: %d\n",i,tabla->pid,tabla->direcion_fisica,tabla->index,tabla->segmento->base,tabla->segmento->size);
+        i++;
+    }
+    list_iterator_destroy(iterador);
+}
+void imprimir_huecos(){
+  int inicio;
+  int tam;
+  pthread_mutex_lock(&m_huecos_libres);
+    t_list_iterator* iterador = list_iterator_create(huecos_libres);
+  pthread_mutex_unlock(&m_huecos_libres);
+  t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
+ // log_debug(klogger,"Listado de Huecos libres: %d\n",list_size(huecos_libres));
+  while (list_iterator_has_next(iterador)) {
+    hueco = list_iterator_next(iterador);
+    inicio = hueco->inicio; 
+    tam = hueco->tamanio;
+    int estado = hueco->estado;
+    log_debug(klogger,"Hueco: %d - Base: %d  - Tamaño: %d - Estado: %d",list_iterator_index(iterador),inicio,tam,estado);    
+    //free(hueco);
+  }
+  printf("\n");
+  list_iterator_destroy(iterador);
+  
+}
+/**
+ * 
+ *          ALGORITMOS
+ * 
+*/
 void algoritmos(){
   if(strcmp(config_memo.algoritmo,"FF")==0){
     config_memo.algoritmo_int=FIRST_FIT;
@@ -263,7 +319,7 @@ void algoritmos(){
   else if(strcmp(config_memo.algoritmo,"BF")==0){
     config_memo.algoritmo_int=BEST_FIT;
   }
-  else if(strcmp(config_memo.algoritmo,"WORST")==0){
+  else if(strcmp(config_memo.algoritmo,"WF")==0){
     config_memo.algoritmo_int=WORST_FIT;
   }
   else if(strcmp(config_memo.algoritmo,"WORST")==0){
@@ -273,7 +329,6 @@ void algoritmos(){
     log_error(mlogger,"No se reconoce el algoritmo de asignación");
   }
 }
-
 int first_fit(int size){
   int index = -2; 
   t_list_iterator* iterador = list_iterator_create(huecos_libres);
@@ -281,11 +336,10 @@ int first_fit(int size){
     t_hueco_libre* hueco = list_iterator_next(iterador);
     if (hueco->tamanio >= size && hueco->estado == LIBRE) {
       index = list_iterator_index(iterador);
-      //free(hueco);
+      
       list_iterator_destroy(iterador);
       return index;
     }
-    //free(hueco);
   }
   list_iterator_destroy(iterador);
   return index;
@@ -307,7 +361,6 @@ int best_fit(int size){
 
     return index;
 }
-
 int worst_fit(int size){
   int index = -2;
     int max = -1;
@@ -325,22 +378,75 @@ int worst_fit(int size){
     return index;
 }
 
-void imprimir_huecos(){
-  
-  int inicio;
-  int tam;
+/**
+ * 
+ *          COMPACTACION
+ * 
+*/
+void compactar(){
+    imprimir_huecos();
+    recibir_operacion(config_memo.kernel);
+    loggear(INICIO_COMPACTAR,0,NULL,0,0,0); 
+    sleep(config_memo.compactacion/1000); 
+    
+    bool _es_libre(t_hueco_libre* hueco){
+        return hueco->estado == LIBRE;
+    }
+    pthread_mutex_lock(&m_huecos_libres);
+    list_remove_and_destroy_all_by_condition(huecos_libres,(void*)_es_libre, (void*)free);
+    int tam = list_size(huecos_libres);
+    t_hueco_libre* hueco = list_get(huecos_libres,tam-1);
+    int inicio = hueco->inicio + hueco->tamanio;
+
+    t_hueco_libre* nuevo =crear_hueco_libre(inicio,config_memo.bytes_libres,LIBRE);
+    list_add(huecos_libres,nuevo);
+    pthread_mutex_unlock(&m_huecos_libres);
+    //sleep(config_memo.compactacion/1000);
+    
+    mover_bases_huecos();
+    
+    //loggear(FIN_COMPACTAR,0,NULL,0,0,0);
+}
+void mover_bases(int dir, int base){
+    
+    bool _es_dir(t_tabla_segmentos* tabla){
+        if (tabla->pid !=0 && dir == tabla->direcion_fisica){
+          
+          modificar_tabla_proceso(tabla->pid,tabla->index,base,tabla->segmento->size);
+          return true;
+        }
+        return false;
+    }
+    pthread_mutex_lock(&m_tabla_segmentos);
+    bool i =list_any_satisfy(tabla_segmentos_gral,(void*)_es_dir);
+    pthread_mutex_unlock(&m_tabla_segmentos);  
+}
+void mover_bases_huecos(){
   pthread_mutex_lock(&m_huecos_libres);
-  t_list_iterator* iterador = list_iterator_create(huecos_libres);
+    t_list_iterator* iterador = list_iterator_create(huecos_libres);
   pthread_mutex_unlock(&m_huecos_libres);
-  t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
+  
+  t_hueco_libre* hueco = calloc(0,sizeof(t_hueco_libre));
+  int inicio;
+  int tam=0;
+  int baseNueva = config_memo.tam_seg_0;
+  int dir =tam + baseNueva; 
   while (list_iterator_has_next(iterador)) {
     hueco = list_iterator_next(iterador);
     inicio = hueco->inicio; 
     tam = hueco->tamanio;
-    int estado = hueco->estado;
-    log_info(klogger,"Hueco: %d - Base: %d  - Tamaño: %d - Estado: %d",list_iterator_index(iterador),inicio,tam,estado);
-    //free(hueco);
+    if (inicio >= baseNueva){
+      pthread_mutex_lock(&m_memoria);
+        memcpy(memoria+baseNueva, memoria+inicio, tam);
+      pthread_mutex_unlock(&m_memoria);
+      dir = tam + inicio;
+      mover_bases(dir,baseNueva);
+      hueco->inicio = baseNueva;
+      baseNueva = baseNueva + tam;
+      
+    }
   }
+  //free(hueco);
   list_iterator_destroy(iterador);
-  
+  imprimir_huecos();
 }

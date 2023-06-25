@@ -20,7 +20,10 @@ int obtener_direccion_fisica(char* direccionLogica, pcb *pcb, int cantBytes)
     if(segmento->size <= desplazamientoSegmento + cantBytes)
       return -1;
 
-    int DF = desplazamientoSegmento + segmento->base;
+    //int DF = desplazamientoSegmento + segmento->base;
+    //Sería así como lo necesito desde memoria:
+    int DF = segmento->size + segmento->base;
+    log_info(logger, "La DF es: %d", DF);
     log_destroy(logger);
     return DF;
 }

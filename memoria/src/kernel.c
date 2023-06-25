@@ -107,11 +107,11 @@ void eliminar_proceso(int pid){
     liberar_proceso(pid);
     log_trace(klogger,"Se elimino el proceso %d",pid);
     
-    t_paquete* paquete = crear_paquete_operacion(FIN_PROCESO);
+    //t_paquete* paquete = crear_paquete_operacion(FIN_PROCESO);
     
-    enviar_paquete(paquete,config_memo.kernel);
+    //enviar_paquete(paquete,config_memo.kernel);
     
-    paquete_destroy(paquete); 
+    //paquete_destroy(paquete); 
     loggear(FIN_PROCESO,pid,NULL,0,0,0);
 }
 
@@ -122,18 +122,23 @@ void create_segment(int pid,int tam,int id){
 
     log_debug(klogger,"Por crear el segmento %d del proceso %d de %d",id,pid,tam);
     if ( bytes < tam){
+
         //respuestas(config_memo.kernel,OUT_OF_MEMORY,M_ERROR);
         enviar_operacion(config_memo.kernel, OUT_OF_MEMORY);
+
         log_error(klogger,"No hay memoria suficiente para crear el segmento");
         loggear(OUT_OF_MEMORY,pid,NULL,tam,0,0);
         return;
     }
     int indice =buscar_hueco_libre(tam);
     if(indice == -2){
-        respuestas(config_memo.kernel,INICIO_COMPACTAR,NULL);
+        //respuestas(config_memo.kernel,INICIO_COMPACTAR,NULL);
+        enviar_operacion(config_memo.kernel, INICIO_COMPACTAR);
         log_warning(klogger,"No hay hueco para crear el segmento, hay que compactar");
         compactar();
-        
+        tablas_compactadas();
+        //respuestas(config_memo.kernel,FIN_COMPACTAR,NULL);
+        enviar_operacion(config_memo.kernel, FIN_COMPACTAR);
         return;
     }else{
         modificar_hueco(indice,M_ERROR,tam,OCUPADO);
@@ -141,7 +146,7 @@ void create_segment(int pid,int tam,int id){
         modificar_tabla_proceso(pid,id,base,tam);
         respuestas(config_memo.kernel,CREATE_SEGMENT,base);
         log_info(klogger,"Se creo el segmento %d",id);
-      
+    
         loggear(CREATE_SEGMENT,pid,NULL,id,tam,base);
     }   
     
@@ -171,7 +176,35 @@ void eliminar_segmento(int pid, int id){
         paquete_destroy(paquete);
         imprimir_tabla(nueva);
     }
-   // list_destroy(nueva);
+    //list_destroy_and_destroy_elements(nueva,(void*)liberar_t_segmento);
+    list_clean(nueva);
     loggear(DELETE_SEGMENT,pid,NULL,id,0,0);
     log_info(klogger,"Se elimino el segmento %d",id);
+}
+void tablas_compactadas(){
+    t_list* lista = list_create();
+    t_paquete* paquete;
+    //t_list* list_slice(t_list* self, int start, int count);
+    int size = list_size(tabla_segmentos_gral);
+    int i = 1;
+    int n = config_memo.cant_seg;
+    int pid;
+    while(i < size){
+        for(int j = 0; j < n; j++){
+            t_tabla_segmentos* tabla = list_get(tabla_segmentos_gral,i+j);
+            list_add(lista,tabla->segmento);
+            loggear(FIN_COMPACTAR,tabla->pid,NULL,tabla->index,tabla->segmento->size,tabla->segmento->base);
+           pid = tabla->pid;
+        }
+       // printf("\n pid %d \n",pid);
+        paquete = crear_paquete_operacion(INICIO_COMPACTAR);
+        agregar_a_paquete(paquete,&pid,sizeof(int));
+        serializar_tabla_segmentos(paquete,lista);
+        enviar_paquete(paquete,config_memo.kernel);
+        paquete_destroy(paquete); 
+       // imprimir_tabla(lista);
+        i = i + n; 
+        list_clean(lista);
+       // list_clean_and_destroy_elements(lista,free); 
+    }
 }

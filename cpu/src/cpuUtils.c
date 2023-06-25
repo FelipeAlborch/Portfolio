@@ -411,7 +411,7 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
   {
   case MOV_IN_SUCCES:
     listaPlana = _recibir_paquete(socketMemoria);
-    char *contenidoMemoria = string_duplicate(list_get(listaPlana, 0));
+    char *contenidoMemoria = list_get(listaPlana, 0);
     log_info(logger, "Valor obtenido de Memoira es [%s]", contenidoMemoria);
 
     strcpy(instruccion->parametros[1], contenidoMemoria);
@@ -449,6 +449,7 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
   
   agregar_a_paquete(paquete, &DF, sizeof(int));
   agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar)-1);
+  agregar_a_paquete(paquete, &cantidadDeBytes, sizeof(int));
   enviar_paquete(paquete, socketMemoria);
 
   eliminar_paquete(paquete);

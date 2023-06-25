@@ -13,6 +13,7 @@
 #define LIBRE true
 #define OCUPADO 505
 #define M_ERROR -100
+#define LOCALHOST "127.0.0.1"
 
 extern t_log* mlogger;
 extern t_log* klogger;
@@ -81,6 +82,7 @@ void conectar();
 void conectar_cpu();
 void conectar_kernel();
 void conectar_fs();
+int esperar_clienteM(int socket_servidor);
 
 void ejecutar_kernel();
 void ejecutar_cpu();
@@ -117,10 +119,10 @@ void crear_estructuras();
 
 void move_in(t_list* lista, int cod);
 void move_out(t_list* lista, int cod);
-void responder_cpu_fs(int pid, int cod, void* info, int dir);
+void responder_cpu_fs(int pid, int cod, void* info, int dir, int size);
 
 void* leer_dato(int direccion, int size);
-int escribir_dato(int direccion, char* valor);
+int escribir_dato(int direccion, char* valor, int size);
 
 void eliminar_segmento(int pid, int direccion);
 void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos);
@@ -128,19 +130,22 @@ void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos);
 
 
 void compactar();
+void tablas_compactadas();
 void actualizar_memoria(int size, int estado);
 
 
 void modificar_tabla_proceso(int pid, int index, int base, int size);
 void modificar_tabla_segmentos(t_tabla_segmentos* tabla,int pid, int dir, int index,int base, int size);
 void modificar_segmento(t_segmento* segmento, int base, int size);
-
+void mover_bases(int dir, int base);
+void mover_bases_huecos();
 
 void imprimir_tabla(t_list* lista);
 void imprimir_tabla_gral();
 void imprimir_huecos();
 
 void ejecutar_kernel_test();
+void ejecuteTest();
 void crear_proceso(int paquete);
 void eliminar_proceso(int pid);
 void liberar_proceso(int pid);
@@ -155,6 +160,7 @@ int buscar_hueco_libre(int size);
 int buscar_hueco_base(int base);
 int base_hueco(int index);
 int buscar_pid(int dir);
+int buscar_base_dir(int dir);
 t_hueco_libre* crear_hueco_libre(int inicio, int tam,int estado);
 
 int first_fit(int size);
