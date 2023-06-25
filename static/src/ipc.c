@@ -107,7 +107,7 @@ void conn_close_sockets(t_queue *sockets)
     {
         socket_fd = *(int *)queue_pop(sockets);
         if (conn_is_open(socket_fd))
-        conn_close(socket_fd);
+            conn_close(socket_fd);
     }
 }
 
@@ -150,7 +150,7 @@ char* read_socket_string(int socket_fd)
 
 t_paquete *read_socket_paquete(int socket_fd)
 {
-    t_paquete *paquete = malloc(sizeof(t_paquete));
+    t_paquete *paquete = paquete_create(PAQUETE);
     int n = recv(socket_fd, &paquete->codigo_operacion, sizeof(paquete->codigo_operacion), MSG_WAITALL);
     assert(n >= 0);
 
@@ -162,6 +162,21 @@ t_paquete *read_socket_paquete(int socket_fd)
     assert(n >= 0);
 
     return paquete;
+}
+
+int socket_recv(int socket_fd, t_paquete **paquete)
+{
+    t_paquete *_paquete = paquete_create(PAQUETE);
+    int n = recv(socket_fd, &_paquete->codigo_operacion, sizeof(_paquete->codigo_operacion), MSG_WAITALL);
+    if(n == -1) return -1;
+    (_paquete)->buffer = malloc(sizeof(t_buffer));
+    n = recv(socket_fd, &_paquete->buffer->size, sizeof(_paquete->buffer->size), MSG_WAITALL);
+    if(n == -1) return -1;
+    _paquete->buffer->stream = malloc(_paquete->buffer->size);
+    n = recv(socket_fd, _paquete->buffer->stream, _paquete->buffer->size, MSG_WAITALL);
+    if(n == -1) return -1;
+    *paquete = _paquete;
+    return 0;
 }
 
 t_list *read_socket_tlv_list(int socket_fd)
@@ -217,6 +232,16 @@ int write_socket_paquete(int socket_fd, t_paquete *paquete)
     assert(n >= 0);
 
     return n;
+}
+
+int socket_send(int socket_fd, t_paquete *paquete)
+{
+    int buffer_size = sizeof(paquete->codigo_operacion) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *buffer = malloc(buffer_size);
+    memcpy(buffer, &paquete->codigo_operacion, sizeof(paquete->codigo_operacion));
+    memcpy(buffer + sizeof(paquete->codigo_operacion), &paquete->buffer->size, sizeof(paquete->buffer->size));
+    memcpy(buffer + sizeof(paquete->codigo_operacion) + sizeof(paquete->buffer->size), paquete->buffer->stream, paquete->buffer->size);
+    return send(socket_fd, buffer, buffer_size, 0);
 }
 
 int write_socket_tlv_list(int socket_fd, t_list *tlv_list)

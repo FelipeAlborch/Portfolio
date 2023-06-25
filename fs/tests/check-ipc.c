@@ -1,14 +1,41 @@
 #include <check.h>
+#include <utils.h>
 #include <ipc.h>
 
 #define LOCALHOST "127.0.0.1"
-#define PORT_5000 "5000"
-#define PORT_5001 "5001"
+#define PORT_5000 "5002"
+#define PORT_5001 "5003"
+#define PORT_6000 "6002"
+#define PORT_6001 "6003"
 #define SERVER_IP "127.0.0.2"
 #define CLIENT_IP "127.0.0.3"
 #define ECHO_TEXT "Hello, server!"
 
 t_queue *g_sockets;
+
+void *clients_handler_fs(void *arg)
+{
+    int listen_socket = *(int *)arg;
+    free(arg);
+    t_paquete *paquete = NULL;
+    int accept_socket = conn_accept(listen_socket);
+    if (accept_socket == -1) perror("conn_accept");
+    queue_push(g_sockets, (void *)alloc_int(accept_socket));
+    
+    while(conn_is_open(accept_socket))
+    {
+        if (socket_recv(accept_socket, &paquete) == -1) perror("socket_recv paquete");
+
+        if (socket_send(accept_socket, paquete) == -1) perror("socket_send paquete");
+
+        if (paquete != NULL) paquete_destroy(paquete);
+
+        if (!conn_is_open(listen_socket)) break;
+    }
+    if (conn_close(accept_socket) == -1) perror("conn_close accept_socket");
+
+    pthread_exit((void *) 0);
+}
 
 void *clients_handler(void *arg)
 {
@@ -39,16 +66,23 @@ void *clients_handler(void *arg)
 
 void ipc_unchecked_setup(void)
 { 
+    pthread_t thread;
     int *server_socket = malloc(sizeof(int));
-    
     g_sockets = queue_create();
 
     *server_socket = conn_create(SERVER, LOCALHOST, PORT_5000);
 
     queue_push(g_sockets, (void *)server_socket);
 
-    pthread_t thread;
     pthread_create(&thread, NULL, clients_handler, (void *)server_socket);
+
+    pthread_detach(thread);
+
+    *server_socket = conn_create(SERVER, LOCALHOST, PORT_6000);
+
+    queue_push(g_sockets, (void *)server_socket);
+
+    pthread_create(&thread, NULL, clients_handler_fs, (void *)server_socket);
 
     pthread_detach(thread);
 
@@ -63,6 +97,42 @@ void ipc_unchecked_teardown(void)
     conn_close_sockets(g_sockets);
     queue_destroy_and_destroy_elements(g_sockets, free);
 }
+
+START_TEST (test_socket_recv_paquete)
+{
+    int client_socket = conn_create(CLIENT, LOCALHOST, PORT_6000);
+    ck_assert_int_ne(client_socket, -1);
+
+    int error;
+    t_paquete *paquete; 
+    
+    paquete = paquete_create(PAQUETE);
+
+    error = socket_send(client_socket, paquete);
+    ck_assert_int_ne(error, -1);
+
+    paquete_destroy(paquete);
+
+    error = socket_recv(client_socket, &paquete);
+    ck_assert_ldouble_eq(paquete->codigo_operacion, PAQUETE);
+
+    paquete_destroy(paquete);
+
+    paquete = paquete_create(MENSAJE);
+
+    error = socket_send(client_socket, paquete);
+    ck_assert_int_ne(error, -1);
+
+    paquete_destroy(paquete);
+
+    error = socket_recv(client_socket, &paquete);
+    ck_assert_ldouble_eq(paquete->codigo_operacion, MENSAJE);
+
+    paquete_destroy(paquete);
+
+    ck_assert(true);
+}
+END_TEST
 
 START_TEST (test_client_server_connection)
 {
@@ -127,6 +197,7 @@ Suite *ipc_test_suite(void)
     TCase *tc = tcase_create(__FILE__);
     tcase_add_test(tc, test_client_server_connection);
     tcase_add_test(tc, test_client_server_echo);
+    tcase_add_test(tc, test_socket_recv_paquete);
     tcase_add_unchecked_fixture(tc, ipc_unchecked_setup, ipc_unchecked_teardown);
     suite_add_tcase(s, tc);
 

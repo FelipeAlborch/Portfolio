@@ -1,91 +1,125 @@
 #include <commons/memory.h>
-#include <log.h>
-#include <ipc.h>
-#include <utils.h>
-#include <config.h>
 #include <pthread.h>
+#include <config.h>
+#include <utils.h>
+#include <ipc.h>
 
-char *BLOCK_STORE_FILE = "blocks.txt";
-const int BLOCK_SIZE = 64;
-const int BLOCK_COUNT = 65536;
+void validate_args(int argc, char **argv);
+void init_fs(char *config_path, FS **fs);
+void init_sockets(FS *fs);
+void init_threads(FS *fs);
+void teardown(FS *fs);
+void * kernel_handler(void *fs);
 
-FCB_table fcb_table;
-
-void * kernel_handler(void *socket_fd);
-
-int 
-main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-    int fs_socket, mem_socket, status;
+    FS *fs;
 
-    pthread_t thread_id;
+    validate_args(argc, argv);
 
-    t_log *log = log_create_fs();
+    init_fs(argv[1], &fs);
 
-    fs_config *config = config_create_fs();
+    init_sockets(fs);
 
-    print_cwd();
+    init_threads(fs);
 
-    config_print_fs(config);
-
-    status = fcb_table_init(&fcb_table, BLOCK_STORE_FILE, BLOCK_SIZE, BLOCK_COUNT);
-
-    mem_socket = conn_create(CLIENT, config->IP_MEMORIA, config->PUERTO_MEMORIA);
-
-    t_paquete *paquete = paquete_create(FILE_SYSTEM);
-
-    write_socket_paquete(mem_socket, (void *)paquete);
-
-    paquete_destroy(paquete);
-
-    log_info(log, "Conectado a memoria en %s:%s", config->IP_MEMORIA, config->PUERTO_MEMORIA);
-
-    fs_socket = conn_create(SERVER, config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
-
-    log_info(log, "Escuchando kernel en %s:%s", config->IP_FSYSTEM, config->PUERTO_ESCUCHA);
-
-    status = pthread_create(&thread_id, NULL, kernel_handler, (void *)alloc_int(fs_socket));
-    if (status != 0) perror("pthread_create");
-
-    pthread_join(thread_id, (void **)&status);
-    if (status != 0) perror("pthread_join");
-
-    conn_close(fs_socket);
-
-    config_destroy_fs(config);
-
-    log_destroy(log);
-        
+    teardown(fs);
+    
     return 0;
 }
 
 void *kernel_handler(void *arg)
 {
-    int fs_socket = *(int *)arg;
-    free(arg);
+    FS *fs = (FS *)arg;
+    t_paquete *paquete;
 
-    t_log *log = log_create_fs();
-
-    int kr_socket;
-    while((kr_socket = conn_accept(fs_socket)) != -1)
-    {
-        char buf[100] = {0};
-
-        read_socket(kr_socket, buf, sizeof(buf));
-
-        log_info(log, "Unknown data from kernel:%s\n", mem_hexstring(buf, sizeof(buf)));
-
-        // TODO: recibir paquetes de kernel
-        // dispatchear instrucciones kernel
-        // segun la instruccion crear thread
-        // para manejar memoria y responder al kernel
-
-        conn_close(kr_socket);
-
-        if (!conn_is_open(fs_socket)) break;
+    fs->socket_accept = conn_accept(fs->socket_listen);
+    if (fs->socket_accept == -1) {
+        log_error(fs->log, "Error al aceptar conexión");
+        pthread_exit((void *) 1);
     }
 
-    log_destroy(log);
+    while(conn_is_open(fs->socket_accept))
+    {
+        if (socket_recv(fs->socket_accept, &paquete) == -1) {
+            log_error(fs->log, "Error al recibir paquete");
+            continue;
+        }
+
+        switch (paquete->codigo_operacion)
+        {
+            case PAQUETE:
+                // TODO: Implementar
+                break;
+            
+            default:
+                break;
+        }
+
+        paquete_destroy(paquete);
+    }
 
     pthread_exit((void *) 0);
+}
+
+void validate_args(int argc, char **argv)
+{
+    if (argc < 2) {
+        if (access("fs.config", F_OK) == 0) {
+            argv[1] = "fs.config";
+        } else {
+            printf("No se encontró el archivo de configuración\n");
+            exit(1);
+        }
+    }
+}
+
+void init_fs(char *config_path, FS **fs)
+{
+    *fs = fs_create(config_path);
+}
+
+void init_sockets(FS *fs)
+{
+    fs->socket_memory = conn_create(CLIENT, fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
+    
+    if (fs->socket_memory == -1) {
+        log_error(fs->log, "No se pudo conectar a memoria en %s:%s", fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
+        // exit(1);
+    } else {
+        t_paquete *paquete = paquete_create(FILE_SYSTEM);
+        write_socket_paquete(fs->socket_memory, paquete);
+        paquete_destroy(paquete);
+
+        log_info(fs->log, "Conectado a memoria en %s:%s", fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
+    }
+
+    fs->socket_listen = conn_create(SERVER, fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
+
+    if (fs->socket_listen == -1) {
+        log_error(fs->log, "No se pudo crear el socket de escucha en %s:%s", fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
+        exit(1);
+    }
+     
+    log_info(fs->log, "Escuchando kernel en %s:%s", fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
+}
+
+void init_threads(FS *fs)
+{
+    pthread_t thread_id;
+
+    int status = pthread_create(&thread_id, NULL, kernel_handler, (void *)fs);
+    assert(status == 0);
+
+    pthread_join(thread_id, (void **)&status);
+    assert(status == 0);
+}
+
+void teardown(FS *fs)
+{
+    conn_close(fs->socket_listen);
+
+    conn_close(fs->socket_memory);
+
+    fs_destroy(fs);
 }

@@ -45,6 +45,8 @@ int read_socket(int, void *, int);
 
 char* read_socket_string(int);
 
+int socket_recv(int socket_fd, t_paquete **paquete);
+
 t_paquete *read_socket_paquete(int);
 
 t_list *read_socket_tlv_list(int);
@@ -54,6 +56,8 @@ int write_socket(int, void *, int);
 int write_socket_string(int, char *);
 
 int write_socket_paquete(int, t_paquete *);
+
+int socket_send(int socket_fd, t_paquete *paquete);
 
 int write_socket_tlv_list(int, t_list *);
 
