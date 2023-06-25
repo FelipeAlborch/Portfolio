@@ -80,6 +80,7 @@ typedef struct{
 }t_proceso;
 
 typedef enum{
+	ABRIR_ARCHIVO,
 	CREAR_ARCHIVO,
 	TRUNCAR_ARCHIVO,
 	LEER_ARCHIVO,

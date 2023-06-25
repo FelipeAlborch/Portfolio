@@ -22,7 +22,9 @@ int conectar_con_memoria(config_de_cpu configuracionCPU){
   t_paquete* conectar= crear_paquete();
 	conectar->codigo_operacion= CPU;
 	enviar_paquete(conectar, socketMemoria);
-	log_info(logger, "Mensaje enviado correctametne!");
+	log_info(logger, "Mensaje enviado correctamente!");
+
+  eliminar_paquete(conectar);
 
 	log_destroy(logger);
 	return socketMemoria;
@@ -85,7 +87,8 @@ bool manejar_paquete_kernel_dispatch(int socketKernel)
             //dump(contexto_recibido->lista_de_instrucciones);
             
             ejecutar_lista_instrucciones_del_pcb(contexto_recibido, socketKernel, socketMemoriaUtil);
-            //liberar_contexto_ejecucion(contexto_recibido);
+            list_destroy_and_destroy_elements(lista_recepcion_valores, free);
+            liberar_contexto_ejecucion(contexto_recibido);
             break;
 		
         default:

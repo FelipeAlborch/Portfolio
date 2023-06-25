@@ -61,7 +61,7 @@ void agregar_proceso_a_tabla(pcb*);
 
 void leer_tabla_procesos();
 
-void destruir_tabla_de_procesos();
+//void destruir_tabla_de_procesos();
 
 void crear_diccionario_recursos();
 

@@ -74,6 +74,7 @@ void destruir_estructuras_planificacion()
     // Destruyo diccionarios;
     dictionary_destroy(diccionario_de_consolas);
     dictionary_destroy_and_destroy_elements(diccionario_recursos, liberar_recurso);
+    dictionary_destroy(tabla_de_procesos);
 
     // Termino los hilos
     pthread_exit(&hilo_corto_plazo);
@@ -170,6 +171,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
     char* nombre_recurso;
     int operacion_de_cpu;
     int tamanio, direccion_fisica;
+    t_recurso *archivo;
 
     recibirOperacion:
     
@@ -232,10 +234,15 @@ void ejecutar(pcb* proceso_a_ejecutar)
             contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
             proceso_en_ejecucion = desalojar_proceso_en_exec();
 
+            if(!es_fifo)
+            {
+                temporal_destroy(proceso_en_ejecucion->tiempo_ejecucion);
+            }
+
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
             loguear_pcb(proceso_en_ejecucion,logger_planificador_extra);
             log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < SUCCESS >", proceso_en_ejecucion->pid);
-            
+
             //agregar_proceso_terminated(proceso_en_ejecucion);
             terminar_proceso(proceso_en_ejecucion);
             //TODO
@@ -421,7 +428,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
 
             list_destroy_and_destroy_elements(lista_contexto_cs, free);
-            //list_destroy(lista_contexto_cs);
+            list_destroy_and_destroy_elements(lista_recepcion_valores, free);
             liberar_contexto_ejecucion(contexto_cs);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
@@ -455,14 +462,14 @@ void ejecutar(pcb* proceso_a_ejecutar)
             t_list* valores_tras_eliminacion = _recibir_paquete(socketMemoria);
             t_list* tabla_tras_eliminacion = deserializar_tabla_segmentos(valores_tras_eliminacion);
             list_destroy_and_destroy_elements(proceso_a_ejecutar->tabla_de_segmentos,free);
-            proceso_a_ejecutar->tabla_de_segmentos = list_duplicate(tabla_tras_eliminacion);
+            proceso_a_ejecutar->tabla_de_segmentos = tabla_tras_eliminacion;
 
             leer_segmentos(proceso_a_ejecutar);
             
-
+            //list_destroy_and_destroy_elements(tabla_tras_eliminacion, free);
             list_destroy_and_destroy_elements(valores_tras_eliminacion,free);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
-            //list_destroy(lista_recepcion_valores);
+            list_destroy_and_destroy_elements(lista_contexto_ds, free);
             liberar_contexto_ejecucion(contexto_ds);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
@@ -491,19 +498,39 @@ void ejecutar(pcb* proceso_a_ejecutar)
             if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_recurso))
             {
                 // PEDIR AL FS
-                // archivo = obtener_archivo_de_fs();
-                t_paquete* paquete_a_fs = crear_paquete_operacion(CREAR_ARCHIVO);
+                t_paquete* paquete_a_fs = crear_paquete_operacion(ABRIR_ARCHIVO);
                 agregar_a_paquete(paquete_a_fs, nombre_recurso, strlen(nombre_recurso)+1);
+                
+                pthread_mutex_lock(&mutex_fs);
+                
                 enviar_paquete(paquete_a_fs, socketFS);
+                eliminar_paquete(paquete_a_fs);
                 
-                int rta1;
-                int rta2;
-                recv(socketFS, &rta1, sizeof(int), MSG_WAITALL );
-                recv(socketFS, &rta2, sizeof(int), MSG_WAITALL );
-                
+                int rta_fs_1;
+                recv(socketFS, &rta_fs_1, sizeof(int), MSG_WAITALL); // 0 = ARCHIVO EXISTE, -1 = ARCHIVO NO EXISTE
 
-                // SI NO EXISTE, CREARLO
-                t_recurso* archivo = crear_recurso(nombre_recurso, 1);
+                log_info(logger_planificador_extra, "Respuesta (1/2) de FS: %d", rta_fs_1);
+
+                pthread_mutex_unlock(&mutex_fs);
+
+                if(rta_fs_1 == -1) {
+
+                    paquete_a_fs = crear_paquete_operacion(CREAR_ARCHIVO);
+                    agregar_a_paquete(paquete_a_fs, nombre_recurso, strlen(nombre_recurso)+1);
+                    
+                    pthread_mutex_lock(&mutex_fs);
+                    
+                    enviar_paquete(paquete_a_fs, socketFS);
+                    
+                    int rta_fs_2;
+                    recv(socketFS, &rta_fs_2, sizeof(int), MSG_WAITALL); // 0 = ARCHIVO CREADO, -1 = ERROR
+
+                    log_info(logger_planificador_extra, "Respuesta (2/2) de FS: %d", rta_fs_2);
+
+                    pthread_mutex_unlock(&mutex_fs);
+                }
+                
+                archivo = crear_recurso(nombre_recurso, 1);
                 archivo->posicion = 0;
 
                 dictionary_put(tabla_global_archivos_abiertos, nombre_recurso, archivo);
@@ -517,12 +544,6 @@ void ejecutar(pcb* proceso_a_ejecutar)
             //list_destroy(lista_recepcion_valores);
             //list_destroy(lista_contexto_fopen);
             
-            if(proceso_bloqueado_por_recurso)
-            {
-                proceso_bloqueado_por_recurso = false;
-                return;
-            }
-
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
             
             goto recibirOperacion;
@@ -551,8 +572,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             if(!archivo_esta_abierto(nombre_recurso))
             {
                 // REMOVER DE LA TABLA DE ARCHIVOS ABIERTOS
-                t_recurso* archivo = dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
-                free(archivo);
+                archivo = dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
+                liberar_recurso(archivo);
             }
 
             liberar_contexto_ejecucion(contexto_de_fclose);
@@ -560,12 +581,6 @@ void ejecutar(pcb* proceso_a_ejecutar)
             list_destroy_and_destroy_elements(lista_contexto_fclose,free);
             //list_destroy(lista_recepcion_valores);
             //list_destroy(lista_contexto_fclose);
-            
-            if(proceso_bloqueado_por_recurso)
-            {
-                proceso_bloqueado_por_recurso = false;
-                return;
-            }
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
             
@@ -621,14 +636,21 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
+                archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
+
+                log_info(logger_kernel_util_obligatorio, "PID: < %d > - Leer Archivo: < %s > - Puntero < %d > - Dirección Memoria < %d > - Tamaño < %d >", proceso_a_ejecutar->pid, nombre_recurso, archivo->posicion, direccion_fisica, tamanio);
+
                 t_paquete* paquete_fread = crear_paquete_operacion(LEER_ARCHIVO);
+                
                 agregar_a_paquete(paquete_fread, nombre_recurso, strlen(nombre_recurso)+1);
+                agregar_a_paquete(paquete_fread, &archivo->posicion, sizeof(int));
                 agregar_a_paquete(paquete_fread, &direccion_fisica, sizeof(int));
                 agregar_a_paquete(paquete_fread, &tamanio, sizeof(int));
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
 
                 enviar_paquete(paquete_fread, socketFS);
+                eliminar_paquete(paquete_fread);
 
                 pthread_t* hilo_fread;
                 pthread_create(&hilo_fread, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
@@ -655,14 +677,21 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
+                archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
+
+                log_info(logger_kernel_util_obligatorio, "PID: < %d > - Escribir Archivo: < %s > - Puntero < %d > - Dirección Memoria < %d > - Tamaño < %d >", proceso_a_ejecutar->pid, nombre_recurso, archivo->posicion, direccion_fisica, tamanio);
+
                 t_paquete* paquete_fwrite = crear_paquete_operacion(ESCRIBIR_ARCHIVO);
+
                 agregar_a_paquete(paquete_fwrite, nombre_recurso, strlen(nombre_recurso)+1);
+                agregar_a_paquete(paquete_fwrite, &archivo->posicion, sizeof(int));
                 agregar_a_paquete(paquete_fwrite, &direccion_fisica, sizeof(int));
                 agregar_a_paquete(paquete_fwrite, &tamanio, sizeof(int));
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 
                 enviar_paquete(paquete_fwrite, socketFS);
+                eliminar_paquete(paquete_fwrite);
 
                 pthread_t* hilo_fwrite;
                 pthread_create(&hilo_fwrite, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
@@ -683,18 +712,22 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 pcb* contexto_de_ftruncate = recibir_contexto_ejecucion(lista_contexto_truncate);
 
                 log_info(logger_planificador_extra, "Contexto recibido por F_TRUNCATE");
+                
+                log_info(logger_kernel_util_obligatorio, "PID: < %d > - Archivo: < %s > - Tamaño: < %d >", proceso_a_ejecutar->pid, nombre_recurso, tamanio);
 
                 actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_ftruncate);
 
                 loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 t_paquete* paquete_ftruncate = crear_paquete_operacion(TRUNCAR_ARCHIVO);
+                int tam = tamanio;
                 agregar_a_paquete(paquete_ftruncate, nombre_recurso, strlen(nombre_recurso)+1);
-                agregar_a_paquete(paquete_ftruncate, &tamanio, sizeof(int));
+                agregar_a_paquete(paquete_ftruncate, &tam, sizeof(int));
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 
                 enviar_paquete(paquete_ftruncate, socketFS);
+                eliminar_paquete(paquete_ftruncate);
 
                 pthread_t* hilo_ftruncate;
                 pthread_create(&hilo_ftruncate, NULL, esperar_listo_de_fs, (void*) nombre_recurso);

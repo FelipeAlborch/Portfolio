@@ -80,6 +80,8 @@ void escuchar_consola(int socketConsola)
 
 			loguear_pcb(nuevo_pcb,logger_kernel_util_extra);
 			agregar_proceso_new(nuevo_pcb);
+			
+			//list_destroy(lista_instrucciones);
 			list_destroy_and_destroy_elements(lista_de_consola, free);
 
 			return;
@@ -165,6 +167,8 @@ int conectar_con_memoria(config_de_kernel configuracion_kernel){
 	enviar_paquete(conectar, socketMemoria);
     log_info(logger, "Mensaje enviado!");
     
+	free(conectar->buffer);
+	free(conectar);
 	log_destroy(logger);
 	
 	return socketMemoria;

@@ -235,6 +235,7 @@ void ejecutar_wait(pcb *pcb , LineaInstruccion *instruccion, int socketKernel)
   t_paquete *paquete = crear_paquete_operacion(WAIT);
   agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
   enviar_paquete(paquete, socketKernel);
+  eliminar_paquete(paquete);
 
   enviar_contexto_ejecucion(pcb, socketKernel, WAIT);
   
@@ -252,6 +253,7 @@ void ejecutar_signal(pcb *pcb, LineaInstruccion* instruccion, int socketKernel)
   t_paquete *paquete = crear_paquete_operacion(SIGNAL);
   agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
   enviar_paquete(paquete, socketKernel);
+  eliminar_paquete(paquete);
 
   enviar_contexto_ejecucion(pcb, socketKernel, SIGNAL);
   
@@ -274,6 +276,8 @@ void ejecutar_create_segment(pcb *pcb, LineaInstruccion *instruccion, int socket
   enviar_contexto_ejecucion(pcb, socketKernel, CREATE_SEGMENT);
   log_info(logger, "Solicitud de creacion de segmento enviada al Kernel!");
 
+  eliminar_paquete(paquete);
+
   log_destroy(logger);
 }
 
@@ -288,6 +292,8 @@ void ejecutar_delete_segment(pcb *pcb, LineaInstruccion *instruccion, int socket
   enviar_paquete(paquete, socketKernel);
   enviar_contexto_ejecucion(pcb, socketKernel, DELETE_SEGMENT);
   log_info(logger, "Solicitud de eliminacion de segmento enviada al Kernel!");
+
+  eliminar_paquete(paquete);
 
   log_destroy(logger);
 }
@@ -371,6 +377,9 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
   agregar_a_paquete(paquete, &cantBytes, sizeof(int));
   agregar_a_paquete(paquete, &DF, sizeof(int));
 
+  enviar_paquete(paquete, socketKernel);
+  eliminar_paquete(paquete);
+
   enviar_contexto_ejecucion(pcb, socketKernel, operacion);
   log_info(logger, "Solicitud enciada al Kernel!");
 
@@ -396,7 +405,7 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
   agregar_a_paquete(paquete, &DF, sizeof(int));
   agregar_a_paquete(paquete ,&cantDeBytes, sizeof(int));
   enviar_paquete(paquete, socketMemoria);
-
+  eliminar_paquete(paquete);
   // Esperando respuesta de memoria...
   switch (recibir_operacion(socketMemoria))
   {
@@ -443,6 +452,7 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
   agregar_a_paquete(paquete, &cantidadDeBytes, sizeof(int));
   enviar_paquete(paquete, socketMemoria);
 
+  eliminar_paquete(paquete);
   free(valorACopiar);
 
   log_destroy(logger);

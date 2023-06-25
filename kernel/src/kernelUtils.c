@@ -137,28 +137,86 @@ void actualizar_tablas_segmentos(t_list* lista_de_valores)
 {
     int cantidad_de_procesos = *(int*) list_get(lista_de_valores, 0);
 
-    int base=  0;
+    int offset =  0;
     for(int i = 0; i < cantidad_de_procesos; i++)
     {
-        int cantidad_de_segmentos = *(int*) list_get(lista_de_valores, base + 1);
-        
+        int cantidad_de_segmentos = *(int*) list_get(lista_de_valores, offset + 1);
         char* key = string_from_format("%d", i+1);
         pcb* proceso = dictionary_get(tabla_de_procesos, key);
         free(key);
-        t_list* tabla_a_actualizar = proceso->tabla_de_segmentos;
+
+        if(proceso == NULL) // La idea es chequear que la entrada para la key este en NULL. Si es asi, el proceso ya fue eliminado
+        {                   // pero dejamos la entrada para que no joda en la iteracion del diccionario
+            continue;       // IMPORTANTE: Cuando se elimina un proceso, hay que liberar el pcb de la tabla, y hacer un put de null para esa key (el pid).
+        }                   // El continue hace que pase a la proxima iteracion
 
         for(int j = 0; j < cantidad_de_segmentos; j++)
         {
-            int base = *(int*) list_get(lista_de_valores, base + 2);
-            int tamanio = *(int*) list_get(lista_de_valores, base + 3);
-
-            t_segmento* segmento_a_actualizar = list_get(tabla_a_actualizar, j);
-            segmento_a_actualizar->base = base;
+            int base_seg = *(int*) list_get(lista_de_valores, offset + 2);
+            int tamanio = *(int*) list_get(lista_de_valores, offset + 3);
+            t_segmento* segmento_a_actualizar = list_get(proceso->tabla_de_segmentos, j);
+            segmento_a_actualizar->base = base_seg;
             segmento_a_actualizar->size = tamanio;
             
-            base += 2; 
+            offset += 2; 
         }
-        base++;
+        offset++;
+    }
+}
+*/
+void actualizar_tablas_segmentos()
+{
+    t_list* lista_de_valores;
+    int pid;
+    int cantidad_de_segmentos;
+    int operacion_memoria;
+    while(1)
+    {
+        int operacion_memoria = recibir_operacion(socketMemoria);
+        switch(operacion_memoria)
+        {
+            case INICIO_COMPACTAR:
+                lista_de_valores = _recibir_paquete(socketMemoria);
+
+                pid = *(int*) list_get(lista_de_valores, 0);
+                log_info(logger_kernel_util_extra, "Nueva tabla post compactacion del proceso %d recibida", pid);
+                cantidad_de_segmentos = *(int*) list_get(lista_de_valores, 1);
+
+                t_list* tabla_de_segmentos_actualizada = list_create();
+
+                char* key = string_from_format("%d", pid);
+                pcb* proceso = dictionary_get(tabla_de_procesos, key);
+                if(proceso == NULL)
+                {
+                    log_warning(logger_kernel_util_extra,"El proceso %d no existe, me pasaron cualquier cosa",pid);
+                }
+                list_destroy_and_destroy_elements(proceso->tabla_de_segmentos,free);
+
+                int base = 0;
+                for(int i = 0; i < cantidad_de_segmentos; i++)
+                {
+                    base = 2 * i;
+		            t_segmento* segmento = malloc(sizeof(t_segmento));
+		            segmento->base = *(int*) list_get(lista_de_valores, base + 2);
+		            segmento->size = *(int*) list_get(lista_de_valores, base + 3);
+		            list_add(tabla_de_segmentos_actualizada, segmento);
+                } 
+
+                proceso->tabla_de_segmentos = list_duplicate(tabla_de_segmentos_actualizada);
+
+                leer_segmentos(proceso);
+
+                list_destroy(tabla_de_segmentos_actualizada);   // Si haces un free de los segmentos de esta tabla, reventas los segmentos que acabas de crear
+                list_destroy_and_destroy_elements(lista_de_valores, free);
+                free(key);
+
+            break;
+
+            case FIN_COMPACTAR:
+                log_info(logger_kernel_util_obligatorio, "Finalizo el proceso de compactacion");
+                return;
+            break;
+        }
     }
 }
 */
@@ -235,6 +293,7 @@ void* esperar_tabla_segmentos(pcb* un_pcb)
 			t_list* tabla_de_segmentos = deserializar_tabla_segmentos(segmentos_recibidos);
 			un_pcb->tabla_de_segmentos = list_duplicate(tabla_de_segmentos);
 			list_destroy_and_destroy_elements(segmentos_recibidos, free);
+            list_destroy(tabla_de_segmentos);
 		break;
 
 		default:
@@ -244,25 +303,36 @@ void* esperar_tabla_segmentos(pcb* un_pcb)
 	}
 }
 
-//void serializar_tablas_de_segmentos(t_paquete* paquete,t_list* lista_general_de_segmentos)
-//{
-//    int cantidad_de_procesos = list_size(lista_general_de_segmentos);
-//    agregar_a_paquete(paquete, &cantidad_de_procesos, sizeof(int));
-//
-//    for(int i = 0; i < cantidad_de_procesos; i++)
-//    {
-//        t_list* tabla_del_proceso = list_get(lista_general_de_segmentos, i);
-//        int cantidad_de_segmentos = list_size(tabla_del_proceso);
-//        agregar_a_paquete(paquete, &cantidad_de_segmentos, sizeof(int));
-//        
-//        for(int j = 0; j < cantidad_de_procesos; j++)
-//        {
-//            t_segmento* segmento = list_Get(tabla_del_proceso, j);
-//            agregar_a_paquete(paquete, &(segmento->base), sizeof(int));
-//            agregar_a_paquete(paquete, &(segmento->size), sizeof(int));
-//        }
-//    }
-//}
+/*
+void serializar_tablas_de_segmentos(t_paquete *paquete)
+{
+  int cantidad_de_procesos = dictionary_size(tabla_de_segmentos_general);
+  agregar_a_paquete(paquete, &cantidad_de_procesos, sizeof(int));
+  for (int i = 0; i < cantidad_de_procesos; i++)
+  {
+
+    char *key = string_from_format("%d", i + 1);
+    t_list *tabla_del_proceso = dictionary_get(tabla_de_segmentos_general, key);
+    free(key);
+
+    if (tabla_del_proceso == NULL)
+    {
+      continue;
+    }
+
+    int cantidad_de_segmentos = list_size(tabla_del_proceso);
+    agregar_a_paquete(paquete, &cantidad_de_segmentos, sizeof(int));
+    for (int j = 0; j < cantidad_de_segmentos; j++)
+    {
+      t_segmento *segmento = list_get(tabla_del_proceso, j);
+      int base = segmento->base;
+      int tam = segmento->size;
+      agregar_a_paquete(paquete, &base, sizeof(int));
+      agregar_a_paquete(paquete, &tam, sizeof(int));
+    }
+  }
+}
+*/
 
 /*****************************************************************************
  *              FUNCIONES PARA EJECUCION
@@ -286,15 +356,27 @@ void terminar_proceso(pcb* un_pcb)
     t_paquete* paquete_a_consola = crear_paquete_operacion(EXIT);
     enviar_paquete(paquete_a_consola, socket_a_consola);  
     
-    t_paquete* paquete_a_memoria = crear_paquete_operacion(FIN_PROCESO);
-    int p_id = un_pcb->pid;
-    agregar_a_paquete(paquete_a_memoria, &p_id, sizeof(int));
-    enviar_paquete(paquete_a_memoria, socketMemoria);
+    //t_paquete* paquete_a_memoria = crear_paquete_operacion(FIN_PROCESO);
+    //int p_id = un_pcb->pid;
+    //agregar_a_paquete(paquete_a_memoria, &p_id, sizeof(int));
+    //enviar_paquete(paquete_a_memoria, socketMemoria);
     
-    eliminar_paquete(paquete_a_memoria);
+    //eliminar_paquete(paquete_a_memoria);
     eliminar_paquete(paquete_a_consola); 
     agregar_proceso_terminated(un_pcb);
     liberar_recursos(un_pcb);
+    liberar_archivos_de_proceso(un_pcb);
+    
+    char* key = string_from_format("%d", un_pcb->pid);
+    pcb* proceso = dictionary_remove(tabla_de_procesos, key);
+    // Este proceso, y el "un_pcb" son exactamente el mismo, pero la idea es remover la entrada de la tabla para poner un NULL despues.
+    // Cuando ponemos un null, podemos iterar el diccionario sin que rompa la logica de "cantidad de procesos", siempre y cuando hagamos el chequeo
+    // El proceso seguiria "existiendo" para la logica del cant_procesos = dictionary_size, entonces no nos tenemos que preocupar.
+    dictionary_put(tabla_de_procesos, key, NULL);
+    
+    free(key);
+    
+    // No hace falta hacer un free(proceso) porque un_pcb y proceso apuntan al mismo lugar.
     liberar_pcb(un_pcb);
 }
 
@@ -317,8 +399,12 @@ void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictiona
 
     recurso->instancias--;
     log_info(logger_kernel_util_obligatorio, "PID: < %d > - %s: < %s > - Instancias < %d >", un_pcb->pid, operacion, recurso->nombre, recurso->instancias);
-    list_add(un_pcb->recursos_asignados, recurso);
-    
+
+    if (strcmp(operacion, "F_OPEN") == 0)
+        list_add(un_pcb->tabla_archivos_abiertos, recurso);
+    else
+        list_add(un_pcb->recursos_asignados, recurso);
+
     if(recurso->instancias < 0)
     {
         pcb* proceso_en_ejecucion = desalojar_proceso_en_exec();
@@ -365,7 +451,13 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
 
     recurso->instancias++;
     log_info(logger_kernel_util_obligatorio, "PID: < %d > - %s: < %s > - Instancias < %d >", un_pcb->pid, operacion, recurso->nombre, recurso->instancias);
-    remover_recurso_si_esta(un_pcb->recursos_asignados, recurso);
+
+
+    if (strcmp(operacion, "F_CLOSE") == 0)
+        remover_recurso_si_esta(un_pcb->tabla_archivos_abiertos, recurso);
+    else
+        remover_recurso_si_esta(un_pcb->recursos_asignados, recurso);
+
 
     if(!queue_is_empty(recurso->cola_bloqueados))
     {
@@ -382,42 +474,17 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
     return;
 }
 
-
-bool archivo_esta_abierto(char* archivo)
-{
-    // contador de procesos que tienen el archivo abierto
-    int contador = 0;
-
-    // devuelve true si el nombre del recurso matchea con el del archivo
-    void _recurso_es_el_archivo(t_recurso* recurso) {
-        return string_equals_ignore_case(recurso->nombre, archivo);
-    }
-
-    // suma 1 a contador si el pcb tiene el archivo abierto
-    void _pcb_tiene_el_archivo(char* ___, pcb* iteration) {
-        int recursos_asignados = list_size(iteration->recursos_asignados);
-
-        bool found = list_any_satisfy(iteration->recursos_asignados, (void*) _recurso_es_el_archivo);
-        if(found)
-            contador++;   
-    }
-
-    dictionary_iterator(tabla_de_procesos, (void*) _pcb_tiene_el_archivo);
-
-    return contador != 0;
-}
-
-
-
 void fseek_archivo(pcb* un_pcb, char* un_recurso, int posicion) {
      t_recurso* archivo = dictionary_get(tabla_global_archivos_abiertos, un_recurso);
     if(archivo == NULL)
     {
         resultado_recurso = false;
+        log_error(logger_kernel_util_extra, "No existe el archivo para hacer fseek");
         return;
     }
 
     archivo->posicion = posicion;
+    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Actualizar puntero Archivo: < %s > - Puntero < %d >", un_pcb->pid, archivo->nombre, archivo->posicion);
 }
 
 void esperar_listo_de_fs(char* nombre_recurso)
@@ -432,12 +499,16 @@ void esperar_listo_de_fs(char* nombre_recurso)
 
     log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_desalojado->pid, nombre_recurso);    
 
-    int rtafs;
+    int rta_fs_1;
+    int rta_fs_2;
     
     /*
     *   ESTO PUEDE GENERAR QUILOMBO
     */
-    recv(socketFS, &rtafs, sizeof(int), MSG_WAITALL);
+    recv(socketFS, &rta_fs_1, sizeof(int), MSG_WAITALL);
+    log_info(logger_planificador_extra, "Respuesta (1/2) de FS: %d", rta_fs_1);
+    recv(socketFS, &rta_fs_2, sizeof(int), MSG_WAITALL);
+    log_info(logger_planificador_extra, "Respuesta (2/2) de FS: %d", rta_fs_2);
 
     pthread_mutex_unlock(&mutex_fs);    // Se desbloquea el socket
     
