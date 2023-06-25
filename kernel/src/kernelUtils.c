@@ -132,7 +132,7 @@ void avisar_memoria(int aviso)
     enviar_paquete(paquete_a_memoria, socketMemoria);
     eliminar_paquete(paquete_a_memoria);
 }
-
+/*
 void actualizar_tablas_segmentos(t_list* lista_de_valores)
 {
     int cantidad_de_procesos = *(int*) list_get(lista_de_valores, 0);
@@ -159,6 +159,62 @@ void actualizar_tablas_segmentos(t_list* lista_de_valores)
             base += 2; 
         }
         base++;
+    }
+}
+*/
+void actualizar_tablas_segmentos()
+{
+    t_list* lista_de_valores;
+    int pid;
+    int cantidad_de_segmentos;
+    int operacion_memoria;
+    while(1)
+    {
+        int operacion_memoria = recibir_operacion(socketMemoria);
+        switch(operacion_memoria)
+        {
+            case INICIO_COMPACTAR:
+                lista_de_valores = _recibir_paquete(socketMemoria);
+                
+                pid = *(int*) list_get(lista_de_valores, 0);
+                log_info(logger_kernel_util_extra, "Nueva tabla post compactacion del proceso %d recibida", pid);
+                cantidad_de_segmentos = *(int*) list_get(lista_de_valores, 1);
+                
+                t_list* tabla_de_segmentos_actualizada = list_create();
+
+                char* key = string_from_format("%d", pid);
+                pcb* proceso = dictionary_get(tabla_de_procesos, key);
+                if(proceso == NULL)
+                {
+                    log_warning(logger_kernel_util_extra,"El proceso %d no existe, me pasaron cualquier cosa",pid);
+                }
+                list_destroy_and_destroy_elements(proceso->tabla_de_segmentos,free);
+
+                int base = 0;
+                for(int i = 0; i < cantidad_de_segmentos; i++)
+                {
+                    base = 2 * i;
+		            t_segmento* segmento = malloc(sizeof(t_segmento));
+		            segmento->base = *(int*) list_get(lista_de_valores, base + 2);
+		            segmento->size = *(int*) list_get(lista_de_valores, base + 3);
+		            list_add(tabla_de_segmentos_actualizada, segmento);
+                } 
+
+                proceso->tabla_de_segmentos = list_duplicate(tabla_de_segmentos_actualizada);
+
+                leer_segmentos(proceso);
+
+                list_destroy(tabla_de_segmentos_actualizada);   // Si haces un free de los segmentos de esta tabla, reventas los segmentos que acabas de crear
+                list_destroy_and_destroy_elements(lista_de_valores, free);
+                free(key);
+
+            break;
+
+            case FIN_COMPACTAR:
+                log_info(logger_kernel_util_obligatorio, "Finalizo el proceso de compactacion");
+                return;
+            break;
+        }
     }
 }
 
@@ -230,16 +286,16 @@ void terminar_proceso(pcb* un_pcb)
     t_paquete* paquete_a_consola = crear_paquete_operacion(EXIT);
     enviar_paquete(paquete_a_consola, socket_a_consola);  
     
-//    t_paquete* paquete_a_memoria = crear_paquete_operacion(FIN_PROCESO);
-//    int p_id = un_pcb->pid;
-//    agregar_a_paquete(paquete_a_memoria, &p_id, sizeof(int));
-//    enviar_paquete(paquete_a_memoria, socketMemoria);
+    t_paquete* paquete_a_memoria = crear_paquete_operacion(FIN_PROCESO);
+    int p_id = un_pcb->pid;
+    agregar_a_paquete(paquete_a_memoria, &p_id, sizeof(int));
+    enviar_paquete(paquete_a_memoria, socketMemoria);
     
-//    eliminar_paquete(paquete_a_memoria);
+    eliminar_paquete(paquete_a_memoria);
     eliminar_paquete(paquete_a_consola); 
     agregar_proceso_terminated(un_pcb);
     liberar_recursos(un_pcb);
-    //liberar_pcb(un_pcb);
+    liberar_pcb(un_pcb);
 }
 
 void wait_recurso(pcb* un_pcb, char* un_recurso) {
