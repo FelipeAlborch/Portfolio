@@ -412,10 +412,16 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
   {
   case MOV_IN_SUCCES:
     listaPlana = _recibir_paquete(socketMemoria);
-    char *contenidoMemoria = list_get(listaPlana, 0);
-    log_info(logger, "Valor obtenido de Memoira es [%s]", contenidoMemoria);
+    //void* contenidoMemoria = malloc(cantDeBytes);
+    //contenidoMemoria = list_get(listaPlana, 0);
+    char* lectura = list_get(listaPlana,0); //string_new(); //= malloc(cantDeBytes);
+    //memcpy(&lectura, contenidoMemoria, cantDeBytes);
+    
+    //printf("Leido: %s", lectura);
+    log_info(logger, "Valor obtenido de Memoria es [%s]", lectura);
+    //instruccion->parametros[1] = lectura;
 
-    strcpy(instruccion->parametros[1], contenidoMemoria);
+    strcpy(instruccion->parametros[1], lectura);
     ejecutar_set(pcb, instruccion);
     list_destroy_and_destroy_elements(listaPlana, free);
     break;
@@ -446,11 +452,11 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
   int cantidadDeBytes = cantidad_bytes_registro(instruccion->parametros[1]);
   char* valorACopiar = valor_del_registro_como_string(obtener_valor_registro(instruccion, pcb), cantidadDeBytes);
   //char* valorACopiar = string_duplicate(obtener_valor_registro(instruccion, pcb));
-  log_debug(logger, "Los caracteres a copiar son: %s", valorACopiar);
-  log_debug(logger, "la cantidad de bytes a copiar son: %d", (int)(strlen(valorACopiar)-1));
+  log_info(logger, "Los caracteres a copiar son: %s", valorACopiar);
+  log_info(logger, "la cantidad de bytes a copiar son: %d", cantidadDeBytes);
   
   agregar_a_paquete(paquete, &DF, sizeof(int));
-  agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar)-1);
+  agregar_a_paquete(paquete, valorACopiar, cantidadDeBytes);
   agregar_a_paquete(paquete, &cantidadDeBytes, sizeof(int));
   enviar_paquete(paquete, socketMemoria);
 

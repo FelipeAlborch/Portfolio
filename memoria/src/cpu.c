@@ -42,10 +42,12 @@ void ejecutar_cpu(){
             case MOV_IN_INSTRUCTION:
                 lista = _recibir_paquete(conectar);
                 move_in(lista,MOV_IN_INSTRUCTION);
+                list_destroy_and_destroy_elements(lista, free);
             break;
             case MOV_OUT_INSTRUCTION:
                 lista = _recibir_paquete(conectar);
                 move_out(lista,MOV_OUT_INSTRUCTION);
+                list_destroy_and_destroy_elements(lista, free);
             break;
             default:
                 log_error(clogger,"No se reconoce la instrucción");
@@ -118,8 +120,13 @@ void move_in(t_list* lista, int code){
     int size=*(int*)list_get(lista,1);
     int pid = buscar_pid(dir);
     void* info = leer_dato(dir,size);
+    //char* info2 = string_new();
+    //memcpy(&info2,info,size);
+    //t_paquete* paq = crear_paquete_operacion(MOV_IN_SUCCES);
+    //agregar_a_paquete(paq, info2, size);
+    //enviar_paquete(paq, config_memo.cpu);
+                              //info2
     responder_cpu_fs(pid, code, info, dir, size);
-    
 }
 void move_out(t_list* lista, int code){
 
@@ -130,7 +137,7 @@ void move_out(t_list* lista, int code){
     char* valor =list_get(lista,1);
     int size=list_get(lista,2); */
     int pid = buscar_pid(dir);
-
+    
     int info = escribir_dato(dir,valor,size);
     responder_cpu_fs(pid, code, info, dir, size);
     
@@ -149,7 +156,7 @@ void* leer_dato(int direccion,int size){
 int escribir_dato(int direccion,char* valor, int size){
     sleep(config_memo.retardo/1000);
     
-   // log_debug(clogger,"Direccion: %d  Info: %s  Tamanio: %d",direccion,valor,size);
+    log_debug(clogger,"Direccion: %d  Info: %s  Tamanio: %d",direccion,valor,size);
     int pid = buscar_pid(direccion);
 
   //  log_info(clogger,"PID: %d",pid);

@@ -71,7 +71,7 @@ void ejecutar_kernel(){
       //running_k=false;    // Por que pones esto en fales?, hace que salga del while, y no se quede esperando a la proxima tarea del kernel
       log_trace(klogger,"ejecute kernel");
   }
-  list_destroy(lista);
+  list_destroy_and_destroy_elements(lista,free);
   //eliminar_paquete(paquete);  // Este free esta tirando seg fault porque la funcion _recibir_paquete(socket) no recibe realmente un t_paquete, sino que enlista los valores que haya en el buffer del socket
   log_info(klogger,"Terminando de ejecutar las tareas del kernel");
   imprimir_tabla_gral();
@@ -88,8 +88,8 @@ void crear_proceso(int pid){
     serializar_tabla_segmentos(paquete,listaS);
     enviar_paquete(paquete,config_memo.kernel);
     
-    
-    paquete_destroy(paquete); 
+    eliminar_paquete(paquete);
+    //paquete_destroy(paquete); 
     //list_destroy(listaS);
 }
 

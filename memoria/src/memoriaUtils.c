@@ -66,7 +66,7 @@ void liberar_memoria(){
     log_destroy(mlogger);
 };
 void liberar_listas(){
-    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)free);
+    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)liberar_t_segmento);
     list_destroy_and_destroy_elements(huecos_libres,(void*)free);
     //list_destroy(huecos_libres);
     log_debug(mlogger,"listas liberadas");
@@ -172,6 +172,7 @@ void respuestas(int cliente, int code,void* algo){
   t_paquete* paquete=crear_paquete_operacion(code);
   agregar_a_paquete(paquete,&algo,sizeof(algo)+1);
   enviar_paquete(paquete,cliente);
+  eliminar_paquete(paquete);
 }
 /**
  * 
