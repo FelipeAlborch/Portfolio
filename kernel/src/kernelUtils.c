@@ -219,62 +219,6 @@ void actualizar_tablas_segmentos()
         }
     }
 }
-*/
-void actualizar_tablas_segmentos()
-{
-    t_list* lista_de_valores;
-    int pid;
-    int cantidad_de_segmentos;
-    int operacion_memoria;
-    while(1)
-    {
-        int operacion_memoria = recibir_operacion(socketMemoria);
-        switch(operacion_memoria)
-        {
-            case INICIO_COMPACTAR:
-                lista_de_valores = _recibir_paquete(socketMemoria);
-                
-                pid = *(int*) list_get(lista_de_valores, 0);
-                log_info(logger_kernel_util_extra, "Nueva tabla post compactacion del proceso %d recibida", pid);
-                cantidad_de_segmentos = *(int*) list_get(lista_de_valores, 1);
-                
-                t_list* tabla_de_segmentos_actualizada = list_create();
-
-                char* key = string_from_format("%d", pid);
-                pcb* proceso = dictionary_get(tabla_de_procesos, key);
-                if(proceso == NULL)
-                {
-                    log_warning(logger_kernel_util_extra,"El proceso %d no existe, me pasaron cualquier cosa",pid);
-                }
-                list_destroy_and_destroy_elements(proceso->tabla_de_segmentos,free);
-
-                int base = 0;
-                for(int i = 0; i < cantidad_de_segmentos; i++)
-                {
-                    base = 2 * i;
-		            t_segmento* segmento = malloc(sizeof(t_segmento));
-		            segmento->base = *(int*) list_get(lista_de_valores, base + 2);
-		            segmento->size = *(int*) list_get(lista_de_valores, base + 3);
-		            list_add(tabla_de_segmentos_actualizada, segmento);
-                } 
-
-                proceso->tabla_de_segmentos = list_duplicate(tabla_de_segmentos_actualizada);
-
-                leer_segmentos(proceso);
-
-                list_destroy(tabla_de_segmentos_actualizada);   // Si haces un free de los segmentos de esta tabla, reventas los segmentos que acabas de crear
-                list_destroy_and_destroy_elements(lista_de_valores, free);
-                free(key);
-
-            break;
-
-            case FIN_COMPACTAR:
-                log_info(logger_kernel_util_obligatorio, "Finalizo el proceso de compactacion");
-                return;
-            break;
-        }
-    }
-}
 
 void* esperar_tabla_segmentos(pcb* un_pcb)
 {
