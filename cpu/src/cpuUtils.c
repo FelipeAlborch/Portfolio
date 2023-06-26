@@ -401,13 +401,14 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
     enviar_contexto_ejecucion(pcb, socketKernel, SEG_FAULT);
     return;
   }
-
+  
   agregar_a_paquete(paquete, &DF, sizeof(int));
   agregar_a_paquete(paquete ,&cantDeBytes, sizeof(int));
   enviar_paquete(paquete, socketMemoria);
-  eliminar_paquete(paquete);
+  
   // Esperando respuesta de memoria...
-  switch (recibir_operacion(socketMemoria))
+  int op = recibir_operacion(socketMemoria);
+  switch (op)
   {
   case MOV_IN_SUCCES:
     listaPlana = _recibir_paquete(socketMemoria);
@@ -420,10 +421,11 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
     break;
   
   default:
-    log_info(logger, "Ocurrio un error en la lectura de Memoria..");
+    log_info(logger, "Ocurrio un error en la lectura de Memoria.. %d");
     break;
   }
 
+  eliminar_paquete(paquete);
   log_destroy(logger);
 }
 
@@ -451,6 +453,10 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
   agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar)-1);
   agregar_a_paquete(paquete, &cantidadDeBytes, sizeof(int));
   enviar_paquete(paquete, socketMemoria);
+
+  int rta_memo;
+  recv(socketMemoria, &rta_memo, sizeof(int), MSG_WAITALL);
+  log_info(logger, "MOV_OUT realizado con exito: %d", rta_memo);
 
   eliminar_paquete(paquete);
   free(valorACopiar);
