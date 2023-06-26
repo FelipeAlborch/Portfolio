@@ -163,14 +163,15 @@ void conectar(){
   
 }
 void respuestas(int cliente, int code,void* algo){
-  t_paquete* paquete=crear_paquete_operacion(code);
-  if (algo != NULL || algo != M_ERROR)
-  {
-    agregar_a_paquete(paquete,&algo,sizeof(algo)+1);
-  }
   
-  enviar_paquete(paquete,cliente);
-  paquete_destroy(paquete);
+  if (algo == NULL)
+  {
+    enviar_operacion(cliente,code);
+    return;
+  }
+  t_paquete* paquete=crear_paquete_operacion(code);
+  agregar_a_paquete(paquete,&algo,sizeof(algo)+1);
+  
 }
 /**
  * 
