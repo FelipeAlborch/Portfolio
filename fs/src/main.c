@@ -3,7 +3,7 @@
 #include <config.h>
 #include <utils.h>
 #include <ipc.h>
-#include <parametrosKernel.h>
+#include <fs_kernel.h>
 
 void validate_args(int argc, char **argv);
 void init_fs(char *config_path, FS **fs);

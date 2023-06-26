@@ -1,9 +1,16 @@
-#ifndef PARAMETROS_KERNEL
-#define PARAMETROS_KERNEL
+#ifndef FS_KERNEL_H_
+#define FS_KERNEL_H_
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <utils.h>
+#include <stdbool.h>
+#include <utils/buffer.h>
+
+typedef enum FS_Error
+{
+    ARCHIVO_NO_EXISTE = -100,
+    ERROR_DESCONOCIDO = -1
+} FS_Error;
 
 typedef struct t_parametros_kernel
 {
@@ -12,6 +19,15 @@ typedef struct t_parametros_kernel
     int dir;
     int tamanio;
 } t_parametros_kernel;
+
+typedef struct t_respuesta_fs
+{
+    char *nombre_archivo;
+    bool archivo_creado;
+    int tamanio;
+    char *buffer;
+    FS_Error error;
+} t_respuesta_fs;
 
 t_parametros_kernel *deserializar_parametros_fcreate(t_buffer *buffer);
 t_parametros_kernel *deserializar_parametros_fopen(t_buffer *buffer);

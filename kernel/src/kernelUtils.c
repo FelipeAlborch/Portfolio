@@ -164,6 +164,7 @@ void actualizar_tablas_segmentos(t_list* lista_de_valores)
     }
 }
 */
+/*
 void actualizar_tablas_segmentos()
 {
     t_list* lista_de_valores;
@@ -475,7 +476,7 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
 }
 
 void fseek_archivo(pcb* un_pcb, char* un_recurso, int posicion) {
-     t_recurso* archivo = dictionary_get(tabla_global_archivos_abiertos, un_recurso);
+    t_recurso* archivo = dictionary_get(tabla_global_archivos_abiertos, un_recurso);
     if(archivo == NULL)
     {
         resultado_recurso = false;

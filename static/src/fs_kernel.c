@@ -1,4 +1,4 @@
-#include <parametrosKernel.h>
+#include <fs_kernel.h>
 
 t_parametros_kernel *deserializar_parametros_fopen(t_buffer *buffer)
 {
