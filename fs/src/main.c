@@ -60,7 +60,18 @@ void *kernel_handler(void *arg)
             parametros = deserializar_parametros_fopen(paquete->buffer);
             res = f_open(parametros->nombre_archivo, fs);
 
-            send(fs->socket_accept, &res, sizeof(int), 0);
+            t_respuesta_fs* respuesta = malloc(sizeof(t_respuesta_fs));
+            respuesta->nombre_archivo = parametros->nombre_archivo;
+            if (res == 0) {
+                respuesta->error = ARCHIVO_SUCCESS;
+            } else {
+                respuesta->error = ARCHIVO_NO_EXISTE;
+            }
+            respuesta->tamanio = 0;
+            respuesta->buffer_size = 0;
+            respuesta->buffer = NULL;
+
+            enviar_respuesta_a_kernel(fs->socket_accept, respuesta);
 
             break;
         }
@@ -72,7 +83,18 @@ void *kernel_handler(void *arg)
             parametros = deserializar_parametros_fcreate(paquete->buffer);
             res = f_create(parametros->nombre_archivo, fs);
 
-            send(fs->socket_accept, &res, sizeof(int), 0);
+            t_respuesta_fs* respuesta = malloc(sizeof(t_respuesta_fs));
+            respuesta->nombre_archivo = parametros->nombre_archivo;
+            if (res == 0) {
+                respuesta->error = ARCHIVO_SUCCESS;
+            } else {
+                respuesta->error = ARCHIVO_NO_EXISTE; // error al crear el archivo (no deberia pasar)
+            }
+            respuesta->tamanio = 0;
+            respuesta->buffer_size = 0;
+            respuesta->buffer = NULL;
+
+            enviar_respuesta_a_kernel(fs->socket_accept, respuesta);
 
             break;
         }
@@ -84,7 +106,19 @@ void *kernel_handler(void *arg)
             parametros = deserializar_parametros_ftruncate(paquete->buffer);
             res = f_truncate(parametros->nombre_archivo, parametros->tamanio, fs);
 
-            send(fs->socket_accept, &res, sizeof(int), 0);
+            t_respuesta_fs* respuesta = malloc(sizeof(t_respuesta_fs));
+            respuesta->nombre_archivo = parametros->nombre_archivo;
+            if (res == 0) {
+                respuesta->error = ARCHIVO_SUCCESS;
+            } else {
+                respuesta->error = ERROR_DE_FS;
+            }
+
+            respuesta->tamanio = parametros->tamanio;
+            respuesta->buffer_size = 0;
+            respuesta->buffer = NULL;
+
+            enviar_respuesta_a_kernel(fs->socket_accept, respuesta);
 
             break;
         }
@@ -97,11 +131,27 @@ void *kernel_handler(void *arg)
             parametros = deserializar_parametros_fread(paquete->buffer);
             char *buff = malloc(parametros->tamanio);
             res_fs = f_read(parametros->nombre_archivo, parametros->posicion, parametros->tamanio, (void **)&buff, fs);
-            send(fs->socket_accept, &res_fs, sizeof(int), 0);
-
             // TODO: escribir el contenido de buff en direccion de memoria
             // res_mem = escribir_memoria(&buff, parametros->posicion, parametros->tamanio);
-            send(fs->socket_accept, &res_mem, sizeof(int), 0);
+
+            // mock escribir memoria
+            res_mem = 0;
+
+            t_respuesta_fs* respuesta = malloc(sizeof(t_respuesta_fs));
+            respuesta->nombre_archivo = parametros->nombre_archivo;
+            if (res_fs == 0 && res_mem == 0) {
+                respuesta->error = ARCHIVO_SUCCESS;
+            } else if (res_fs == 0) {
+                respuesta->error = ERROR_DE_FS;
+            } else if (res_mem == 0) {
+                respuesta->error = ERROR_DE_MEMORIA;
+            }
+
+            respuesta->tamanio = parametros->tamanio;
+            respuesta->buffer_size = 0;
+            respuesta->buffer = NULL;
+
+            enviar_respuesta_a_kernel(fs->socket_accept, respuesta);
 
             break;
         }
@@ -115,10 +165,28 @@ void *kernel_handler(void *arg)
             char *buff = malloc(parametros->tamanio);
             // TODO: leer de direccion de memoria y guardar en buff
             // res_mem = leer_memoria(&buff, parametros->posicion, parametros->tamanio);
-            send(fs->socket_accept, &res_mem, sizeof(int), 0);
+
+            // mock leer memoria
+            res_mem = 0;
+            memcpy(buff, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", parametros->tamanio);
 
             res_fs = f_write(parametros->nombre_archivo, parametros->posicion, parametros->tamanio, buff, fs);
-            send(fs->socket_accept, &res_fs, sizeof(int), 0);
+
+            t_respuesta_fs* respuesta = malloc(sizeof(t_respuesta_fs));
+            respuesta->nombre_archivo = parametros->nombre_archivo;
+            if (res_fs == 0 && res_mem == 0) {
+                respuesta->error = ARCHIVO_SUCCESS;
+            } else if (res_mem == 0) {
+                respuesta->error = ERROR_DE_MEMORIA;
+            } else if (res_fs == 0) {
+                respuesta->error = ERROR_DE_FS;
+            } 
+
+            respuesta->tamanio = parametros->tamanio;
+            respuesta->buffer_size = parametros->tamanio;
+            respuesta->buffer = buff;
+
+            enviar_respuesta_a_kernel(fs->socket_accept, respuesta);
 
             break;
         }

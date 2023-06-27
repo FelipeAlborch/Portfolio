@@ -506,14 +506,14 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 enviar_paquete(paquete_a_fs, socketFS);
                 eliminar_paquete(paquete_a_fs);
                 
-                int rta_fs_1;
-                recv(socketFS, &rta_fs_1, sizeof(int), MSG_WAITALL); // 0 = ARCHIVO EXISTE, -1 = ARCHIVO NO EXISTE
+                t_respuesta_fs* res_1 = recibir_respuesta_de_fs(socketFS);
 
-                log_info(logger_planificador_extra, "Respuesta (1/2) de FS: %d", rta_fs_1);
+                log_info(logger_planificador_extra, "Respuesta (1/2) de FS: %s (%d)", res_1->nombre_archivo, res_1->error);
+                log_info(logger_planificador_extra, "tamanio - buffer_size: %d (%d)", res_1->tamanio, res_1->buffer_size);
 
                 pthread_mutex_unlock(&mutex_fs);
 
-                if(rta_fs_1 == -1) {
+                if(res_1->error == ARCHIVO_NO_EXISTE) {
 
                     paquete_a_fs = crear_paquete_operacion(CREAR_ARCHIVO);
                     agregar_a_paquete(paquete_a_fs, nombre_recurso, strlen(nombre_recurso)+1);
@@ -521,11 +521,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
                     pthread_mutex_lock(&mutex_fs);
                     
                     enviar_paquete(paquete_a_fs, socketFS);
-                    
-                    int rta_fs_2;
-                    recv(socketFS, &rta_fs_2, sizeof(int), MSG_WAITALL); // 0 = ARCHIVO CREADO, -1 = ERROR
 
-                    log_info(logger_planificador_extra, "Respuesta (2/2) de FS: %d", rta_fs_2);
+                    t_respuesta_fs *res_2 = recibir_respuesta_de_fs(socketFS);
+
+                    log_info(logger_planificador_extra, "Respuesta (2/2) de FS: %s (%d)", res_2->nombre_archivo, res_2->error);
+                    log_info(logger_planificador_extra, "tamanio - buffer_size: %d (%d)", res_2->tamanio, res_2->buffer_size);
 
                     pthread_mutex_unlock(&mutex_fs);
                 }

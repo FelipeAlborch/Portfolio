@@ -1,5 +1,6 @@
 #include "kernelUtils.h"
 #include "kernelArchivos.h"
+#include "fs_kernel.h"
 
 extern t_dictionary* tabla_global_archivos_abiertos;
 
@@ -500,16 +501,11 @@ void esperar_listo_de_fs(char* nombre_recurso)
 
     log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_desalojado->pid, nombre_recurso);    
 
-    int rta_fs_1;
-    int rta_fs_2;
-    
-    /*
-    *   ESTO PUEDE GENERAR QUILOMBO
-    */
-    recv(socketFS, &rta_fs_1, sizeof(int), MSG_WAITALL);
-    log_info(logger_planificador_extra, "Respuesta (1/2) de FS: %d", rta_fs_1);
-    recv(socketFS, &rta_fs_2, sizeof(int), MSG_WAITALL);
-    log_info(logger_planificador_extra, "Respuesta (2/2) de FS: %d", rta_fs_2);
+    t_respuesta_fs* res = recibir_respuesta_de_fs(socketFS);
+
+    log_warning(logger_planificador_extra, "Respuesta de FS: %s (%d)", res->nombre_archivo, res->error);
+    log_warning(logger_planificador_extra, "tamanio %d - buffer_size: (%d)", res->tamanio, res->buffer_size);
+    log_warning(logger_planificador_extra, "buff: %x", res->buffer);
 
     pthread_mutex_unlock(&mutex_fs);    // Se desbloquea el socket
     
