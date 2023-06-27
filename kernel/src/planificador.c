@@ -622,8 +622,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
             case F_READ:
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
                 nombre_recurso = list_get(lista_recepcion_valores, 0);
-                direccion_fisica = *(int*) list_get(lista_recepcion_valores, 1);
-                tamanio = *(int*) list_get(lista_recepcion_valores, 2);
+                tamanio = *(int*) list_get(lista_recepcion_valores, 1);
+                direccion_fisica = *(int*) list_get(lista_recepcion_valores, 2);
+
                 log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
 
                 int operacion_fread = recibir_operacion(socketCPU);
@@ -663,8 +664,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             case F_WRITE:
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
                 nombre_recurso = list_get(lista_recepcion_valores, 0);
-                direccion_fisica = *(int*) list_get(lista_recepcion_valores, 1);
-                tamanio = *(int*) list_get(lista_recepcion_valores, 2);
+                tamanio = *(int*) list_get(lista_recepcion_valores, 1);
+                direccion_fisica = *(int*) list_get(lista_recepcion_valores, 2);
                 log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
 
                 int operacion_fwrite = recibir_operacion(socketCPU);
@@ -762,8 +763,3 @@ void ejecutar(pcb* proceso_a_ejecutar)
         break;
     }
 }
-
-
-
-
-

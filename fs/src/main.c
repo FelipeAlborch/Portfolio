@@ -130,7 +130,7 @@ void *kernel_handler(void *arg)
             int res_mem = -1; // 0 = OK, -1 = ERROR
             parametros = deserializar_parametros_fread(paquete->buffer);
             char *buff = malloc(parametros->tamanio);
-            res_fs = f_read(parametros->nombre_archivo, parametros->posicion, parametros->tamanio, (void **)&buff, fs);
+            res_fs = f_read(parametros->nombre_archivo, parametros->posicion, parametros->tamanio, parametros->dir, buff, fs);
             // TODO: escribir el contenido de buff en direccion de memoria
             // res_mem = escribir_memoria(&buff, parametros->posicion, parametros->tamanio);
 
@@ -170,7 +170,7 @@ void *kernel_handler(void *arg)
             res_mem = 0;
             memcpy(buff, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", parametros->tamanio);
 
-            res_fs = f_write(parametros->nombre_archivo, parametros->posicion, parametros->tamanio, buff, fs);
+            res_fs = f_write(parametros->nombre_archivo, parametros->posicion, parametros->tamanio, parametros->dir, buff, fs);
 
             t_respuesta_fs* respuesta = malloc(sizeof(t_respuesta_fs));
             respuesta->nombre_archivo = parametros->nombre_archivo;
