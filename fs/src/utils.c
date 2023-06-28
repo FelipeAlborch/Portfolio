@@ -316,7 +316,7 @@ int f_create(char *file_name, FS *fs) {
 
 int f_truncate(char *file_name, int size, FS *fs) {
     
-    log_info(fs->log, "Truncar Archivo: %s", file_name);
+    log_info(fs->log, "Truncar Archivo: %s - size: %d", file_name, size);
     
     FCB *fcb;
     if (fcb_create_from_file(file_name, fs, &fcb) == -1) {

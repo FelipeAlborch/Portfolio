@@ -65,8 +65,6 @@ t_parametros_kernel *deserializar_parametros_fread(t_buffer *buffer)
 
     memcpy(&params->tamanio, buffer->stream + offset, sizeof(int));
 
-    printf("PARAMS: %s - %d - %d - %d", params->nombre_archivo, params->posicion, params->dir, params->tamanio);
-
     return params;
 }
 
@@ -91,8 +89,6 @@ t_parametros_kernel *deserializar_parametros_fwrite(t_buffer *buffer)
 
     memcpy(&params->tamanio, buffer->stream + offset, sizeof(int));
 
-    printf("PARAMS: %s - %d - %d - %d", params->nombre_archivo, params->posicion, params->dir, params->tamanio);
-
     return params;
 }
 
@@ -104,7 +100,6 @@ void parametros_destroy(t_parametros_kernel *params)
 
 void enviar_respuesta_a_kernel(int socket, t_respuesta_fs *respuesta)
 {
-    assert(respuesta->error == 0);
     t_paquete *paquete_respuesta_fs = crear_paquete_operacion(PAQUETE);
     agregar_a_paquete(paquete_respuesta_fs, respuesta->nombre_archivo, strlen(respuesta->nombre_archivo) + 1);
     agregar_a_paquete(paquete_respuesta_fs, &respuesta->error, sizeof(FS_Error));
