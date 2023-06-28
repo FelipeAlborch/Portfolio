@@ -506,14 +506,14 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 enviar_paquete(paquete_a_fs, socketFS);
                 eliminar_paquete(paquete_a_fs);
                 
-                int rta_fs_1;
-                recv(socketFS, &rta_fs_1, sizeof(int), MSG_WAITALL); // 0 = ARCHIVO EXISTE, -1 = ARCHIVO NO EXISTE
+                t_respuesta_fs* res_1 = recibir_respuesta_de_fs(socketFS);
 
-                log_info(logger_planificador_extra, "Respuesta (1/2) de FS: %d", rta_fs_1);
+                log_info(logger_planificador_extra, "Respuesta (1/2) de FS: %s (%d)", res_1->nombre_archivo, res_1->error);
+                log_info(logger_planificador_extra, "tamanio - buffer_size: %d (%d)", res_1->tamanio, res_1->buffer_size);
 
                 pthread_mutex_unlock(&mutex_fs);
 
-                if(rta_fs_1 == -1) {
+                if(res_1->error == ARCHIVO_NO_EXISTE) {
 
                     paquete_a_fs = crear_paquete_operacion(CREAR_ARCHIVO);
                     agregar_a_paquete(paquete_a_fs, nombre_recurso, strlen(nombre_recurso)+1);
@@ -521,11 +521,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
                     pthread_mutex_lock(&mutex_fs);
                     
                     enviar_paquete(paquete_a_fs, socketFS);
-                    
-                    int rta_fs_2;
-                    recv(socketFS, &rta_fs_2, sizeof(int), MSG_WAITALL); // 0 = ARCHIVO CREADO, -1 = ERROR
 
-                    log_info(logger_planificador_extra, "Respuesta (2/2) de FS: %d", rta_fs_2);
+                    t_respuesta_fs *res_2 = recibir_respuesta_de_fs(socketFS);
+
+                    log_info(logger_planificador_extra, "Respuesta (2/2) de FS: %s (%d)", res_2->nombre_archivo, res_2->error);
+                    log_info(logger_planificador_extra, "tamanio - buffer_size: %d (%d)", res_2->tamanio, res_2->buffer_size);
 
                     pthread_mutex_unlock(&mutex_fs);
                 }
@@ -622,8 +622,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
             case F_READ:
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
                 nombre_recurso = list_get(lista_recepcion_valores, 0);
-                direccion_fisica = *(int*) list_get(lista_recepcion_valores, 1);
-                tamanio = *(int*) list_get(lista_recepcion_valores, 2);
+                tamanio = *(int*) list_get(lista_recepcion_valores, 1);
+                direccion_fisica = *(int*) list_get(lista_recepcion_valores, 2);
+
                 log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
 
                 int operacion_fread = recibir_operacion(socketCPU);
@@ -643,9 +644,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 t_paquete* paquete_fread = crear_paquete_operacion(LEER_ARCHIVO);
                 
                 agregar_a_paquete(paquete_fread, nombre_recurso, strlen(nombre_recurso)+1);
-                agregar_a_paquete(paquete_fread, &archivo->posicion, sizeof(int));
-                agregar_a_paquete(paquete_fread, &direccion_fisica, sizeof(int));
-                agregar_a_paquete(paquete_fread, &tamanio, sizeof(int));
+                agregar_entero_a_paquete(paquete_fread, &archivo->posicion);
+                agregar_entero_a_paquete(paquete_fread, &direccion_fisica);
+                agregar_entero_a_paquete(paquete_fread, &tamanio);
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
 
@@ -663,8 +664,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             case F_WRITE:
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
                 nombre_recurso = list_get(lista_recepcion_valores, 0);
-                direccion_fisica = *(int*) list_get(lista_recepcion_valores, 1);
-                tamanio = *(int*) list_get(lista_recepcion_valores, 2);
+                tamanio = *(int*) list_get(lista_recepcion_valores, 1);
+                direccion_fisica = *(int*) list_get(lista_recepcion_valores, 2);
                 log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
 
                 int operacion_fwrite = recibir_operacion(socketCPU);
@@ -684,9 +685,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 t_paquete* paquete_fwrite = crear_paquete_operacion(ESCRIBIR_ARCHIVO);
 
                 agregar_a_paquete(paquete_fwrite, nombre_recurso, strlen(nombre_recurso)+1);
-                agregar_a_paquete(paquete_fwrite, &archivo->posicion, sizeof(int));
-                agregar_a_paquete(paquete_fwrite, &direccion_fisica, sizeof(int));
-                agregar_a_paquete(paquete_fwrite, &tamanio, sizeof(int));
+                agregar_entero_a_paquete(paquete_fwrite, &archivo->posicion);
+                agregar_entero_a_paquete(paquete_fwrite, &direccion_fisica);
+                agregar_entero_a_paquete(paquete_fwrite, &tamanio);
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 
@@ -722,7 +723,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 t_paquete* paquete_ftruncate = crear_paquete_operacion(TRUNCAR_ARCHIVO);
                 int tam = tamanio;
                 agregar_a_paquete(paquete_ftruncate, nombre_recurso, strlen(nombre_recurso)+1);
-                agregar_a_paquete(paquete_ftruncate, &tam, sizeof(int));
+                agregar_entero_a_paquete(paquete_ftruncate, &tam);
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 
@@ -762,8 +763,3 @@ void ejecutar(pcb* proceso_a_ejecutar)
         break;
     }
 }
-
-
-
-
-

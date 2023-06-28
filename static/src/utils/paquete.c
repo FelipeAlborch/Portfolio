@@ -22,6 +22,16 @@ t_paquete* crear_paquete_operacion(int codigo_operacion)
 	return paquete;
 }
 
+
+void agregar_entero_a_paquete(t_paquete* paquete, void* valor)
+{
+	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + sizeof(int));
+
+	memcpy(paquete->buffer->stream + paquete->buffer->size, valor, sizeof(int));
+
+	paquete->buffer->size += sizeof(int);
+}
+
 void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio)
 {
 	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio + sizeof(int));

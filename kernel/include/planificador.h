@@ -8,6 +8,8 @@
 #include <kernelUtils.h>
 #include <kernelArchivos.h>
 
+#include <fs_kernel.h>
+
 //extern int socket_cpu_planificador;
 //extern int socket_memoria_planificador;
 //extern int socket_fs_planificador;

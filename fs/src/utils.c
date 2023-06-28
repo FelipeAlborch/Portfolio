@@ -316,7 +316,7 @@ int f_create(char *file_name, FS *fs) {
 
 int f_truncate(char *file_name, int size, FS *fs) {
     
-    log_info(fs->log, "Truncar Archivo: %s", file_name);
+    log_info(fs->log, "Truncar Archivo: %s - size: %d", file_name, size);
     
     FCB *fcb;
     if (fcb_create_from_file(file_name, fs, &fcb) == -1) {
@@ -329,9 +329,9 @@ int f_truncate(char *file_name, int size, FS *fs) {
     return 0;
 }
 
-int f_read(char *file_name, int offset, int size, void **buffer, FS *fs) {
+int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs) {
 
-    log_info(fs->log, "Leer Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, size, size);
+    log_info(fs->log, "Leer Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, dir, size);
 
     FCB *fcb;
     if (fcb_create_from_file(file_name, fs, &fcb) == -1) {
@@ -367,9 +367,9 @@ int f_read(char *file_name, int offset, int size, void **buffer, FS *fs) {
     return 0;
 }
 
-int f_write(char *file_name, int offset, int size, void *buffer, FS *fs) {
+int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs) {
     
-    log_info(fs->log, "Escribir Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, size, size);
+    log_info(fs->log, "Escribir Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, dir, size);
     
     FCB *fcb;
     if (fcb_create_from_file(file_name, fs, &fcb) == -1) {
