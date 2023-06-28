@@ -57,15 +57,12 @@ t_parametros_kernel *deserializar_parametros_fread(t_buffer *buffer)
     memcpy(params->nombre_archivo, buffer->stream + offset, tamanio_nombre);
     offset += tamanio_nombre;
 
-    offset += sizeof(int);
     memcpy(&params->posicion, buffer->stream + offset, sizeof(int));
     offset += sizeof(int);
 
-    offset += sizeof(int);
     memcpy(&params->dir, buffer->stream + offset, sizeof(int));
     offset += sizeof(int);
 
-    offset += sizeof(int);
     memcpy(&params->tamanio, buffer->stream + offset, sizeof(int));
 
     printf("PARAMS: %s - %d - %d - %d", params->nombre_archivo, params->posicion, params->dir, params->tamanio);
@@ -86,15 +83,12 @@ t_parametros_kernel *deserializar_parametros_fwrite(t_buffer *buffer)
     memcpy(params->nombre_archivo, buffer->stream + offset, tamanio_nombre);
     offset += tamanio_nombre;
 
-    offset += sizeof(int);
     memcpy(&params->posicion, buffer->stream + offset, sizeof(int));
     offset += sizeof(int);
 
-    offset += sizeof(int);
     memcpy(&params->dir, buffer->stream + offset, sizeof(int));
     offset += sizeof(int);
 
-    offset += sizeof(int);
     memcpy(&params->tamanio, buffer->stream + offset, sizeof(int));
 
     printf("PARAMS: %s - %d - %d - %d", params->nombre_archivo, params->posicion, params->dir, params->tamanio);
@@ -114,8 +108,8 @@ void enviar_respuesta_a_kernel(int socket, t_respuesta_fs *respuesta)
     t_paquete *paquete_respuesta_fs = crear_paquete_operacion(PAQUETE);
     agregar_a_paquete(paquete_respuesta_fs, respuesta->nombre_archivo, strlen(respuesta->nombre_archivo) + 1);
     agregar_a_paquete(paquete_respuesta_fs, &respuesta->error, sizeof(FS_Error));
-    agregar_a_paquete(paquete_respuesta_fs, &respuesta->tamanio, sizeof(int));
-    agregar_a_paquete(paquete_respuesta_fs, &respuesta->buffer_size, sizeof(int));
+    agregar_entero_a_paquete(paquete_respuesta_fs, &respuesta->tamanio);
+    agregar_entero_a_paquete(paquete_respuesta_fs, &respuesta->buffer_size);
     if (respuesta->buffer_size > 0)
     {
         agregar_a_paquete(paquete_respuesta_fs, respuesta->buffer, respuesta->tamanio);
@@ -132,6 +126,7 @@ t_respuesta_fs *recibir_respuesta_de_fs(int socket)
     t_paquete *paquete = recibir_paquete(socket);
     int offset = 0;
     int tamanio_nombre;
+    int tamanio_error;
 
     // respuesta->nombre_archivo (size)
     memcpy(&tamanio_nombre, paquete->buffer->stream, sizeof(int));
@@ -142,23 +137,19 @@ t_respuesta_fs *recibir_respuesta_de_fs(int socket)
     memcpy(respuesta->nombre_archivo, paquete->buffer->stream + offset, tamanio_nombre);
     offset += tamanio_nombre;
 
-    // respuesta->error
-    // FIXME: al serializar se agrega un int para el tamanio del del dato (aunque sea un int),
-    // no estoy seguro por qué ni como arreglarlo, pero por ahora lo dejo así para que funcione
-
+    // respuesta->error (== sizeof(FS_Error))
+    memcpy(&tamanio_error, paquete->buffer->stream + offset, sizeof(int));
     offset += sizeof(int);
-    memcpy(&respuesta->error, paquete->buffer->stream + offset, sizeof(FS_Error));
-    offset += sizeof(FS_Error);
+
+    // respuesta->error
+    memcpy(&respuesta->error, paquete->buffer->stream + offset, tamanio_error);
+    offset += tamanio_error;
 
     // respuesta->tamanio
-    // FIXME: idem anterior
-    offset += sizeof(int);
     memcpy(&respuesta->tamanio, paquete->buffer->stream + offset, sizeof(int));
     offset += sizeof(int);
 
     // respuesta->buffer_size
-    // FIXME: idem anterior
-    offset += sizeof(int);
     memcpy(&respuesta->buffer_size, paquete->buffer->stream + offset, sizeof(int));
     offset += sizeof(int);
 

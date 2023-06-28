@@ -644,9 +644,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 t_paquete* paquete_fread = crear_paquete_operacion(LEER_ARCHIVO);
                 
                 agregar_a_paquete(paquete_fread, nombre_recurso, strlen(nombre_recurso)+1);
-                agregar_a_paquete(paquete_fread, &archivo->posicion, sizeof(int));
-                agregar_a_paquete(paquete_fread, &direccion_fisica, sizeof(int));
-                agregar_a_paquete(paquete_fread, &tamanio, sizeof(int));
+                agregar_entero_a_paquete(paquete_fread, &archivo->posicion);
+                agregar_entero_a_paquete(paquete_fread, &direccion_fisica);
+                agregar_entero_a_paquete(paquete_fread, &tamanio);
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
 
@@ -685,9 +685,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 t_paquete* paquete_fwrite = crear_paquete_operacion(ESCRIBIR_ARCHIVO);
 
                 agregar_a_paquete(paquete_fwrite, nombre_recurso, strlen(nombre_recurso)+1);
-                agregar_a_paquete(paquete_fwrite, &archivo->posicion, sizeof(int));
-                agregar_a_paquete(paquete_fwrite, &direccion_fisica, sizeof(int));
-                agregar_a_paquete(paquete_fwrite, &tamanio, sizeof(int));
+                agregar_entero_a_paquete(paquete_fwrite, &archivo->posicion);
+                agregar_entero_a_paquete(paquete_fwrite, &direccion_fisica);
+                agregar_entero_a_paquete(paquete_fwrite, &tamanio);
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 
@@ -723,7 +723,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 t_paquete* paquete_ftruncate = crear_paquete_operacion(TRUNCAR_ARCHIVO);
                 int tam = tamanio;
                 agregar_a_paquete(paquete_ftruncate, nombre_recurso, strlen(nombre_recurso)+1);
-                agregar_a_paquete(paquete_ftruncate, &tam, sizeof(int));
+                agregar_entero_a_paquete(paquete_ftruncate, &tam);
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 

@@ -21,6 +21,11 @@ t_paquete* crear_paquete(void);
 t_paquete* crear_paquete_operacion(int);
 
 /**
+ * 
+*/
+void agregar_entero_a_paquete(t_paquete* paquete, void* valor);
+
+/**
 * @NAME: agregar_a_paquete
 * @DESC: Agrega un elemento al paquete.
 * @PARAMS:
