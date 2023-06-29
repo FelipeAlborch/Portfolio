@@ -401,9 +401,12 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
     enviar_contexto_ejecucion(pcb, socketKernel, SEG_FAULT);
     return;
   }
-
+  int DL = atoi(instruccion->parametros[1]);
+  int offset = obtener_desplazamiento_del_segmento(DL);
+  
   agregar_a_paquete(paquete, &DF, sizeof(int));
-  agregar_a_paquete(paquete ,&cantDeBytes, sizeof(int));
+  agregar_a_paquete(paquete, &cantDeBytes, sizeof(int));
+  agregar_a_paquete(paquete, &offset, sizeof(int));
   /**
    * TODO: Agregar para enviarle el offset a memoria
    *  
@@ -449,17 +452,24 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
   int cantidadDeBytes = cantidad_bytes_registro(instruccion->parametros[1]);
   char* valorACopiar = valor_del_registro_como_string(obtener_valor_registro(instruccion, pcb), cantidadDeBytes);
   //char* valorACopiar = string_duplicate(obtener_valor_registro(instruccion, pcb));
-  log_debug(logger, "Los caracteres a copiar son: %s", valorACopiar);
-  log_debug(logger, "la cantidad de bytes a copiar son: %d", (int)(strlen(valorACopiar)-1));
+  log_info(logger, "Los caracteres a copiar son: %s", valorACopiar);
+  log_info(logger, "la cantidad de bytes a copiar son: %d", (int)(strlen(valorACopiar)));
   
+  int DL = atoi(instruccion->parametros[0]);
+  int offset = obtener_desplazamiento_del_segmento(DL);
   agregar_a_paquete(paquete, &DF, sizeof(int));
-  agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar)-1);
+  agregar_a_paquete(paquete, valorACopiar, cantidadDeBytes);
   agregar_a_paquete(paquete, &cantidadDeBytes, sizeof(int));
+  agregar_a_paquete(paquete, &offset, sizeof(int));
     /**
    * TODO: Agregar para enviarle el offset a memoria
    *  
     */
   enviar_paquete(paquete, socketMemoria);
+
+  int rta_memo;
+  recv(socketMemoria, &rta_memo, sizeof(int), MSG_WAITALL);
+  log_warning(logger, "ME llego: %d", rta_memo);
 
   eliminar_paquete(paquete);
   free(valorACopiar);
