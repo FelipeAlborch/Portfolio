@@ -66,7 +66,7 @@ void liberar_memoria(){
     log_destroy(mlogger);
 };
 void liberar_listas(){
-    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)free);
+    list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)liberar_t_segmento);
     list_destroy_and_destroy_elements(huecos_libres,(void*)free);
     //list_destroy(huecos_libres);
     log_debug(mlogger,"listas liberadas");
@@ -163,14 +163,22 @@ void conectar(){
   
 }
 void respuestas(int cliente, int code,void* algo){
-  t_paquete* paquete=crear_paquete_operacion(code);
-  if (algo != NULL || algo != M_ERROR)
-  {
-    agregar_a_paquete(paquete,&algo,sizeof(algo)+1);
+  if (algo == NULL){
+    enviar_operacion(cliente,code);
+    return;
   }
   
+  t_paquete* paquete=crear_paquete_operacion(code);
+  
+  if(code == INICIO_PROCESO || code == DELETE_SEGMENT){
+    serializar_tabla_segmentos(paquete,(t_list*)algo);
+    enviar_paquete(paquete,config_memo.kernel);
+    eliminar_paquete(paquete);
+    return;
+  }
+  agregar_a_paquete(paquete,algo,sizeof(algo)+1);
   enviar_paquete(paquete,cliente);
-  paquete_destroy(paquete);
+  eliminar_paquete(paquete);
 }
 /**
  * 

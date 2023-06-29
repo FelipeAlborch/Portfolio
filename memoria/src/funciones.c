@@ -87,15 +87,17 @@ void ejecuteTest(){
     int dir=list_get(listaS3,0);
     char* dato = list_get(listaS3,1);
     log_debug(klogger,"por escribir en memoria %d",dir);
-    int i = escribir_dato(dir,dato,size);
+    int i = escribir_dato(dir,dato,size,20);
    // move_out(listaS3,MOV_OUT);
 
     log_trace(klogger,"quiero crear el seg 10 %d\n",121);
     create_segment(121,100,10);
     dir =512;
     char * info =string_duplicate("");
-    void* info1 = leer_dato(dir,size);
+    void* info1 = leer_dato(dir,size,20);
     memcpy(&info,info1,size);
      
     log_debug(klogger,"el dato leido es %s",info);
+    free(info);
+    free(info1);
 }

@@ -404,6 +404,11 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
 
   agregar_a_paquete(paquete, &DF, sizeof(int));
   agregar_a_paquete(paquete ,&cantDeBytes, sizeof(int));
+  /**
+   * TODO: Agregar para enviarle el offset a memoria
+   *  
+    */
+
   enviar_paquete(paquete, socketMemoria);
   eliminar_paquete(paquete);
   // Esperando respuesta de memoria...
@@ -450,6 +455,10 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
   agregar_a_paquete(paquete, &DF, sizeof(int));
   agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar)-1);
   agregar_a_paquete(paquete, &cantidadDeBytes, sizeof(int));
+    /**
+   * TODO: Agregar para enviarle el offset a memoria
+   *  
+    */
   enviar_paquete(paquete, socketMemoria);
 
   eliminar_paquete(paquete);

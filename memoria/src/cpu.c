@@ -42,10 +42,12 @@ void ejecutar_cpu(){
             case MOV_IN_INSTRUCTION:
                 lista = _recibir_paquete(conectar);
                 move_in(lista,MOV_IN_INSTRUCTION);
+                list_destroy_and_destroy_elements(lista, free);
             break;
             case MOV_OUT_INSTRUCTION:
                 lista = _recibir_paquete(conectar);
                 move_out(lista,MOV_OUT_INSTRUCTION);
+                list_destroy_and_destroy_elements(lista, free);
             break;
             default:
                 log_error(clogger,"No se reconoce la instrucción");
@@ -95,10 +97,12 @@ void ejecutar_fs(){
             case M_READ:
                 lista = _recibir_paquete(conectar);
                 move_in(lista,M_READ);
+                list_destroy_and_destroy_elements(lista, free);
             break;
             case M_WRITE:
                 lista = _recibir_paquete(conectar);
-                move_out(lista,M_WRITE);    
+                move_out(lista,M_WRITE);  
+                list_destroy_and_destroy_elements(lista, free);  
             break;
             default:
             break;
@@ -116,37 +120,46 @@ void move_in(t_list* lista, int code){
     
     int dir=*(int*)list_get(lista,0);
     int size=*(int*)list_get(lista,1);
+    int offset=*(int*)list_get(lista,2);
     int pid = buscar_pid(dir);
-    void* info = leer_dato(dir,size);
-    responder_cpu_fs(pid, code, info, dir, size);
-    
+    void* info = leer_dato(dir,size, offset);
+
+    char* datos = void_a_string(info,size);
+    responder_cpu_fs(pid, code, datos, dir, size);
+    free(datos);
+    free(info);
 }
 void move_out(t_list* lista, int code){
 
     int dir=*(int*)list_get(lista,0);
     char* valor = (char*)list_get(lista,1);
     int size=*(int*)list_get(lista,2); 
-/*     int dir=list_get(lista,0);
-    char* valor =list_get(lista,1);
-    int size=list_get(lista,2); */
+    int offset=*(int*)list_get(lista,3);
+
     int pid = buscar_pid(dir);
 
-    int info = escribir_dato(dir,valor,size);
-    responder_cpu_fs(pid, code, info, dir, size);
+    int info = escribir_dato(dir,valor,size, offset);
+    if (info == M_ERROR)
+    {
+        log_error(clogger,"No se pudo escribir en la memoria");
+        return;
+    }
+    
+    responder_cpu_fs(pid, code, NULL, dir, size);
     
 }
-void* leer_dato(int direccion,int size){
+void* leer_dato(int direccion,int size, int offset){
     sleep(config_memo.retardo/1000);
     
     int base = buscar_base_dir(direccion);
 	void* info = malloc(size);
     pthread_mutex_lock(&m_memoria);
-        memcpy(info,memoria+base,size);
+        memcpy(info,memoria+base+offset,size);
     pthread_mutex_unlock(&m_memoria);
     
 	return info;
 }
-int escribir_dato(int direccion,char* valor, int size){
+int escribir_dato(int direccion,char* valor, int size,int offset){
     sleep(config_memo.retardo/1000);
     
    // log_debug(clogger,"Direccion: %d  Info: %s  Tamanio: %d",direccion,valor,size);
@@ -161,7 +174,7 @@ int escribir_dato(int direccion,char* valor, int size){
     {
         pthread_mutex_lock(&m_memoria);
             memcpy(memoria+base,&valor,size);
-            cero = memcmp(memoria+base,&valor,size);
+            cero = memcmp(memoria+base+offset,&valor,size);
         pthread_mutex_unlock(&m_memoria);
         printf("Cero: %d\n",cero);
         if (cero == 0 ){
@@ -199,7 +212,7 @@ int buscar_pid(int dir){
 }
 void responder_cpu(int pid, int cod, void* info){
     
-    if (pid == M_ERROR){
+/*     if (pid == M_ERROR){
         loggear(M_ERROR,pid,"",0,0,0);
         pthread_mutex_lock(&m_config);
         respuestas(config_memo.cpu,M_ERROR,info);
@@ -208,7 +221,7 @@ void responder_cpu(int pid, int cod, void* info){
     }
     pthread_mutex_lock(&m_config);
     respuestas(config_memo.cpu,cod,info);
-    pthread_mutex_unlock(&m_config);
+    pthread_mutex_unlock(&m_config); */
     
 }
 void responder_cpu_fs(int pid, int cod, void* info, int dir, int size){
@@ -223,11 +236,11 @@ void responder_cpu_fs(int pid, int cod, void* info, int dir, int size){
             loggear(MOV_IN_INSTRUCTION,pid,"CPU",dir,size,0);
             break;
         case MOV_OUT_INSTRUCTION:
-            respuestas(config_memo.cpu,cod,info);
+            respuestas(config_memo.cpu,cod,NULL);
             loggear(MOV_OUT_INSTRUCTION,pid,"CPU",dir,size,0);
             break;
         case M_READ:
-            respuestas(config_memo.fs,cod,info);
+            respuestas(config_memo.fs,cod,NULL);
             loggear(M_READ,pid,info,dir,size,0);
             break;
         case M_WRITE:
@@ -240,4 +253,9 @@ void responder_cpu_fs(int pid, int cod, void* info, int dir, int size){
             break;
     }
     pthread_mutex_unlock(&m_config);
+}
+char* void_a_string(void* info, int size){
+    char* string =string_duplicate("");
+    memcpy(&string,info,size);
+    return string;
 }
