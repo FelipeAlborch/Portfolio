@@ -411,6 +411,7 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
 
         pcb* proceso_bloqueado = queue_pop(recurso->cola_bloqueados);
         log_info(logger_kernel_util_obligatorio, "PID: < %d > - Desbloqueado por: < %s >", proceso_bloqueado->pid, recurso->nombre);
+        recurso->posicion = 0;
 
         pthread_mutex_unlock(&(recurso->mutex_cola));
 
