@@ -25,52 +25,52 @@ typedef struct t_message {
     int size;
 } t_message;
 
-int conn_create_localhost(Host, char *);
+int conn_create_localhost(Host host_type, char *port);
 
-int conn_create(Host, char *, char *);
+int conn_create(Host host_type, char *ip, char *port);
 
-int conn_accept(int);
+int conn_accept(int socket_fd);
 
-int conn_close(int);
+int conn_close(int socket_fd);
 
-int conn_is_open(int);
+int conn_is_open(int socket_fd);
 
 void conn_close_sockets(t_queue *);
 
-void conn_wait_until_close(int);
+void conn_wait_until_close(int socket_fd);
 
-int peek_socket(int, void *, int);
+int socket_peek(int socket_fd, void *buffer, int buffer_size);
 
-int read_socket(int, void *, int);
+int socket_read(int socket_fd, void *buffer, int buffer_size);
 
-char* read_socket_string(int);
+char* socket_read_string(int socket_fd);
 
 int socket_recv(int socket_fd, t_paquete **paquete);
 
-t_paquete *read_socket_paquete(int);
+t_paquete *socket_read_paquete(int socket_fd);
 
-t_list *read_socket_tlv_list(int);
+int socket_write(int socket_fd, void *buffer, int buffer_size);
 
-int write_socket(int, void *, int);
+int socket_write_int(int socket_fd, int *buffer);
 
-int write_socket_string(int, char *);
+int socket_write_string(int socket_fd, char *buffer);
 
-int write_socket_paquete(int, t_paquete *);
+int socket_write_paquete(int socket_fd, t_paquete *paquete);
 
-int socket_send(int socket_fd, t_paquete *paquete);
+t_paquete *paquete_create_mwrite(int dir, char *bytes, int tamanio);
 
-int write_socket_tlv_list(int, t_list *);
+t_paquete *paquete_create_mread(int dir, int tamanio);
 
-t_paquete *paquete_create(int);
+t_paquete *paquete_create(int codigo_operacion);
 
-void paquete_destroy(t_paquete *);
+void paquete_destroy(t_paquete *paquete);
 
-t_buffer *buffer_create(int);
+t_buffer *buffer_create(int size);
 
-void buffer_destroy(t_buffer *);
+void buffer_destroy(t_buffer *buffer);
 
-void *buf_create(int);
+void *buf_create(int size);
 
-int *alloc_int(int);
+int *alloc_int(int value);
 
 #endif

@@ -217,7 +217,7 @@ void responder_cpu(int pid, int cod, void* info){
 /*     if (pid == M_ERROR){
         loggear(M_ERROR,pid,"",0,0,0);
         pthread_mutex_lock(&m_config);
-        respuestas(config_memo.cpu,M_ERROR,info);
+   //     respuestas(config_memo.cpu,M_ERROR,info);
         pthread_mutex_unlock(&m_config);
         return;
     }
@@ -231,7 +231,7 @@ void responder_cpu_fs(int pid, int cod, void* info, int dir, int size){
     switch (cod){
         case M_ERROR:
             loggear(M_ERROR,pid,"",0,0,0);
-            respuestas(config_memo.fs,M_ERROR,info);
+            enviar_operacion(config_memo.cpu,M_ERROR);
             break;
         case MOV_IN_INSTRUCTION:
             respuestas(config_memo.cpu,MOV_IN_SUCCES,info);

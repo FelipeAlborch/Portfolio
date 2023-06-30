@@ -26,7 +26,7 @@ void *clients_handler_fs(void *arg)
     {
         if (socket_recv(accept_socket, &paquete) == -1) perror("socket_recv paquete");
 
-        if (socket_send(accept_socket, paquete) == -1) perror("socket_send paquete");
+        if (socket_write_paquete(accept_socket, paquete) == -1) perror("socket_send paquete");
 
         if (paquete != NULL) paquete_destroy(paquete);
 
@@ -108,7 +108,7 @@ START_TEST (test_socket_recv_paquete)
     
     paquete = paquete_create(PAQUETE);
 
-    error = socket_send(client_socket, paquete);
+    error = socket_write_paquete(client_socket, paquete);
     ck_assert_int_ne(error, -1);
 
     paquete_destroy(paquete);
@@ -120,7 +120,7 @@ START_TEST (test_socket_recv_paquete)
 
     paquete = paquete_create(MENSAJE);
 
-    error = socket_send(client_socket, paquete);
+    error = socket_write_paquete(client_socket, paquete);
     ck_assert_int_ne(error, -1);
 
     paquete_destroy(paquete);
