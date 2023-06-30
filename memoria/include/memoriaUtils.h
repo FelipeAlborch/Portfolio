@@ -70,6 +70,7 @@ void liberar_t_config();
 void liberar_huecos(t_hueco_libre* hueco);
 void liberar_t_segmento(t_tabla_segmentos* segmento);
 void liberar_mutex();
+void liberar_hilos();
 
 void inicializar_configuracion();
 void inicializar_memoria();

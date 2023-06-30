@@ -125,8 +125,8 @@ void move_in(t_list* lista, int code){
     void* info = leer_dato(dir,size, offset);
 
     char* datos = (char*)info;//void_a_string(info,size,&datos);    
-    printf("lei: %s \n", datos);
-    //char* 
+  //  printf("lei: %s \n", datos);
+    
     responder_cpu_fs(pid, code, datos, dir, size);
     //free(datos);
     free(info);
@@ -137,7 +137,7 @@ void move_out(t_list* lista, int code){
     char* valor = (char*)list_get(lista,1);
     int size=*(int*)list_get(lista,2); 
     int offset=*(int*)list_get(lista,3);
-    printf("valores: %d, %s, %d, %d", dir, valor, size, offset);
+  //  printf("valores: %d, %s, %d, %d", dir, valor, size, offset);
     int pid = buscar_pid(dir);
 
     int info = escribir_dato(dir,valor,size, offset);
@@ -154,6 +154,7 @@ void* leer_dato(int direccion,int size, int offset){
     sleep(config_memo.retardo/1000);
     
     int base = buscar_base_dir(direccion);
+    log_debug(clogger,"Direccion: %d  base: %d",direccion,base);
 	void* info = malloc(size);
     pthread_mutex_lock(&m_memoria);
         memcpy(info,memoria+base+offset,size);
@@ -164,13 +165,13 @@ void* leer_dato(int direccion,int size, int offset){
 int escribir_dato(int direccion,char* valor, int size,int offset){
     sleep(config_memo.retardo/1000);
     
-    log_debug(clogger,"Direccion: %d  Info: %s  Tamanio: %d",direccion,valor,size);
+    //log_trace(clogger,"Direccion: %d  Info: %s  Tamanio: %d",direccion,valor,size);
     int pid = buscar_pid(direccion);
 
-    log_info(clogger,"PID: %d",pid);
+    //log_info(clogger,"PID: %d",pid);
     int base = buscar_base_dir(direccion);
 
-    log_info(clogger,"Base: %d",base);  
+    //log_info(clogger,"Base: %d",base);  
     int cero = M_ERROR;
     if (pid != M_ERROR)
     {
@@ -178,7 +179,7 @@ int escribir_dato(int direccion,char* valor, int size,int offset){
             memcpy(memoria+base+offset,valor,size);
             cero = memcmp(memoria+base+offset,valor,size);
         pthread_mutex_unlock(&m_memoria);
-        printf("Cero: %d\n",cero);
+        //printf("Cero: %d\n",cero);
         if (cero == 0 ){
             //loggear(MOV_OUT_INSTRUCTION,pid,valor,direccion,size,0);
             return pid;
@@ -193,6 +194,11 @@ int escribir_dato(int direccion,char* valor, int size,int offset){
 }
 int buscar_pid(int dir){
     int pid = M_ERROR;
+    if (dir == config_memo.tam_seg_0)
+    {
+        return 0;
+    }
+    
     bool _buscar_en_tabla (t_tabla_segmentos* tabla) {
         
         if(tabla->direcion_fisica == dir){

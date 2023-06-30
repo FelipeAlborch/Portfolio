@@ -52,9 +52,12 @@ void terminar_programa(t_log* milogger){
   liberar_listas();
   liberar_t_config();
   liberar_mutex();
+  liberar_hilos();
   liberar_memoria();
-
+    
+    
   printf("----------FIN------------\n");
+  
 };
 void liberar_memoria(){
     free(memoria);
@@ -87,7 +90,6 @@ void liberar_conexion_memoria(){
     liberar_conexion(config_memo.fs);
     liberar_conexion(config_memo.kernel); 
     liberar_conexion(server_m);
-
     log_debug(mlogger,"conexiones liberadas");
 };
 void liberar_t_config(){
@@ -103,7 +105,12 @@ void liberar_mutex(){
     pthread_mutex_destroy(&m_huecos_libres);
     log_debug(mlogger,"mutex liberados");
 };
-
+void liberar_hilos(){
+    pthread_cancel(&hilo_cpu);
+    pthread_cancel(&hilo_fs);
+    pthread_cancel(&hilo_kernel);
+    log_debug(mlogger,"hilos liberados");
+};
 /**
  * 
  *          FUNCIONES PARA INICIAR PROGRAMA

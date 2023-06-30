@@ -61,7 +61,8 @@ typedef enum
 	TABLAS_PROCESOS,
 	MOV_OUT,	//se escribe el valor del registro en memoria
 	MOV_IN,		//se lee el valor del registro en memoria
-	CREATE_SEGMENT_SUCCESS
+	CREATE_SEGMENT_SUCCESS,
+	FIN_MODULO	//se envia para terminar el modulo
 }msj_memoria;
 
 typedef enum

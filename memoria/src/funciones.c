@@ -87,19 +87,19 @@ void ejecuteTest(){
     int dir=list_get(listaS3,0);
     char* dato = list_get(listaS3,1);
     log_debug(klogger,"por escribir en memoria %d",dir);
-    int i = escribir_dato(dir,dato,size,20);
+    int i = escribir_dato(128,dato,size,20);
    // move_out(listaS3,MOV_OUT);
 
     log_trace(klogger,"quiero crear el seg 10 %d\n",121);
     create_segment(121,100,10);
     dir =512;
     log_debug(klogger,"el dato leido");
-     //=string_duplicate("");
-    void* info1 = leer_dato(dir,size,20);
-    char* info; //= malloc(size+1);
-    info = void_a_string(info1,size,&info);
- 
-     
+
+    void* info1 = leer_dato(128,size,20);
+    char* info =(char*)info1;//= malloc(size+1);
+    //info = void_a_string(info1,size,&info);
+    
+    
     log_debug(klogger,"el dato leido es %s",info);
 
     terminar_programa(loggerMemoria);

@@ -66,7 +66,7 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente)
 
 	// FIXME: probablemente haya memleaks por comentar esta linea. 
 	// la comenté para evitar un double-free al correr cpu.
-	// free(a_enviar);
+	free(a_enviar);
 }
 
 t_list* _recibir_paquete(int socket_cliente)
@@ -86,7 +86,7 @@ t_list* _recibir_paquete(int socket_cliente)
 		memcpy(valor, buffer+desplazamiento, tamanio);
 		desplazamiento+=tamanio;
 		list_add(valores, valor);
-		//free(valor);	//	Revisar el memcheck.log con y sin este free
+		free(valor);	//	Revisar el memcheck.log con y sin este free
 	}
 
 	

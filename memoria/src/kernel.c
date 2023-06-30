@@ -67,18 +67,23 @@ void ejecutar_kernel(){
                 eliminar_segmento(pid, id);
                 
                 break;
+            case FIN_MODULO:
+                log_info(klogger,"Se desconecto el kernel");
+                running_k=false;
+                break;
             default:
             break;
-      }
-      run--;
-      list_destroy_and_destroy_elements(lista,free);
-      //running_k=false;    // Por que pones esto en fales?, hace que salga del while, y no se quede esperando a la proxima tarea del kernel
-      log_trace(klogger,"ejecute kernel");
-  }
-  list_destroy_and_destroy_elements(lista,free);
-  //eliminar_paquete(paquete);  // Este free esta tirando seg fault porque la funcion _recibir_paquete(socket) no recibe realmente un t_paquete, sino que enlista los valores que haya en el buffer del socket
-  log_info(klogger,"Terminando de ejecutar las tareas del kernel");
-  imprimir_tabla_gral();
+        }
+
+    list_destroy_and_destroy_elements(lista,free);
+    
+    }
+    //list_destroy_and_destroy_elements(lista,free);
+
+    log_info(klogger,"Terminando de ejecutar las tareas del kernel");
+
+    terminar_programa(loggerMemoria);
+      //imprimir_tabla_gral();
 }
 
 
@@ -86,14 +91,9 @@ void crear_proceso(int pid){
 
     t_list* listaS=crear_tabla_proceso(pid);
     loggear(INICIO_PROCESO,pid,NULL,0,0,0);
-    
 
-/*     t_paquete* paquete = crear_paquete_operacion(INICIO_PROCESO);
-    serializar_tabla_segmentos(paquete,listaS);
-    enviar_paquete(paquete,config_memo.kernel);
-    eliminar_paquete(paquete); */
     respuestas(config_memo.kernel,INICIO_PROCESO,listaS);
-    //list_destroy(listaS);
+    list_destroy_and_destroy_elements(listaS,free);
 }
 
 void eliminar_proceso(int pid){
@@ -127,12 +127,12 @@ void create_segment(int pid,int tam,int id){
     int indice =buscar_hueco_libre(tam);
     if(indice == -2){
         respuestas(config_memo.kernel,INICIO_COMPACTAR,NULL);
-        //enviar_operacion(config_memo.kernel, INICIO_COMPACTAR);
+        
         log_warning(klogger,"No hay hueco para crear el segmento, hay que compactar");
         compactar();
         tablas_compactadas();
         respuestas(config_memo.kernel,FIN_COMPACTAR,NULL);
-        //enviar_operacion(config_memo.kernel, FIN_COMPACTAR);
+        
         return;
     }else{
         modificar_hueco(indice,M_ERROR,tam,OCUPADO);
