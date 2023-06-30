@@ -93,11 +93,16 @@ void ejecuteTest(){
     log_trace(klogger,"quiero crear el seg 10 %d\n",121);
     create_segment(121,100,10);
     dir =512;
-    char * info =string_duplicate("");
+    log_debug(klogger,"el dato leido");
+     //=string_duplicate("");
     void* info1 = leer_dato(dir,size,20);
-    memcpy(&info,info1,size);
+    //char* info = malloc(size);
+    char* info= string_duplicate(void_a_string(info1,size));
+   
+    //memcpy(&info,info1,size);
      
     log_debug(klogger,"el dato leido es %s",info);
     free(info);
     free(info1);
+    terminar_programa(loggerMemoria);
 }

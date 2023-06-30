@@ -162,19 +162,19 @@ void* leer_dato(int direccion,int size, int offset){
 int escribir_dato(int direccion,char* valor, int size,int offset){
     sleep(config_memo.retardo/1000);
     
-   // log_debug(clogger,"Direccion: %d  Info: %s  Tamanio: %d",direccion,valor,size);
+    log_debug(clogger,"Direccion: %d  Info: %s  Tamanio: %d",direccion,valor,size);
     int pid = buscar_pid(direccion);
 
-  //  log_info(clogger,"PID: %d",pid);
+    log_info(clogger,"PID: %d",pid);
     int base = buscar_base_dir(direccion);
 
-  //  log_info(clogger,"Base: %d",base);  
+    log_info(clogger,"Base: %d",base);  
     int cero = M_ERROR;
     if (pid != M_ERROR)
     {
         pthread_mutex_lock(&m_memoria);
-            memcpy(memoria+base,&valor,size);
-            cero = memcmp(memoria+base+offset,&valor,size);
+            memcpy(memoria+base+offset,&valor,size);
+            cero = memcmp(memoria+base+offset,valor,size);
         pthread_mutex_unlock(&m_memoria);
         printf("Cero: %d\n",cero);
         if (cero == 0 ){
@@ -255,7 +255,10 @@ void responder_cpu_fs(int pid, int cod, void* info, int dir, int size){
     pthread_mutex_unlock(&m_config);
 }
 char* void_a_string(void* info, int size){
-    char* string =string_duplicate("");
-    memcpy(&string,info,size);
-    return string;
+    char* dato =malloc(size+1);
+    memcpy(&dato ,info,size);
+    printf("String: %s\n",dato);
+   // string[size]='\0';
+    printf("String: %s\n",dato);
+    return dato;
 }
