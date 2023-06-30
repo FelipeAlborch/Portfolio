@@ -124,11 +124,9 @@ void move_in(t_list* lista, int code){
     int pid = buscar_pid(dir);
     void* info = leer_dato(dir,size, offset);
 
-    char* datos = malloc(size);
-    memcpy(datos, info, size);
+    char* datos = void_a_string(info,size,&datos);    
     printf("lei: %s \n", datos);
-    //char* datos = void_a_string(info,size);
-    
+    //char* 
     responder_cpu_fs(pid, code, datos, dir, size);
     free(datos);
     free(info);
@@ -258,11 +256,10 @@ void responder_cpu_fs(int pid, int cod, void* info, int dir, int size){
     }
     pthread_mutex_unlock(&m_config);
 }
-char* void_a_string(void* info, int size){
-    char* dato =malloc(size+1);
-    memcpy(&dato ,info,size);
-    printf("String: %s\n",dato);
-   // string[size]='\0';
-    printf("String: %s\n",dato);
-    return dato;
+char* void_a_string(void* info, int size, char** dato2){
+    memcpy(&dato2 ,info,size);
+
+    printf("String: %s\n",dato2);
+
+    return (char*)dato2;
 }

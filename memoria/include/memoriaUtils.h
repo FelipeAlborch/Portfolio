@@ -123,7 +123,7 @@ void responder_cpu_fs(int pid, int cod, void* info, int dir, int size);
 
 void* leer_dato(int direccion, int size, int offset);
 int escribir_dato(int direccion, char* valor, int size, int offset);
-char* void_a_string(void* info, int size);
+char* void_a_string(void* info, int size, char** valor);
 
 void eliminar_segmento(int pid, int direccion);
 void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos);

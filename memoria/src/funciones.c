@@ -81,8 +81,8 @@ void ejecuteTest(){
 
     t_list* listaS3 = list_create();
     list_add(listaS3,640);
-    list_add(listaS3,"hola como estassss");
-    list_add(listaS3,string_length("hola como estassss"));
+    list_add(listaS3,"hola como estasss!");
+    list_add(listaS3,string_length("hola como estasss!")+1);
     int size = list_get(listaS3,2);
     int dir=list_get(listaS3,0);
     char* dato = list_get(listaS3,1);
@@ -96,13 +96,11 @@ void ejecuteTest(){
     log_debug(klogger,"el dato leido");
      //=string_duplicate("");
     void* info1 = leer_dato(dir,size,20);
-    //char* info = malloc(size);
-    char* info= string_duplicate(void_a_string(info1,size));
-   
-    //memcpy(&info,info1,size);
+    char* info; //= malloc(size+1);
+    info = void_a_string(info1,size,&info);
+ 
      
     log_debug(klogger,"el dato leido es %s",info);
-    free(info);
-    free(info1);
+
     terminar_programa(loggerMemoria);
 }
