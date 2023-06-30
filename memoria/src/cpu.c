@@ -35,7 +35,7 @@ void ejecutar_cpu(){
         int conectar=config_memo.cpu;
     pthread_mutex_unlock(&m_config);
     log_trace(clogger, "Por ejecutar las tareas del CPU");
-    t_list* lista;
+    t_list* lista = list_create();
     
     while (running_cpu){
         switch (recibir_operacion(conectar)){
@@ -49,14 +49,21 @@ void ejecutar_cpu(){
                 move_out(lista,MOV_OUT_INSTRUCTION);
                 list_destroy_and_destroy_elements(lista, free);
             break;
+            case FIN_MODULO:
+                running_cpu=false;
+                log_warning(clogger,"Se finalizan los módulos");
+            break;
             default:
                 log_error(clogger,"No se reconoce la instrucción");
+                running_cpu=false;
             break;
+            
     }
-    //running_cpu=false;
+       // list_destroy_and_destroy_elements(lista, free);
+
     }
     log_info(clogger,"Terminando de ejecutar las tareas del CPU");
-    
+    terminar_programa(loggerMemoria);
 }
 /**
  * 
@@ -90,7 +97,8 @@ void ejecutar_fs(){
     int conectar=config_memo.fs;
     pthread_mutex_unlock(&m_config);
     log_info(flogger, "Por ejecutar las tareas del FileSystem");
-    t_list* lista;
+    t_list* lista = list_create();
+    int codigo;
     while (running_fs)
     {
         switch (recibir_operacion(conectar)){
@@ -102,14 +110,23 @@ void ejecutar_fs(){
             case M_WRITE:
                 lista = _recibir_paquete(conectar);
                 move_out(lista,M_WRITE);  
-                list_destroy_and_destroy_elements(lista, free);  
+                list_destroy_and_destroy_elements(lista, free);
+            break;
+            case FIN_MODULO:
+                running_fs=false;
+                log_warning(flogger,"Se finalizan los módulos");
             break;
             default:
+                log_error(flogger,"No se reconoce la instrucción");
+                running_fs=false;
             break;
+            
         }
+        
     }
-    //running_fs=false;
+    
     log_info(flogger,"Terminando de ejecutar las tareas del FileSystem");
+    terminar_programa(loggerMemoria);
 }
 /**
  * 
