@@ -126,7 +126,7 @@ void move_in(t_list* lista, int code){
 
     char* datos = malloc(size);
     memcpy(datos, info, size);
-    printf("lei: %s", datos);
+    printf("lei: %s \n", datos);
     //char* datos = void_a_string(info,size);
     
     responder_cpu_fs(pid, code, datos, dir, size);
@@ -139,7 +139,6 @@ void move_out(t_list* lista, int code){
     char* valor = (char*)list_get(lista,1);
     int size=*(int*)list_get(lista,2); 
     int offset=*(int*)list_get(lista,3);
-    valor[size] = '\0';
     printf("valores: %d, %s, %d, %d", dir, valor, size, offset);
     int pid = buscar_pid(dir);
 
