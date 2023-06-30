@@ -176,6 +176,12 @@ void respuestas(int cliente, int code,void* algo){
     eliminar_paquete(paquete);
     return;
   }
+  if(code == MOV_IN_SUCCES){
+    agregar_a_paquete(paquete,algo,strlen((char*)algo)+1);
+    enviar_paquete(paquete,cliente);
+    eliminar_paquete(paquete);
+    return;
+  }
   agregar_a_paquete(paquete,algo,sizeof(algo)+1);
   enviar_paquete(paquete,cliente);
   eliminar_paquete(paquete);

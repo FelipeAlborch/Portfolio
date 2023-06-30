@@ -124,11 +124,11 @@ void move_in(t_list* lista, int code){
     int pid = buscar_pid(dir);
     void* info = leer_dato(dir,size, offset);
 
-    char* datos = void_a_string(info,size,&datos);    
+    char* datos = (char*)info;//void_a_string(info,size,&datos);    
     printf("lei: %s \n", datos);
     //char* 
     responder_cpu_fs(pid, code, datos, dir, size);
-    free(datos);
+    //free(datos);
     free(info);
 }
 void move_out(t_list* lista, int code){
@@ -175,7 +175,7 @@ int escribir_dato(int direccion,char* valor, int size,int offset){
     if (pid != M_ERROR)
     {
         pthread_mutex_lock(&m_memoria);
-            memcpy(memoria+base+offset,&valor,size);
+            memcpy(memoria+base+offset,valor,size);
             cero = memcmp(memoria+base+offset,valor,size);
         pthread_mutex_unlock(&m_memoria);
         printf("Cero: %d\n",cero);
