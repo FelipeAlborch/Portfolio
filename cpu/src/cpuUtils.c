@@ -385,9 +385,12 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
       instruccion->parametros[0], cantBytes, DF);
   }
 
+  int DL = atoi(instruccion->parametros[0]);
+  int offset = obtener_desplazamiento_del_segmento(DL);
   agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
   agregar_a_paquete(paquete, &cantBytes, sizeof(int));
   agregar_a_paquete(paquete, &DF, sizeof(int));
+  agregar_a_paquete(paquete, &offset, sizeof(int));
 
   enviar_paquete(paquete, socketKernel);
   eliminar_paquete(paquete);
