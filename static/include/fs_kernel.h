@@ -22,6 +22,7 @@ typedef struct t_parametros_kernel
     int posicion;
     int dir;
     int tamanio;
+    int offset_dir;
 } t_parametros_kernel;
 
 typedef struct t_respuesta_fs

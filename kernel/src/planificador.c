@@ -171,6 +171,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
     char* nombre_recurso;
     int operacion_de_cpu;
     int tamanio, direccion_fisica;
+    int offset;
     t_recurso *archivo;
 
     recibirOperacion:
@@ -624,6 +625,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 nombre_recurso = list_get(lista_recepcion_valores, 0);
                 tamanio = *(int*) list_get(lista_recepcion_valores, 1);
                 direccion_fisica = *(int*) list_get(lista_recepcion_valores, 2);
+                offset = *(int*) list_get(lista_recepcion_valores, 3);
 
                 log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
 
@@ -647,6 +649,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_entero_a_paquete(paquete_fread, &archivo->posicion);
                 agregar_entero_a_paquete(paquete_fread, &direccion_fisica);
                 agregar_entero_a_paquete(paquete_fread, &tamanio);
+                agregar_entero_a_paquete(paquete_fread, &offset);
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
 
@@ -666,6 +669,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 nombre_recurso = list_get(lista_recepcion_valores, 0);
                 tamanio = *(int*) list_get(lista_recepcion_valores, 1);
                 direccion_fisica = *(int*) list_get(lista_recepcion_valores, 2);
+                offset = *(int *)list_get(lista_recepcion_valores, 3);
+
                 log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
 
                 int operacion_fwrite = recibir_operacion(socketCPU);
@@ -688,7 +693,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_entero_a_paquete(paquete_fwrite, &archivo->posicion);
                 agregar_entero_a_paquete(paquete_fwrite, &direccion_fisica);
                 agregar_entero_a_paquete(paquete_fwrite, &tamanio);
-                
+                agregar_entero_a_paquete(paquete_fwrite, &offset);
+
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 
                 enviar_paquete(paquete_fwrite, socketFS);
