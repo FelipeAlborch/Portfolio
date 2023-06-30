@@ -29,4 +29,3 @@ int main(int argc, char *argv[]) {
   terminar_programa(loggerMemoria);   
   return 0;
 }
-

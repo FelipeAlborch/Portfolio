@@ -185,29 +185,41 @@ void ejecutar_set(pcb *pcb, LineaInstruccion *instruccion)
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
 
   if(!strcmp(instruccion->parametros[0], "AX"))
-    strcpy(pcb->AX, instruccion->parametros[1]);
+    memcpy(pcb->AX, instruccion->parametros[1], 4);
+    //strcpy(pcb->AX, instruccion->parametros[1]);
   else if(!strcmp(instruccion->parametros[0], "BX"))
-    strcpy(pcb->BX, instruccion->parametros[1]);  
+    memcpy(pcb->BX, instruccion->parametros[1], 4);
+    //strcpy(pcb->BX, instruccion->parametros[1]);  
   else if(!strcmp(instruccion->parametros[0], "CX"))
-    strcpy(pcb->CX, instruccion->parametros[1]);
+    memcpy(pcb->CX, instruccion->parametros[1], 4);
+    //strcpy(pcb->CX, instruccion->parametros[1]);
   else if(!strcmp(instruccion->parametros[0], "DX"))
-    strcpy(pcb->DX, instruccion->parametros[1]);
+    memcpy(pcb->DX, instruccion->parametros[1], 4);
+    //strcpy(pcb->DX, instruccion->parametros[1]);
   if(!strcmp(instruccion->parametros[0], "EAX"))
-    strcpy(pcb->EAX, instruccion->parametros[1]);
+    memcpy(pcb->EAX, instruccion->parametros[1], 8);
+    //strcpy(pcb->EAX, instruccion->parametros[1]);
   else if(!strcmp(instruccion->parametros[0], "EBX"))
-    strcpy(pcb->EBX, instruccion->parametros[1]);  
+    memcpy(pcb->EBX, instruccion->parametros[1], 8);
+    //strcpy(pcb->EBX, instruccion->parametros[1]);  
   else if(!strcmp(instruccion->parametros[0], "ECX"))
-    strcpy(pcb->ECX, instruccion->parametros[1]);
+    memcpy(pcb->ECX, instruccion->parametros[1], 8);
+    //strcpy(pcb->ECX, instruccion->parametros[1]);
   else if(!strcmp(instruccion->parametros[0], "EDX"))
-    strcpy(pcb->EDX, instruccion->parametros[1]);
+    memcpy(pcb->EDX, instruccion->parametros[1], 8);
+    //strcpy(pcb->EDX, instruccion->parametros[1]);
   if(!strcmp(instruccion->parametros[0], "RAX"))
-    strcpy(pcb->RAX, instruccion->parametros[1]);
+    memcpy(pcb->RAX, instruccion->parametros[1], 16);
+    //strcpy(pcb->RAX, instruccion->parametros[1]);
   else if(!strcmp(instruccion->parametros[0], "RBX"))
-    strcpy(pcb->RBX, instruccion->parametros[1]);  
+    memcpy(pcb->RBX, instruccion->parametros[1], 16);
+    //strcpy(pcb->RBX, instruccion->parametros[1]);  
   else if(!strcmp(instruccion->parametros[0], "RCX"))
-    strcpy(pcb->RCX, instruccion->parametros[1]);
+    memcpy(pcb->RCX, instruccion->parametros[1], 16);
+    //strcpy(pcb->RCX, instruccion->parametros[1]);
   else if(!strcmp(instruccion->parametros[0], "RDX"))
-    strcpy(pcb->RDX, instruccion->parametros[1]);
+    memcpy(pcb->RDX, instruccion->parametros[1], 16);
+    //strcpy(pcb->RDX, instruccion->parametros[1]);
 
   log_info(logger, "Se copio al registro %s el valor %s", instruccion->parametros[0], instruccion->parametros[1]);
   log_destroy(logger);
@@ -401,9 +413,18 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
     enviar_contexto_ejecucion(pcb, socketKernel, SEG_FAULT);
     return;
   }
+
+  int DL = atoi(instruccion->parametros[1]);
+  int offset = obtener_desplazamiento_del_segmento(DL);
   
   agregar_a_paquete(paquete, &DF, sizeof(int));
-  agregar_a_paquete(paquete ,&cantDeBytes, sizeof(int));
+  agregar_a_paquete(paquete, &cantDeBytes, sizeof(int));
+  agregar_a_paquete(paquete, &offset, sizeof(int));
+  /**
+   * TODO: Agregar para enviarle el offset a memoria
+   *  
+    */
+
   enviar_paquete(paquete, socketMemoria);
   
   // Esperando respuesta de memoria...
@@ -453,16 +474,27 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
   char* valorACopiar = valor_del_registro_como_string(obtener_valor_registro(instruccion, pcb), cantidadDeBytes);
   //char* valorACopiar = string_duplicate(obtener_valor_registro(instruccion, pcb));
   log_info(logger, "Los caracteres a copiar son: %s", valorACopiar);
-  log_info(logger, "la cantidad de bytes a copiar son: %d", cantidadDeBytes);
+
+  log_info(logger, "la cantidad de bytes a copiar son: %d", (int)(strlen(valorACopiar)));
   
+  int DL = atoi(instruccion->parametros[0]);
+  int offset = obtener_desplazamiento_del_segmento(DL);
   agregar_a_paquete(paquete, &DF, sizeof(int));
-  agregar_a_paquete(paquete, valorACopiar, cantidadDeBytes);
+
+  agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar)+1);
+
   agregar_a_paquete(paquete, &cantidadDeBytes, sizeof(int));
+  agregar_a_paquete(paquete, &offset, sizeof(int));
+    /**
+   * TODO: Agregar para enviarle el offset a memoria
+   *  
+    */
   enviar_paquete(paquete, socketMemoria);
 
   int rta_memo;
   recv(socketMemoria, &rta_memo, sizeof(int), MSG_WAITALL);
-  log_info(logger, "MOV_OUT realizado con exito: %d", rta_memo);
+
+  log_warning(logger, "ME llego: %d", rta_memo);
 
   eliminar_paquete(paquete);
   free(valorACopiar);

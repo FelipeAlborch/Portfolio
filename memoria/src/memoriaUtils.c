@@ -163,14 +163,20 @@ void conectar(){
   
 }
 void respuestas(int cliente, int code,void* algo){
-  
-  if (algo == NULL)
-  {
+  if (algo == NULL){
     enviar_operacion(cliente,code);
     return;
   }
+  
   t_paquete* paquete=crear_paquete_operacion(code);
-  agregar_a_paquete(paquete,&algo,sizeof(algo)+1);
+  
+  if(code == INICIO_PROCESO || code == DELETE_SEGMENT){
+    serializar_tabla_segmentos(paquete,(t_list*)algo);
+    enviar_paquete(paquete,config_memo.kernel);
+    eliminar_paquete(paquete);
+    return;
+  }
+  agregar_a_paquete(paquete,algo,sizeof(algo)+1);
   enviar_paquete(paquete,cliente);
   eliminar_paquete(paquete);
 }

@@ -208,7 +208,7 @@ int f_truncate(char *file_name, int size, FS *fs);
  * @param fs: filesystem
  * @return 0 si se leyó correctamente, -1 si ocurrió un error
  */
-int f_read(char *file_name, int offset, int size, void **buffer, FS *fs);
+int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs);
 
 /**
  * f_write - escribe un archivo.
@@ -220,6 +220,6 @@ int f_read(char *file_name, int offset, int size, void **buffer, FS *fs);
  * @param fs: filesystem
  * @return 0 si se escribió correctamente, -1 si ocurrió un error
  */
-int f_write(char *file_name, int offset, int size, void *buffer, FS *fs);
+int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs);
 
 #endif
