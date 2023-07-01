@@ -205,6 +205,9 @@ int fcb_alloc(int size, FCB *fcb, FS *fs) {
         int free_block = bitarray_next_free(fs->bitmap);
         assert(free_block != -1);
         bitarray_set_bit(fs->bitmap, free_block);
+        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+            free_block, bitarray_test_bit(fs->bitmap, free_block)
+        );
         fcb->dptr = block_local_address(free_block, fs);
         blocks_reserved ++;
         blocks_required --;
@@ -213,12 +216,18 @@ int fcb_alloc(int size, FCB *fcb, FS *fs) {
         int free_block = bitarray_next_free(fs->bitmap);
         assert(free_block != -1);
         bitarray_set_bit(fs->bitmap, free_block);
+        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+            free_block, bitarray_test_bit(fs->bitmap, free_block)
+        );
         fcb->iptr = block_local_address(free_block, fs);
     }
     while (blocks_reserved >= 1 && blocks_required > 0) {
         int free_block = bitarray_next_free(fs->bitmap);
         assert(free_block != -1);
         bitarray_set_bit(fs->bitmap, free_block);
+        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+            free_block, bitarray_test_bit(fs->bitmap, free_block)
+        );
         uintptr_t iptr_offset_address = ptr_address(fcb->iptr, fs) + blocks_reserved - 1;
         uint32_t free_block_local_address = block_local_address(free_block, fs);
         *(uint32_t *)iptr_offset_address = free_block_local_address;
@@ -248,19 +257,31 @@ int fcb_dealloc(int size, FCB *fcb, FS *fs) {
     while (blocks_reserved > 2 && blocks_required > 0) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_reserved - 2);
         bitarray_clean_bit(fs->bitmap, block_index(local_adress, fs));
+        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+            block_index(local_adress, fs), bitarray_test_bit(fs->bitmap, block_index(local_adress, fs))
+        );
         blocks_reserved --;
         blocks_required --;
     }
     if (blocks_reserved == 2 && blocks_required > 0) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_reserved - 2);
         bitarray_clean_bit(fs->bitmap, block_index(local_adress, fs));
+        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+            block_index(local_adress, fs), bitarray_test_bit(fs->bitmap, block_index(local_adress, fs))
+        );
         bitarray_clean_bit(fs->bitmap, block_index(fcb->iptr, fs));
+        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+            block_index(local_adress, fs), bitarray_test_bit(fs->bitmap, block_index(local_adress, fs))
+        );
         fcb->iptr = 0;
         blocks_reserved --;
         blocks_required --;
     }
     if (blocks_reserved == 1 && blocks_required > 0) {
         bitarray_clean_bit(fs->bitmap, block_index(fcb->dptr, fs));
+        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+            block_index(fcb->dptr, fs), bitarray_test_bit(fs->bitmap, block_index(fcb->dptr, fs))
+        );
         fcb->dptr = 0;
         blocks_reserved --;
         blocks_required --;
