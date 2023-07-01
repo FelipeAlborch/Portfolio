@@ -106,9 +106,14 @@ void parametros_destroy(t_parametros_kernel *params)
 
 void enviar_respuesta_a_kernel(int socket, t_respuesta_fs *respuesta)
 {
-    t_paquete *paquete_respuesta_fs = crear_paquete_operacion(PAQUETE);
+    t_paquete *paquete_respuesta_fs = malloc(sizeof(t_paquete));
+    paquete_respuesta_fs->codigo_operacion = PAQUETE;
+    paquete_respuesta_fs->buffer = malloc(sizeof(t_buffer));
+    paquete_respuesta_fs->buffer->size = 0;
+    paquete_respuesta_fs->buffer->stream = NULL;
+
     agregar_a_paquete(paquete_respuesta_fs, respuesta->nombre_archivo, strlen(respuesta->nombre_archivo) + 1);
-    agregar_a_paquete(paquete_respuesta_fs, &respuesta->error, sizeof(FS_Error));
+    agregar_entero_a_paquete(paquete_respuesta_fs, &respuesta->error);
     agregar_entero_a_paquete(paquete_respuesta_fs, &respuesta->tamanio);
     agregar_entero_a_paquete(paquete_respuesta_fs, &respuesta->buffer_size);
     if (respuesta->buffer_size > 0)
@@ -117,6 +122,7 @@ void enviar_respuesta_a_kernel(int socket, t_respuesta_fs *respuesta)
     }
 
     enviar_paquete(paquete_respuesta_fs, socket);
+    paquete_destroy(paquete_respuesta_fs);
 }
 
 // deserializar respuesta de fs
@@ -139,12 +145,12 @@ t_respuesta_fs *recibir_respuesta_de_fs(int socket)
     offset += tamanio_nombre;
 
     // respuesta->error (== sizeof(FS_Error))
-    memcpy(&tamanio_error, paquete->buffer->stream + offset, sizeof(int));
-    offset += sizeof(int);
+    // memcpy(&tamanio_error, paquete->buffer->stream + offset, sizeof(int));
+    // offset += sizeof(int);
 
     // respuesta->error
-    memcpy(&respuesta->error, paquete->buffer->stream + offset, tamanio_error);
-    offset += tamanio_error;
+    memcpy(&respuesta->error, paquete->buffer->stream + offset, sizeof(int));
+    offset += sizeof(int);
 
     // respuesta->tamanio
     memcpy(&respuesta->tamanio, paquete->buffer->stream + offset, sizeof(int));

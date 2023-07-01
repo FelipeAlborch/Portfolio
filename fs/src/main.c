@@ -138,7 +138,7 @@ void *kernel_handler(void *arg)
             log_info(fs->log, "[LEER_ARCHIVO]");
 
             int res_fs = -1;  // 0 = OK, -1 = ERROR
-            int res_mem = -1; // 0 = OK, -1 = ERROR
+            msj_memoria res_mem = -1; // 0 = OK, -1 = ERROR
 
             char *bytes;
             t_parametros_kernel *params = deserializar_parametros_fread(paquete->buffer);
@@ -150,12 +150,13 @@ void *kernel_handler(void *arg)
             {
                 paquete_destroy(paquete);
                 paquete = paquete_create_mwrite(params->dir, bytes, params->tamanio, params->offset_dir);
-                res_mem = socket_send(fs->socket_memory, paquete);
+                socket_send(fs->socket_memory, paquete);
+                recv(fs->socket_memory, &res_mem, sizeof(int), MSG_WAITALL);
             }
 
             t_respuesta_fs *respuesta = malloc(sizeof(t_respuesta_fs));
             respuesta->nombre_archivo = params->nombre_archivo;
-            if (res_fs == 0 && res_mem == 0)
+            if (res_fs == 0 && res_mem == M_WRITE)
             {
                 respuesta->error = ARCHIVO_SUCCESS;
             }
