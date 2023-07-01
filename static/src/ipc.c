@@ -232,7 +232,7 @@ t_paquete *paquete_create_mread(int dir, int tamanio, int offset_dir)
 t_paquete *paquete_create_mwrite(int dir, char *bytes, int tamanio, int offset_dir) 
 {
     t_paquete *paquete = paquete_create(M_WRITE);
-    paquete->buffer = buffer_create(sizeof(dir) + sizeof(tamanio) + tamanio);
+    paquete->buffer = buffer_create(sizeof(dir) + sizeof(tamanio) + tamanio + sizeof(offset_dir));
     memcpy(paquete->buffer->stream, (void *)&dir, sizeof(dir));
     memcpy(paquete->buffer->stream + sizeof(dir), (void *)&tamanio, sizeof(tamanio));
     memcpy(paquete->buffer->stream + sizeof(dir) + sizeof(tamanio), (void *)bytes, tamanio);

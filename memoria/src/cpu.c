@@ -136,9 +136,9 @@ void ejecutar_fs()
 */
 void move_in(t_list* lista, int code){
     
-    int dir = list_get(lista,0);
-    int size = list_get(lista, 1);
-    int offset = list_get(lista, 2);
+    int dir = *(int *) list_get(lista,0);
+    int size = *(int *) list_get(lista, 1);
+    int offset = *(int *) list_get(lista, 2);
     int pid = buscar_pid(dir);
     void* info = leer_dato(dir,size, offset);
 
@@ -273,11 +273,11 @@ void responder_cpu_fs(int pid, int cod, void* info, int dir, int size){
             break;
         case M_READ:
             respuestas(config_memo.fs,cod,info);
-            loggear(M_READ,pid,info,dir,size,0);
+            loggear(M_READ,pid,"FS",dir,size,0);
             break;
         case M_WRITE:
             respuestas(config_memo.fs,cod,NULL);
-            loggear(M_WRITE,pid,info,dir,size,0);
+            loggear(M_WRITE,pid,"FS",dir,size,0);
             break;
         default:
             loggear(M_ERROR,pid,"",0,0,0);

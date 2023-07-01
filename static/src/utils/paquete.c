@@ -101,8 +101,8 @@ t_list* deserializar_mread (t_paquete* paquete) {
 
 	while(desplazamiento < paquete->buffer->size)
 	{
-		int valor;
-		memcpy(&valor, paquete->buffer->stream + desplazamiento, sizeof(int));
+		char* valor = malloc(sizeof(int));
+		memcpy(valor, paquete->buffer->stream + desplazamiento, sizeof(int));
 		desplazamiento += sizeof(int);
 		list_add(valores, valor);
 	}
@@ -110,61 +110,32 @@ t_list* deserializar_mread (t_paquete* paquete) {
 	return valores;
 }
 
-// t_list* deserializar_mwrite (t_paquete* paquete) {
-
-// 	int desplazamiento = 0;
-// 	t_list* valores = list_create();
-
-// 	int dir;
-// 	int tamanio;
-// 	char* dato;
-// 	int offset;
-
-// 	memcpy(&dir, paquete->buffer->stream + desplazamiento, sizeof(int));
-// 	desplazamiento += sizeof(int);
-
-// 	memcpy(&tamanio, paquete->buffer->stream + desplazamiento, sizeof(int));
-// 	desplazamiento += sizeof(int);
-
-// 	dato = malloc(tamanio);
-// 	memcpy(dato, paquete->buffer->stream + desplazamiento, tamanio);
-// 	desplazamiento += tamanio;
-
-// 	memcpy(&offset, paquete->buffer->stream + desplazamiento, sizeof(int));
-	
-// 	list_add(valores, &dir);
-// 	list_add(valores, &tamanio);
-// 	list_add(valores, dato);
-// 	list_add(valores, &offset);
-
-// 	return valores;
-// }
-
 t_list* deserializar_mwrite(t_paquete* paquete) {
     int desplazamiento = 0;
     t_list* valores = list_create();
 
-    int dir;
-    int tamanio;
+    char* dir = malloc(sizeof(int));
+    char* tamanio = malloc(sizeof(int));
     char* dato;
-    int offset;
+    char* offset = malloc(sizeof(int));
 
-    memcpy(&dir, paquete->buffer->stream + desplazamiento, sizeof(int));
+    memcpy(dir, paquete->buffer->stream + desplazamiento, sizeof(int));
     desplazamiento += sizeof(int);
 
-    memcpy(&tamanio, paquete->buffer->stream + desplazamiento, sizeof(int));
+    memcpy(tamanio, paquete->buffer->stream + desplazamiento, sizeof(int));
     desplazamiento += sizeof(int);
 
-    dato = malloc(tamanio);
-    memcpy(dato, paquete->buffer->stream + desplazamiento, tamanio);
-    desplazamiento += tamanio;
+		int tamanio_int = *(int*)tamanio;
+    dato = malloc(tamanio_int);
+    memcpy(dato, paquete->buffer->stream + desplazamiento, tamanio_int);
+    desplazamiento += tamanio_int;
 
-    memcpy(&offset, paquete->buffer->stream + desplazamiento, sizeof(int));
+    memcpy(offset, paquete->buffer->stream + desplazamiento, sizeof(int));
 
-    list_add(valores, &dir);
+    list_add(valores, dir);
     list_add(valores, dato);
-    list_add(valores, &tamanio);
-    list_add(valores, &offset);
+    list_add(valores, tamanio);
+    list_add(valores, offset);
 
     return valores;
 }
