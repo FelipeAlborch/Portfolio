@@ -114,7 +114,6 @@ void *kernel_handler(void *arg)
             } else {
                 respuesta->error = ERROR_DE_FS;
             }
-
             respuesta->tamanio = params->tamanio;
             respuesta->buffer_size = 0;
             respuesta->buffer = NULL;
@@ -151,7 +150,6 @@ void *kernel_handler(void *arg)
             } else if (res_mem == 0) {
                 respuesta->error = ERROR_DE_MEMORIA;
             }
-
             respuesta->tamanio = params->tamanio;
             respuesta->buffer_size = 0;
             respuesta->buffer = NULL;
@@ -193,7 +191,6 @@ void *kernel_handler(void *arg)
             } else if (res_fs == 0) {
                 respuesta->error = ERROR_DE_FS;
             } 
-
             respuesta->tamanio = params->tamanio;
             respuesta->buffer_size = params->tamanio;
             respuesta->buffer = (char *)paquete->buffer->stream;
@@ -223,7 +220,7 @@ void validate(int argc, char **argv)
         }
         else
         {
-            printf("No se encontró el archivo de configuración\n");
+            perror("No se encontró el archivo de configuración\n");
             exit(1);
         }
     }
@@ -249,7 +246,7 @@ void init_sockets(FS *fs)
         socket_write_paquete(fs->socket_memory, paquete);
         paquete_destroy(paquete);
 
-        log_info(fs->log, "Conectado a memoria en %s:%s", fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
+        log_info(fs->log, "Conectado con memoria en %s:%s", fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);
     }
 
     fs->socket_listen = conn_create(SERVER, fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
@@ -257,10 +254,12 @@ void init_sockets(FS *fs)
     if (fs->socket_listen == -1)
     {
         log_error(fs->log, "No se pudo crear el socket de escucha en %s:%s", fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
-        exit(1);
+        // exit(1);
     }
-
-    log_info(fs->log, "Escuchando kernel en %s:%s", fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
+    else
+    {
+        log_info(fs->log, "Escuchando en %s:%s", fs->config->IP_FSYSTEM, fs->config->PUERTO_ESCUCHA);
+    }
 }
 
 void init_threads(FS *fs)
