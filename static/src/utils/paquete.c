@@ -86,7 +86,7 @@ t_list* _recibir_paquete(int socket_cliente)
 		memcpy(valor, buffer+desplazamiento, tamanio);
 		desplazamiento+=tamanio;
 		list_add(valores, valor);
-		free(valor);	//	Revisar el memcheck.log con y sin este free
+		//free(valor);	//	Revisar el memcheck.log con y sin este free
 	}
 
 	
