@@ -161,7 +161,7 @@ t_paquete* recibir_paquete (int socket) {
 		log_error(logger, "Ocurrio un error al recibir size");
 		codigo_operacion = ERROR;
 	}
-	printf("el valor del size %d",size);
+	printf("el valor del size %d\n",size);
 	void* stream = malloc(size);
 	if (recv(socket, stream, size, MSG_WAITALL) <= 0) {
 		log_error(logger, "Ocurrio un error al recibir stream");

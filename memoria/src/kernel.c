@@ -75,10 +75,10 @@ void ejecutar_kernel(){
             break;
         }
 
-    //list_destroy_and_destroy_elements(lista,free);
+    list_destroy_and_destroy_elements(lista,free);
     
     }
-    list_destroy_and_destroy_elements(lista,free);
+    //list_destroy_and_destroy_elements(lista,free);
 
     log_info(klogger,"Terminando de ejecutar las tareas del kernel");
 

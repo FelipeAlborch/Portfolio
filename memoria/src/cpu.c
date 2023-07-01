@@ -108,7 +108,7 @@ void ejecutar_fs()
         {
             t_list *lista = deserializar_mread(paquete);
             move_in(lista, M_READ);
-            list_clean(lista);
+            list_destroy_and_destroy_elements(lista, free);
             break;
             
         }
@@ -116,7 +116,7 @@ void ejecutar_fs()
         {
             t_list *lista = deserializar_mwrite(paquete);
             move_out(lista, M_WRITE);
-            list_clean(lista);
+            list_destroy_and_destroy_elements(lista, free);
             break;
         }
         default:
@@ -158,9 +158,9 @@ void move_out(t_list* lista, int code){
     int size = *(int *)list_get(lista, 2);
     int offset = *(int *)list_get(lista, 3);
 
-    log_info(flogger, "[MOV_OUT]: dir: %d valor: %s size: %d offset: %d ", dir, valor, size, offset);
+    log_info(flogger, "[MOV_OUT]: dir: %d valor: %s size: %d offset: %d \n", dir, valor, size, offset);
 
-    printf("valores: %d, %s, %d, %d", dir, valor, size, offset);
+    printf("valores: %d, %s, %d, %d\n", dir, valor, size, offset);
     int pid = buscar_pid(dir);
 
     int info = escribir_dato(dir,valor,size, offset);
