@@ -285,7 +285,7 @@ void superbloque_destroy(Superbloque *superbloque) {
 
 int f_open(char *file_name, FS *fs) {
     
-    log_info(fs->log, "Abrir Archivo: %s", file_name);
+    log_trace(fs->log, "Abrir Archivo: %s", file_name);
     
     char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
     if (access(file_path, F_OK) == -1) {
@@ -299,7 +299,7 @@ int f_open(char *file_name, FS *fs) {
 
 int f_create(char *file_name, FS *fs) {
     
-    log_info(fs->log, "Crear Archivo: %s", file_name);
+    log_trace(fs->log, "Crear Archivo: %s", file_name);
     
     char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
     if (access(file_path, F_OK) == 0) {
@@ -316,7 +316,7 @@ int f_create(char *file_name, FS *fs) {
 
 int f_truncate(char *file_name, int size, FS *fs) {
     
-    log_info(fs->log, "Truncar Archivo: %s - size: %d", file_name, size);
+    log_trace(fs->log, "Truncar Archivo: %s - size: %d", file_name, size);
     
     FCB *fcb;
     if (fcb_create_from_file(file_name, fs, &fcb) == -1) {
@@ -331,7 +331,7 @@ int f_truncate(char *file_name, int size, FS *fs) {
 
 int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs) {
 
-    log_info(fs->log, "Leer Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, dir, size);
+    log_trace(fs->log, "Leer Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, dir, size);
 
     FCB *fcb;
     if (fcb_create_from_file(file_name, fs, &fcb) == -1) {
@@ -349,17 +349,32 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
     int blocks_read = 0;
     while (blocks_offset > 0 && blocks_read < blocks_required) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_offset - 1);
+        usleep(fs->config->RETARDO_ACCESO_BLOQUE);
+        log_trace(fs->log, 
+            "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
+            fcb->file_name, blocks_offset + blocks_read, block_index(local_adress, fs)
+        );
         memcpy(*buffer + blocks_read * fs->superbloque->BLOCK_SIZE, (void *)ptr_address(local_adress, fs), fs->superbloque->BLOCK_SIZE);
         blocks_offset --;
         blocks_read ++;
     }
     if (blocks_offset == 0 && blocks_read < blocks_required) {
         uint32_t local_adress = fcb->dptr;
+        usleep(fs->config->RETARDO_ACCESO_BLOQUE);
+        log_trace(fs->log, 
+            "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
+            fcb->file_name, blocks_offset + blocks_read, block_index(local_adress, fs)
+        );
         memcpy(*buffer + blocks_read * fs->superbloque->BLOCK_SIZE, (void *)ptr_address(local_adress, fs), fs->superbloque->BLOCK_SIZE);
         blocks_read ++;
     }
     while (blocks_offset == 0 && blocks_read < blocks_required) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_read - 1);
+        usleep(fs->config->RETARDO_ACCESO_BLOQUE);
+        log_trace(fs->log, 
+            "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
+            fcb->file_name, blocks_offset + blocks_read, block_index(local_adress, fs)
+        );
         memcpy(*buffer + blocks_read * fs->superbloque->BLOCK_SIZE, (void *)ptr_address(local_adress, fs), fs->superbloque->BLOCK_SIZE);
         blocks_read ++;
     }
@@ -369,7 +384,7 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
 
 int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs) {
     
-    log_info(fs->log, "Escribir Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, dir, size);
+    log_trace(fs->log, "Escribir Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, dir, size);
     
     FCB *fcb;
     if (fcb_create_from_file(file_name, fs, &fcb) == -1) {
@@ -386,17 +401,32 @@ int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs
     int blocks_written = 0;
     while (blocks_offset > 0 && blocks_written < blocks_required) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_offset - 1);
+        usleep(fs->config->RETARDO_ACCESO_BLOQUE);
+        log_trace(fs->log, 
+            "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
+            fcb->file_name, blocks_offset + blocks_written, block_index(local_adress, fs)
+        );
         memcpy((void *)ptr_address(local_adress, fs), buffer + blocks_written * fs->superbloque->BLOCK_SIZE, fs->superbloque->BLOCK_SIZE);
         blocks_offset --;
         blocks_written ++;
     }
     if (blocks_offset == 0 && blocks_written < blocks_required) {
         uint32_t local_adress = fcb->dptr;
+        usleep(fs->config->RETARDO_ACCESO_BLOQUE);
+        log_trace(fs->log, 
+            "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
+            fcb->file_name, blocks_offset + blocks_written, block_index(local_adress, fs)
+        );
         memcpy((void *)ptr_address(local_adress, fs), buffer + blocks_written * fs->superbloque->BLOCK_SIZE, fs->superbloque->BLOCK_SIZE);
         blocks_written ++;
     }
     while (blocks_offset == 0 && blocks_written < blocks_required) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_written - 1);
+        usleep(fs->config->RETARDO_ACCESO_BLOQUE);
+        log_trace(fs->log, 
+            "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
+            fcb->file_name, blocks_offset + blocks_written, block_index(local_adress, fs)
+        );
         memcpy((void *)ptr_address(local_adress, fs), buffer + blocks_written * fs->superbloque->BLOCK_SIZE, fs->superbloque->BLOCK_SIZE);
         blocks_written ++;
     }
