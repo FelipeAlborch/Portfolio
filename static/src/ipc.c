@@ -209,7 +209,7 @@ int socket_write_string(int socket_fd, char *string)
     return socket_write(socket_fd, buffer, buffer_size);
 }
 
-int socket_write_paquete(int socket_fd, t_paquete *paquete)
+int socket_send(int socket_fd, t_paquete *paquete)
 {
     int buffer_size = sizeof(paquete->codigo_operacion) + sizeof(paquete->buffer->size) + paquete->buffer->size;
     void *buffer = malloc(buffer_size);

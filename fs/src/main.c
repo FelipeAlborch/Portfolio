@@ -138,7 +138,7 @@ void *kernel_handler(void *arg)
             if (res_fs == 0) {
                 paquete_destroy(paquete);
                 paquete = paquete_create_mwrite(params->dir, bytes, params->tamanio);
-                res_mem = socket_write_paquete(fs->socket_memory, paquete);
+                res_mem = socket_send(fs->socket_memory, paquete);
             }
 
             t_respuesta_fs* respuesta = malloc(sizeof(t_respuesta_fs));
@@ -171,12 +171,13 @@ void *kernel_handler(void *arg)
             paquete_destroy(paquete);
 
             paquete = paquete_create_mread(params->dir, params->tamanio);
-            res_mem = socket_write_paquete(fs->socket_memory, paquete);
+            res_mem = socket_send(fs->socket_memory, paquete);
             paquete_destroy(paquete);
 
             error = socket_recv(fs->socket_memory, &paquete);
             if (error == -1 || paquete->codigo_operacion != (op_code)M_READ) {
                 log_error(fs->log, "Error al recibir paquete");
+                parametros_destroy(params);
                 break;
             }
 
@@ -243,7 +244,7 @@ void init_sockets(FS *fs)
     else
     {
         t_paquete *paquete = paquete_create(FILE_SYSTEM);
-        socket_write_paquete(fs->socket_memory, paquete);
+        socket_send(fs->socket_memory, paquete);
         paquete_destroy(paquete);
 
         log_info(fs->log, "Conectado con memoria en %s:%s", fs->config->IP_MEMORIA, fs->config->PUERTO_MEMORIA);

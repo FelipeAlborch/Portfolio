@@ -55,7 +55,7 @@ int socket_write_int(int socket_fd, int *buffer);
 
 int socket_write_string(int socket_fd, char *buffer);
 
-int socket_write_paquete(int socket_fd, t_paquete *paquete);
+int socket_send(int socket_fd, t_paquete *paquete);
 
 t_paquete *paquete_create_mwrite(int dir, char *bytes, int tamanio);
 
