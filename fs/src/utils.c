@@ -16,7 +16,7 @@ FS *fs_create(char *config_path) {
     int error = 0;
     FS *fs = malloc(sizeof(FS));
 
-    fs->log = log_create("fs.log", "FS", 1, LOG_LEVEL_DEBUG);
+    fs->log = log_create("fs.log", "FS", 1, LOG_LEVEL_TRACE);
     fs->config = config_create_fs_from_file(config_path);
 
     print_cwd();
@@ -356,11 +356,10 @@ int f_truncate(char *file_name, int size, FS *fs) {
     return 0;
 }
 
-int get_size_to_read(int size, int blocks_read, FS *fs) {
-    int bytes_read = blocks_read * fs->superbloque->BLOCK_SIZE;
-
-    return size - bytes_read < fs->superbloque->BLOCK_SIZE 
-        ? size - bytes_read
+int size_to_read(int size, int blocks_read, FS *fs) {
+    int bytes_to_read = size - blocks_read * fs->superbloque->BLOCK_SIZE;
+    return bytes_to_read < fs->superbloque->BLOCK_SIZE 
+        ? bytes_to_read
         : fs->superbloque->BLOCK_SIZE;
 }
 
@@ -379,8 +378,6 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
         return -1;
     }
     *buffer = malloc(size);
-    void* block_buffer = malloc(fs->superbloque->BLOCK_SIZE);
-
     int blocks_required = block_count(size, fs);
     int blocks_offset = block_count(offset, fs);
     int blocks_read = 0;
@@ -391,11 +388,10 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_offset + blocks_read, block_index(local_adress, fs)
         );
-
         memcpy(
             *buffer + blocks_read * fs->superbloque->BLOCK_SIZE,
             (void *)ptr_address(local_adress, fs),
-            get_size_to_read(size, blocks_read, fs)
+            size_to_read(size, blocks_read, fs)
         );
         blocks_offset --;
         blocks_read ++;
@@ -411,7 +407,7 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
         memcpy(
             *buffer + blocks_read * fs->superbloque->BLOCK_SIZE,
             (void *)ptr_address(local_adress, fs),
-            get_size_to_read(size, blocks_read, fs)
+            size_to_read(size, blocks_read, fs)
         );
         blocks_read ++;
     }
@@ -425,7 +421,7 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
         memcpy(
             *buffer + blocks_read * fs->superbloque->BLOCK_SIZE,
             (void *)ptr_address(local_adress, fs),
-            get_size_to_read(size, blocks_read, fs)
+            size_to_read(size, blocks_read, fs)
         );
         blocks_read ++;
     }
