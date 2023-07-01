@@ -165,7 +165,7 @@ void actualizar_tablas_segmentos(t_list* lista_de_valores)
     }
 }
 */
-/*
+
 void actualizar_tablas_segmentos()
 {
     t_list* lista_de_valores;

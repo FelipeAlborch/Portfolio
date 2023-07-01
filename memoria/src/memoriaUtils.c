@@ -174,6 +174,8 @@ void respuestas(int cliente, int code,void* algo){
     enviar_operacion(cliente,code);
     return;
   }
+
+  log_info(mlogger, "[RESPUESTAS]: %d - %s ", code, algo);
   
   t_paquete* paquete=crear_paquete_operacion(code);
   
@@ -183,7 +185,7 @@ void respuestas(int cliente, int code,void* algo){
     eliminar_paquete(paquete);
     return;
   }
-  if(code == MOV_IN_SUCCES){
+  if(code == MOV_IN_SUCCES || code == M_READ){
     agregar_a_paquete(paquete,algo,strlen((char*)algo)+1);
     enviar_paquete(paquete,cliente);
     eliminar_paquete(paquete);

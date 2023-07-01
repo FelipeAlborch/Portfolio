@@ -92,40 +92,41 @@ void conectar_fs(){
     ejecutar_fs();
 }
 
-void ejecutar_fs(){
+void ejecutar_fs()
+{
     pthread_mutex_lock(&m_config);
-    int conectar=config_memo.fs;
+    int conectar = config_memo.fs;
     pthread_mutex_unlock(&m_config);
     log_info(flogger, "Por ejecutar las tareas del FileSystem");
-    t_list* lista = list_create();
-    int codigo;
     while (running_fs)
     {
-        switch (recibir_operacion(conectar)){
-            case M_READ:
-                lista = _recibir_paquete(conectar);
-                move_in(lista,M_READ);
-                list_destroy_and_destroy_elements(lista, free);
-            break;
-            case M_WRITE:
-                lista = _recibir_paquete(conectar);
-                move_out(lista,M_WRITE);  
-                list_destroy_and_destroy_elements(lista, free);
-            break;
-            case FIN_MODULO:
-                running_fs=false;
-                log_warning(flogger,"Se finalizan los módulos");
-            break;
-            default:
-                log_error(flogger,"No se reconoce la instrucción");
-                running_fs=false;
+        t_paquete *paquete = recibir_paquete(conectar);
+
+        switch (paquete->codigo_operacion)
+        {
+        case M_READ:
+        {
+            t_list *lista = deserializar_mread(paquete);
+            move_in(lista, M_READ);
+            list_clean(lista);
             break;
             
         }
-        
+        case M_WRITE:
+        {
+            t_list *lista = deserializar_mwrite(paquete);
+            move_out(lista, M_WRITE);
+            list_clean(lista);
+            break;
+        }
+        default:
+            log_warning(mlogger, "operacion desconocida");
+            break;
+        }
+        // running_fs=false;
     }
     
-    log_info(flogger,"Terminando de ejecutar las tareas del FileSystem");
+    log_info(flogger, "Terminando de ejecutar las tareas del FileSystem");
     terminar_programa(loggerMemoria);
 }
 /**
@@ -135,11 +136,13 @@ void ejecutar_fs(){
 */
 void move_in(t_list* lista, int code){
     
-    int dir=*(int*)list_get(lista,0);
-    int size=*(int*)list_get(lista,1);
-    int offset=*(int*)list_get(lista,2);
+    int dir = list_get(lista,0);
+    int size = list_get(lista, 1);
+    int offset = list_get(lista, 2);
     int pid = buscar_pid(dir);
     void* info = leer_dato(dir,size, offset);
+
+    log_info(flogger, "[MOV_IN]: dir: %d size: %d offset: %d ", dir, size, offset);
 
     char* datos = (char*)info;//void_a_string(info,size,&datos);    
   //  printf("lei: %s \n", datos);
@@ -150,11 +153,14 @@ void move_in(t_list* lista, int code){
 }
 void move_out(t_list* lista, int code){
 
-    int dir=*(int*)list_get(lista,0);
-    char* valor = (char*)list_get(lista,1);
-    int size=*(int*)list_get(lista,2); 
-    int offset=*(int*)list_get(lista,3);
-  //  printf("valores: %d, %s, %d, %d", dir, valor, size, offset);
+    int dir = *(int *)list_get(lista, 0);
+    char *valor = (char *)list_get(lista, 1);
+    int size = *(int *)list_get(lista, 2);
+    int offset = *(int *)list_get(lista, 3);
+
+    log_info(flogger, "[MOV_OUT]: dir: %d valor: %s size: %d offset: %d ", dir, valor, size, offset);
+
+    printf("valores: %d, %s, %d, %d", dir, valor, size, offset);
     int pid = buscar_pid(dir);
 
     int info = escribir_dato(dir,valor,size, offset);
@@ -167,6 +173,7 @@ void move_out(t_list* lista, int code){
     responder_cpu_fs(pid, code, NULL, dir, size);
     
 }
+
 void* leer_dato(int direccion,int size, int offset){
     sleep(config_memo.retardo/1000);
     
@@ -265,11 +272,11 @@ void responder_cpu_fs(int pid, int cod, void* info, int dir, int size){
             loggear(MOV_OUT_INSTRUCTION,pid,"CPU",dir,size,0);
             break;
         case M_READ:
-            respuestas(config_memo.fs,cod,NULL);
+            respuestas(config_memo.fs,cod,info);
             loggear(M_READ,pid,info,dir,size,0);
             break;
         case M_WRITE:
-            respuestas(config_memo.fs,cod,info);
+            respuestas(config_memo.fs,cod,NULL);
             loggear(M_WRITE,pid,info,dir,size,0);
             break;
         default:

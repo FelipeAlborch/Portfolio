@@ -135,9 +135,11 @@ void *kernel_handler(void *arg)
             params = deserializar_parametros_fread(paquete->buffer);
             res_fs = f_read(params->nombre_archivo, params->posicion, params->tamanio, params->dir, (void **)&bytes, fs);
 
+            log_info(fs->log, "[PARAMS] archivo: %s - dir:  %d - posicion: %d - tamanio: %d - offset: %d", params->nombre_archivo, params->dir, params->posicion, params->tamanio, params->offset_dir);
+
             if (res_fs == 0) {
                 paquete_destroy(paquete);
-                paquete = paquete_create_mwrite(params->dir, bytes, params->tamanio);
+                paquete = paquete_create_mwrite(params->dir, bytes, params->tamanio, , params->offset_dir);
                 res_mem = socket_send(fs->socket_memory, paquete);
             }
 
@@ -170,8 +172,10 @@ void *kernel_handler(void *arg)
             params = deserializar_parametros_fwrite(paquete->buffer);
             paquete_destroy(paquete);
 
-            paquete = paquete_create_mread(params->dir, params->tamanio);
+            paquete = paquete_create_mread(params->dir, params->tamanio, params->offset_dir);
             res_mem = socket_send(fs->socket_memory, paquete);
+
+            log_info(fs->log, "[PARAMS] archivo: %s - dir:  %d - posicion: %d - tamanio: %d - offset: %d", params->nombre_archivo, params->dir, params->posicion, params->tamanio, params->offset_dir);
             paquete_destroy(paquete);
 
             error = socket_recv(fs->socket_memory, &paquete);
@@ -181,7 +185,14 @@ void *kernel_handler(void *arg)
                 break;
             }
 
-            res_fs = f_write(params->nombre_archivo, params->posicion, paquete->buffer->size, params->dir, paquete->buffer->stream, fs);
+            int tamanio;
+            memcpy(&tamanio, paquete->buffer->stream, sizeof(int));
+            char* dato = malloc(tamanio);
+            memcpy(dato, paquete->buffer->stream + sizeof(int), tamanio);
+
+            log_info(fs->log, "Dato: %s - Tamaño: %d", dato, tamanio);
+
+            res_fs = f_write(params->nombre_archivo, params->posicion, params->tamanio, params->dir, dato, fs);
 
             t_respuesta_fs* respuesta = malloc(sizeof(t_respuesta_fs));
             respuesta->nombre_archivo = params->nombre_archivo;

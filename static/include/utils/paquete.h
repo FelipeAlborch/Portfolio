@@ -73,4 +73,8 @@ void eliminar_paquete(t_paquete*);
 
 t_paquete* recibir_paquete(int);
 
+t_list *deserializar_mread(t_paquete *paquete);
+
+t_list *deserializar_mwrite(t_paquete *paquete);
+
 #endif
