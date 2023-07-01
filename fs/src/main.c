@@ -139,7 +139,7 @@ void *kernel_handler(void *arg)
 
             if (res_fs == 0) {
                 paquete_destroy(paquete);
-                paquete = paquete_create_mwrite(params->dir, bytes, params->tamanio, , params->offset_dir);
+                paquete = paquete_create_mwrite(params->dir, bytes, params->tamanio, params->offset_dir);
                 res_mem = socket_send(fs->socket_memory, paquete);
             }
 
