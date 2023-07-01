@@ -209,6 +209,10 @@ int fcb_alloc(int size, FCB *fcb, FS *fs) {
         assert(free_block != -1);
         bitarray_set_bit(fs->bitmap, free_block);
         fcb->dptr = block_local_address(free_block, fs);
+        log_trace(fs->log, 
+            "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
+            fcb->file_name, blocks_reserved, block_index(fcb->iptr, fs)
+        );
         blocks_reserved ++;
         blocks_required --;
     }
@@ -229,12 +233,12 @@ int fcb_alloc(int size, FCB *fcb, FS *fs) {
         uintptr_t iptr_offset_address = ptr_address(fcb->iptr, fs) + blocks_reserved - 1;
         uint32_t free_block_local_address = block_local_address(free_block, fs);
         *(uint32_t *)iptr_offset_address = free_block_local_address;
+        blocks_reserved ++;
+        blocks_required --;
         log_trace(fs->log, 
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_reserved, block_index(free_block_local_address, fs)
         );
-        blocks_reserved ++;
-        blocks_required --;
     }
     fcb->file_size += size;
     return fcb_update(fcb);
@@ -273,7 +277,7 @@ int fcb_dealloc(int size, FCB *fcb, FS *fs) {
         );
         bitarray_clean_bit(fs->bitmap, block_index(fcb->iptr, fs));
         log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
-            block_index(local_adress, fs), bitarray_test_bit(fs->bitmap, block_index(local_adress, fs))
+            block_index(fcb->iptr, fs), bitarray_test_bit(fs->bitmap, block_index(fcb->iptr, fs))
         );
         fcb->iptr = 0;
         blocks_reserved --;
