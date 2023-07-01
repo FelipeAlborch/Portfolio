@@ -186,9 +186,12 @@ int bitarray_count_free(t_bitarray *bitarray) {
     return count;
 }
 
-int bitarray_next_free(t_bitarray *bitarray) {
-    for (int i = 0; i < bitarray->size * 8; i++) {
-        if (!bitarray_test_bit(bitarray, i))
+int bitarray_next_free(FS *fs) {
+    for (int i = 0; i < fs->bitmap->size * 8; i++) {
+        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+            i, bitarray_test_bit(fs->bitmap, i)
+        );
+        if (!bitarray_test_bit(fs->bitmap, i))
             return i;
     }
     return -1;
@@ -202,35 +205,34 @@ int fcb_alloc(int size, FCB *fcb, FS *fs) {
         return -1;
     }
     if (blocks_reserved == 0 && blocks_required > 0) {
-        int free_block = bitarray_next_free(fs->bitmap);
+        int free_block = bitarray_next_free(fs);
         assert(free_block != -1);
         bitarray_set_bit(fs->bitmap, free_block);
-        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
-            free_block, bitarray_test_bit(fs->bitmap, free_block)
-        );
         fcb->dptr = block_local_address(free_block, fs);
         blocks_reserved ++;
         blocks_required --;
     }
     if (blocks_reserved == 1 && blocks_required > 0) {
-        int free_block = bitarray_next_free(fs->bitmap);
+        int free_block = bitarray_next_free(fs);
         assert(free_block != -1);
         bitarray_set_bit(fs->bitmap, free_block);
-        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
-            free_block, bitarray_test_bit(fs->bitmap, free_block)
-        );
         fcb->iptr = block_local_address(free_block, fs);
+        log_trace(fs->log, 
+            "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
+            fcb->file_name, blocks_reserved, block_index(fcb->iptr, fs)
+        );
     }
     while (blocks_reserved >= 1 && blocks_required > 0) {
-        int free_block = bitarray_next_free(fs->bitmap);
+        int free_block = bitarray_next_free(fs);
         assert(free_block != -1);
         bitarray_set_bit(fs->bitmap, free_block);
-        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
-            free_block, bitarray_test_bit(fs->bitmap, free_block)
-        );
         uintptr_t iptr_offset_address = ptr_address(fcb->iptr, fs) + blocks_reserved - 1;
         uint32_t free_block_local_address = block_local_address(free_block, fs);
         *(uint32_t *)iptr_offset_address = free_block_local_address;
+        log_trace(fs->log, 
+            "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
+            fcb->file_name, blocks_reserved, block_index(free_block_local_address, fs)
+        );
         blocks_reserved ++;
         blocks_required --;
     }
