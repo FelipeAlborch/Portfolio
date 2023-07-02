@@ -137,21 +137,22 @@ void *kernel_handler(void *arg)
         {
             log_info(fs->log, "[LEER_ARCHIVO]");
 
+            int error;
             int res_fs = -1;  // 0 = OK, -1 = ERROR
-            msj_memoria res_mem = -1; // 0 = OK, -1 = ERROR
+            msj_memoria res_mem;
 
             char *bytes;
             t_parametros_kernel *params = deserializar_parametros_fread(paquete->buffer);
             res_fs = f_read(params->nombre_archivo, params->posicion, params->tamanio, params->dir, (void **)&bytes, fs);
 
-            // log_info(fs->log, "[PARAMS] archivo: %s - dir:  %d - posicion: %d - tamanio: %d - offset: %d", params->nombre_archivo, params->dir, params->posicion, params->tamanio, params->offset_dir);
-
             if (res_fs == 0)
             {
                 paquete_destroy(paquete);
                 paquete = paquete_create_mwrite(params->dir, bytes, params->tamanio, params->offset_dir);
-                socket_send(fs->socket_memory, paquete);
-                recv(fs->socket_memory, &res_mem, sizeof(int), MSG_WAITALL);
+                error = socket_send(fs->socket_memory, paquete);
+                assert(error == 0);
+                error = recv(fs->socket_memory, &res_mem, sizeof(msj_memoria), MSG_WAITALL);
+                assert(error == sizeof(msj_memoria));
             }
 
             t_respuesta_fs *respuesta = malloc(sizeof(t_respuesta_fs));
