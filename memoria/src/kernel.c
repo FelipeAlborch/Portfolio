@@ -108,6 +108,8 @@ void eliminar_proceso(int pid){
     liberar_proceso(pid);
     log_trace(klogger,"Se elimino el proceso %d",pid); 
     loggear(FIN_PROCESO,pid,NULL,0,0,0);
+    //imprimir_huecos();
+    //imprimir_tabla_gral();
 }
 
 
@@ -171,8 +173,7 @@ void eliminar_segmento(int pid, int id){
         eliminar_paquete(paquete);
         imprimir_tabla(nueva);
     }
-    //list_destroy_and_destroy_elements(nueva,(void*)liberar_t_segmento);
-    list_clean(nueva);
+    list_destroy(nueva);
     loggear(DELETE_SEGMENT,pid,NULL,id,0,0);
     log_info(klogger,"Se elimino el segmento %d",id);
 }

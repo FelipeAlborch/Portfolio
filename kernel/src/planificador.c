@@ -218,7 +218,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
             
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
-            loguear_pcb(proceso_en_ejecucion,logger_kernel_util_extra);
+            //loguear_pcb(proceso_en_ejecucion,logger_kernel_util_extra);
             
 
             pthread_t hilo_io;
@@ -367,7 +367,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             pcb* contexto_cs = recibir_contexto_ejecucion(lista_contexto_cs);
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_cs);
-            loguear_pcb(proceso_a_ejecutar, logger_planificador_extra);
+            //loguear_pcb(proceso_a_ejecutar, logger_planificador_extra);
 
             log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Crear Segmento - Id: < %d > - Tamaño:< %d >", proceso_a_ejecutar->pid, nro_segmento_crear, tam_segmento);
             

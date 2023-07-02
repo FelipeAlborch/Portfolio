@@ -76,7 +76,7 @@ t_list* crear_tabla_proceso(int pid){
 }
 
 t_hueco_libre* crear_hueco_libre(int inicio, int tam, int estado){
-    t_hueco_libre* hueco = calloc(1,sizeof(t_hueco_libre));
+    t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
     hueco->inicio = inicio;
     hueco->tamanio = tam;
     hueco->estado = estado;
@@ -134,6 +134,7 @@ t_segmento* buscar_segmento_dir(int dir){
         return segmento;
     }
     else{
+        free(segmento);
         return NULL;
     }
 }
@@ -185,8 +186,11 @@ int buscar_hueco_libre(int size){
 }
 int buscar_base_dir(int dir){
     t_segmento* segmento= buscar_segmento_dir(dir);
+    int base;
     if(segmento != NULL){
-        return segmento->base;
+        base = segmento->base;
+        free(segmento);
+        return base;
     }
     return M_ERROR;
 }
@@ -226,6 +230,15 @@ void eliminar_segmento_list(t_segmento* segmento, t_list* segmentos){
     free(segmento);
 }
 
+void quitar_tabla(int pid){
+    
+    bool buscar_pid(t_tabla_segmentos* tabla){
+        return tabla->pid == pid;
+    }
+
+    list_remove_and_destroy_all_by_condition(tabla_segmentos_gral, (void*)buscar_pid, (void*)liberar_t_segmento);
+}
+
 void liberar_proceso(int pid) {
     t_list_iterator* iterator= list_iterator_create(tabla_segmentos_gral);
     while (list_iterator_has_next(iterator)) {
@@ -237,13 +250,12 @@ void liberar_proceso(int pid) {
                 modificar_hueco(index,tabla->segmento->base,tabla->segmento->size,LIBRE);
             }
             
-            list_remove_element(tabla_segmentos_gral, tabla);
         }
-        //free(tabla);
     }
     
     list_iterator_destroy(iterator);
-    
+    quitar_tabla(pid);
+
 }
 
 void liberar_hueco(int index){
@@ -309,6 +321,8 @@ void modificar_hueco(int index, int inicio, int tam, int estado){
             hueco->inicio = huecoNuevo->inicio + huecoNuevo->tamanio;
             hueco->tamanio -=  tam;
             list_add_in_index(huecos_libres,index+1,hueco); 
+        }else{
+            free(hueco);
         }
         
         actualizar_memoria(tam,OCUPADO);

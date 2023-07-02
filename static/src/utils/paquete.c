@@ -149,22 +149,25 @@ void eliminar_paquete(t_paquete* paquete)
 t_paquete* recibir_paquete (int socket) {
 	int codigo_operacion;
 
-	t_log* logger = log_create("logs.log","",true,LOG_LEVEL_ERROR);
+	//t_log* logger = log_create("logs.log","",true,LOG_LEVEL_ERROR);
 
 	if (recv(socket, &codigo_operacion, sizeof(int), MSG_WAITALL) <= 0) {
-		log_error(logger, "Ocurrio un error al recibir op_code");
+		perror("Ocurrio un error al recibir op_code");
+		//log_error(logger, "Ocurrio un error al recibir op_code");
 		codigo_operacion = ERROR;
 	}
 
 	int size;
 	if (recv(socket, &size, sizeof(int), MSG_WAITALL) <= 0) {
-		log_error(logger, "Ocurrio un error al recibir size");
+		perror("Ocurrio un error al recibir size");
+		//log_error(logger, "Ocurrio un error al recibir size");
 		codigo_operacion = ERROR;
 	}
 	printf("el valor del size %d\n",size);
 	void* stream = malloc(size);
 	if (recv(socket, stream, size, MSG_WAITALL) <= 0) {
-		log_error(logger, "Ocurrio un error al recibir stream");
+		perror("Ocurrio un error al recibir stream");
+		//log_error(logger, "Ocurrio un error al recibir stream");
 		codigo_operacion = ERROR;
 	}
 
@@ -177,6 +180,6 @@ t_paquete* recibir_paquete (int socket) {
 	paquete->buffer->size = size;
 
 	//free(stream);
-	log_destroy(logger);
+	//log_destroy(logger);
 	return paquete;
 }

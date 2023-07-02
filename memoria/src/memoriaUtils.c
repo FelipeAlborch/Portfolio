@@ -70,8 +70,7 @@ void liberar_memoria(){
 };
 void liberar_listas(){
     list_destroy_and_destroy_elements(tabla_segmentos_gral,(void*)liberar_t_segmento);
-    list_destroy_and_destroy_elements(huecos_libres,(void*)free);
-    //list_destroy(huecos_libres);
+    list_destroy_and_destroy_elements(huecos_libres,free);
     log_debug(mlogger,"listas liberadas");
 };
 void liberar_huecos(t_hueco_libre* hueco){
@@ -408,6 +407,7 @@ int worst_fit(int size){
 */
 void compactar(){
     imprimir_huecos();
+    //imprimir_tabla_gral();
     recibir_operacion(config_memo.kernel);
     loggear(INICIO_COMPACTAR,0,NULL,0,0,0); 
     sleep(config_memo.compactacion/1000); 
