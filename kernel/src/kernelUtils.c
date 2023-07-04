@@ -17,8 +17,10 @@ int socketFS;
 
 bool resultado_recurso = true;
 bool proceso_bloqueado_por_recurso = false;
+bool comunicacion_fs_memoria;
 
 pthread_mutex_t mutex_fs;
+pthread_mutex_t operacion_fs_memoria;
 
 
 /*****************************************************************************
@@ -454,6 +456,11 @@ void esperar_listo_de_fs(char* nombre_recurso)
 
     pthread_mutex_unlock(&mutex_fs);    // Se desbloquea el socket
     
+    if(comunicacion_fs_memoria){
+        pthread_mutex_unlock(&operacion_fs_memoria);
+        comunicacion_fs_memoria = false;
+    }
+
     agregar_proceso_ready(proceso_desalojado);
 }
 

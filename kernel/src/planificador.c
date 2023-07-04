@@ -28,6 +28,7 @@ void inicializar_estructuras_planificacion() {
     pthread_mutex_init(&mutex_ready, NULL);
     pthread_mutex_init(&mutex_exec, NULL);
     pthread_mutex_init(&mutex_terminated, NULL);
+    pthread_mutex_init(&operacion_fs_memoria, NULL);
 
     // Inicializo las colas de planificacion.
     cola_new = queue_create();
@@ -61,7 +62,7 @@ void destruir_estructuras_planificacion()
     pthread_mutex_destroy(&mutex_ready);
     pthread_mutex_destroy(&mutex_exec);
     pthread_mutex_destroy(&mutex_terminated);
-
+    pthread_mutex_destroy(&operacion_fs_memoria);
     // Destruyo colas.
     // Habria que primero destruir los elementos de las colas.
     queue_destroy(cola_new);
@@ -411,13 +412,17 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 break;  
 
                 case INICIO_COMPACTAR:
+                    log_warning(logger_planificador_extra, "Revisando que no exista operacion entre FileSystem y Memoria");
+                    
+                    pthread_mutex_lock(&operacion_fs_memoria);
                     
                     enviar_operacion(socketMemoria, INICIO_COMPACTAR);
                     log_info(logger_planificador_extra, "Compactacion: ");
                     log_info(logger_kernel_util_obligatorio, "< Se solicitó compactación >");
-                    // ACA HAY QUE PONER ALGO PARA SABER SI HAY OPERACION ENTRE FILESYSTEM Y MEMORIA
                     
                     actualizar_tablas_segmentos();
+                    
+                    pthread_mutex_unlock(&operacion_fs_memoria);
 
                     goto crear_segmento;
 
@@ -542,8 +547,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
             liberar_contexto_ejecucion(contexto_de_fopen);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
             list_destroy_and_destroy_elements(lista_contexto_fopen,free);
-            //list_destroy(lista_recepcion_valores);
-            //list_destroy(lista_contexto_fopen);
+
+            if(proceso_bloqueado_por_recurso){
+                proceso_bloqueado_por_recurso = false;
+                return;
+            }
             
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
             
@@ -621,6 +629,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
         break;
 
             case F_READ:
+                comunicacion_fs_memoria = true;
+                
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
                 nombre_recurso = list_get(lista_recepcion_valores, 0);
                 tamanio = *(int*) list_get(lista_recepcion_valores, 1);
@@ -653,6 +663,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
 
+                pthread_mutex_lock(&operacion_fs_memoria);
+
                 enviar_paquete(paquete_fread, socketFS);
                 eliminar_paquete(paquete_fread);
 
@@ -665,6 +677,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
             break;
 
             case F_WRITE:
+                comunicacion_fs_memoria = true;
+
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
                 nombre_recurso = list_get(lista_recepcion_valores, 0);
                 tamanio = *(int*) list_get(lista_recepcion_valores, 1);
@@ -696,7 +710,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_entero_a_paquete(paquete_fwrite, &offset);
 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
-                
+                pthread_mutex_lock(&operacion_fs_memoria);
+
                 enviar_paquete(paquete_fwrite, socketFS);
                 eliminar_paquete(paquete_fwrite);
 

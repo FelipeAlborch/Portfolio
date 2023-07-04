@@ -18,8 +18,10 @@ extern int socketFS;
 
 extern bool resultado_recurso;
 extern bool proceso_bloqueado_por_recurso;
+extern bool comunicacion_fs_memoria;
 
 extern pthread_mutex_t mutex_fs;
+extern pthread_mutex_t operacion_fs_memoria;
 
 
 /*****************************************************************************
