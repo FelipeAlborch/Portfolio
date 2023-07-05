@@ -193,7 +193,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
             
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
-            loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
+            //loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
 
 
             agregar_proceso_ready(proceso_en_ejecucion);
@@ -242,7 +242,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
 
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
-            loguear_pcb(proceso_en_ejecucion,logger_planificador_extra);
+            //loguear_pcb(proceso_en_ejecucion,logger_planificador_extra);
             log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < SUCCESS >", proceso_en_ejecucion->pid);
 
             //agregar_proceso_terminated(proceso_en_ejecucion);
@@ -268,7 +268,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_wait);
 
-            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+            //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
             wait_recurso(proceso_a_ejecutar, nombre_recurso);
 
@@ -323,7 +323,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_signal);
 
-            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+            //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
             signal_recurso(proceso_a_ejecutar, nombre_recurso);
 
@@ -498,7 +498,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fopen);
 
-            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+            //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
             // BUSCAR EN TABLA DE ARCHIVOS ABIERTOS
             if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_recurso))
@@ -573,7 +573,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fclose);
 
-            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+            //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
             fclose_recurso(proceso_a_ejecutar, nombre_recurso);
 
@@ -612,7 +612,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fseek);
 
-            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+            //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
             fseek_archivo(proceso_a_ejecutar, nombre_recurso, posicion);
 
@@ -647,7 +647,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fread);
 
-                loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+                //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
 
@@ -691,11 +691,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 t_list* lista_contexto_fwrite = _recibir_paquete(socketCPU);
                 pcb* contexto_de_fwrite = recibir_contexto_ejecucion(lista_contexto_fwrite);
 
-                log_info(logger_planificador_extra, "Contexto recibido por F_READ");
+                log_info(logger_planificador_extra, "Contexto recibido por F_WRITE");
 
                 actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fwrite);
 
-                loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+                //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
 
@@ -739,7 +739,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_ftruncate);
 
-                loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+                //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 t_paquete* paquete_ftruncate = crear_paquete_operacion(TRUNCAR_ARCHIVO);
                 int tam = tamanio;
@@ -766,7 +766,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 log_warning(logger_planificador_extra, "Terminando proceso: < %d > por  SEG_FAULT.", proceso_a_ejecutar->pid);
 
                 actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
-                loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
+                //loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
 
                 terminar_proceso(proceso_en_ejecucion);
 
