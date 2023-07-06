@@ -340,7 +340,7 @@ void consolidar_hueco(int indice){
     int anterior = indice - 1;
     int size = list_size(huecos_libres);
     
-    if(size >= siguiente){
+    if(size > siguiente){
         t_hueco_libre* huecoSig = list_get(huecos_libres,siguiente);
         
         if (huecoSig->estado == LIBRE)
