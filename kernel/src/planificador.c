@@ -173,6 +173,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
     int operacion_de_cpu;
     int tamanio, direccion_fisica;
     int offset;
+    int pid;
     t_recurso *archivo;
 
     recibirOperacion:
@@ -242,7 +243,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
 
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
-            //loguear_pcb(proceso_en_ejecucion,logger_planificador_extra);
+            loguear_pcb(proceso_en_ejecucion,logger_planificador_extra);
             log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < SUCCESS >", proceso_en_ejecucion->pid);
 
             //agregar_proceso_terminated(proceso_en_ejecucion);
@@ -636,8 +637,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 tamanio = *(int*) list_get(lista_recepcion_valores, 1);
                 direccion_fisica = *(int*) list_get(lista_recepcion_valores, 2);
                 offset = *(int*) list_get(lista_recepcion_valores, 3);
+                pid = *(int*) list_get(lista_recepcion_valores, 4);
 
-                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d, pid: %d", nombre_recurso, direccion_fisica, tamanio, pid);
 
                 int operacion_fread = recibir_operacion(socketCPU);
                 t_list* lista_contexto_fread = _recibir_paquete(socketCPU);
@@ -660,6 +662,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_entero_a_paquete(paquete_fread, &direccion_fisica);
                 agregar_entero_a_paquete(paquete_fread, &tamanio);
                 agregar_entero_a_paquete(paquete_fread, &offset);
+                agregar_entero_a_paquete(paquete_fread, &pid);
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
 
@@ -684,8 +687,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 tamanio = *(int*) list_get(lista_recepcion_valores, 1);
                 direccion_fisica = *(int*) list_get(lista_recepcion_valores, 2);
                 offset = *(int *)list_get(lista_recepcion_valores, 3);
+                pid = *(int*) list_get(lista_recepcion_valores, 4);
 
-                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d, pid: %d", nombre_recurso, direccion_fisica, tamanio, pid);
 
                 int operacion_fwrite = recibir_operacion(socketCPU);
                 t_list* lista_contexto_fwrite = _recibir_paquete(socketCPU);
@@ -708,6 +712,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_entero_a_paquete(paquete_fwrite, &direccion_fisica);
                 agregar_entero_a_paquete(paquete_fwrite, &tamanio);
                 agregar_entero_a_paquete(paquete_fwrite, &offset);
+                agregar_entero_a_paquete(paquete_fwrite, &pid);
+                
 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
                 pthread_mutex_lock(&operacion_fs_memoria);

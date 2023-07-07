@@ -219,24 +219,26 @@ int socket_send(int socket_fd, t_paquete *paquete)
     return socket_write(socket_fd, buffer, buffer_size);
 }
 
-t_paquete *paquete_create_mread(int dir, int tamanio, int offset_dir) 
+t_paquete *paquete_create_mread(int dir, int tamanio, int offset_dir, int p_id) 
 {
     t_paquete *paquete = paquete_create(M_READ);
-    paquete->buffer = buffer_create(sizeof(dir) + sizeof(tamanio) + tamanio + sizeof(offset_dir));
+    paquete->buffer = buffer_create(sizeof(dir) + sizeof(tamanio) + tamanio + sizeof(offset_dir) + sizeof(p_id));
     memcpy(paquete->buffer->stream, (void *)&dir, sizeof(dir));
     memcpy(paquete->buffer->stream + sizeof(dir), (void *)&tamanio, sizeof(tamanio));
     memcpy(paquete->buffer->stream + sizeof(dir) + sizeof(tamanio), (void *)&offset_dir, sizeof(offset_dir));
+    memcpy(paquete->buffer->stream + sizeof(dir) + sizeof(tamanio) + sizeof(offset_dir), (void *)&p_id, sizeof(p_id));
     return paquete;
 }
 
-t_paquete *paquete_create_mwrite(int dir, char *bytes, int tamanio, int offset_dir) 
+t_paquete *paquete_create_mwrite(int dir, char *bytes, int tamanio, int offset_dir, int p_id) 
 {
     t_paquete *paquete = paquete_create(M_WRITE);
-    paquete->buffer = buffer_create(sizeof(dir) + sizeof(tamanio) + tamanio + sizeof(offset_dir));
+    paquete->buffer = buffer_create(sizeof(dir) + sizeof(tamanio) + tamanio + sizeof(offset_dir) + sizeof(p_id));
     memcpy(paquete->buffer->stream, (void *)&dir, sizeof(dir));
     memcpy(paquete->buffer->stream + sizeof(dir), (void *)&tamanio, sizeof(tamanio));
     memcpy(paquete->buffer->stream + sizeof(dir) + sizeof(tamanio), (void *)bytes, tamanio);
     memcpy(paquete->buffer->stream + sizeof(dir) + sizeof(tamanio) + tamanio, (void *)&offset_dir, sizeof(offset_dir));
+    memcpy(paquete->buffer->stream + sizeof(dir) + sizeof(tamanio) + tamanio + sizeof(offset_dir), (void *)&p_id, sizeof(p_id));
     return paquete;
 }
 

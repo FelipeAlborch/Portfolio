@@ -57,9 +57,9 @@ int socket_write_string(int socket_fd, char *buffer);
 
 int socket_send(int socket_fd, t_paquete *paquete);
 
-t_paquete *paquete_create_mwrite(int dir, char *bytes, int tamanio, int offset_dir);
+t_paquete *paquete_create_mwrite(int dir, char *bytes, int tamanio, int offset_dir, int p_id);
 
-t_paquete *paquete_create_mread(int dir, int tamanio, int offset_dir);
+t_paquete *paquete_create_mread(int dir, int tamanio, int offset_dir, int p_id);
 
 t_paquete *paquete_create(int codigo_operacion);
 

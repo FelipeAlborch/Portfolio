@@ -143,12 +143,13 @@ void *kernel_handler(void *arg)
 
             char *bytes;
             t_parametros_kernel *params = deserializar_parametros_fread(paquete->buffer);
+            log_info(fs->log, "[PARAMS] archivo: %s - dir:  %d - posicion: %d - tamanio: %d - offset: %d, - pid: %d", params->nombre_archivo, params->dir, params->posicion, params->tamanio, params->offset_dir, params->p_id);
             res_fs = f_read(params->nombre_archivo, params->posicion, params->tamanio, params->dir, (void **)&bytes, fs);
 
             if (res_fs == 0)
             {
                 paquete_destroy(paquete);
-                paquete = paquete_create_mwrite(params->dir, bytes, params->tamanio, params->offset_dir);
+                paquete = paquete_create_mwrite(params->dir, bytes, params->tamanio, params->offset_dir, params->p_id);
                 error = socket_send(fs->socket_memory, paquete);
                 assert(error == 0);
                 error = recv(fs->socket_memory, &res_mem, sizeof(msj_memoria), MSG_WAITALL);
@@ -189,10 +190,10 @@ void *kernel_handler(void *arg)
             t_parametros_kernel *params = deserializar_parametros_fwrite(paquete->buffer);
             paquete_destroy(paquete);
 
-            paquete = paquete_create_mread(params->dir, params->tamanio, params->offset_dir);
+            paquete = paquete_create_mread(params->dir, params->tamanio, params->offset_dir, params->p_id);
             res_mem = socket_send(fs->socket_memory, paquete);
 
-            log_info(fs->log, "[PARAMS] archivo: %s - dir:  %d - posicion: %d - tamanio: %d - offset: %d", params->nombre_archivo, params->dir, params->posicion, params->tamanio, params->offset_dir);
+            log_info(fs->log, "[PARAMS] archivo: %s - dir:  %d - posicion: %d - tamanio: %d - offset: %d, - pid: %d", params->nombre_archivo, params->dir, params->posicion, params->tamanio, params->offset_dir, params->p_id);
             paquete_destroy(paquete);
 
             error = socket_recv(fs->socket_memory, &paquete);

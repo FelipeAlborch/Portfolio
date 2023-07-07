@@ -118,6 +118,7 @@ t_list* deserializar_mwrite(t_paquete* paquete) {
     char* tamanio = malloc(sizeof(int));
     char* dato;
     char* offset = malloc(sizeof(int));
+	char* pid = malloc(sizeof(int));
 
     memcpy(dir, paquete->buffer->stream + desplazamiento, sizeof(int));
     desplazamiento += sizeof(int);
@@ -131,11 +132,15 @@ t_list* deserializar_mwrite(t_paquete* paquete) {
     desplazamiento += tamanio_int;
 
     memcpy(offset, paquete->buffer->stream + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	memcpy(pid, paquete->buffer->stream + desplazamiento, sizeof(int));
 
     list_add(valores, dir);
     list_add(valores, dato);
     list_add(valores, tamanio);
     list_add(valores, offset);
+	list_add(valores, pid);
 
     return valores;
 }
