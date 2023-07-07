@@ -41,19 +41,15 @@ void conn_wait_until_close(int socket_fd);
 
 int socket_peek(int socket_fd, void *buffer, int buffer_size);
 
-int socket_read(int socket_fd, void *buffer, int buffer_size);
-
-char* socket_read_string(int socket_fd);
+int _socket_recv(int socket_fd, void *buffer, int buffer_size);
 
 int socket_recv(int socket_fd, t_paquete **paquete);
 
-t_paquete *socket_read_paquete(int socket_fd);
+int _socket_send(int socket_fd, void *buffer, int buffer_size);
 
-int socket_write(int socket_fd, void *buffer, int buffer_size);
+int socket_send_int(int socket_fd, int *buffer);
 
-int socket_write_int(int socket_fd, int *buffer);
-
-int socket_write_string(int socket_fd, char *buffer);
+int socket_send_string(int socket_fd, char *buffer);
 
 int socket_send(int socket_fd, t_paquete *paquete);
 

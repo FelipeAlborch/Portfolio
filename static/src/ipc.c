@@ -121,47 +121,35 @@ void conn_wait_until_close(int socket_fd)
 int socket_peek(int socket_fd, void *buffer, int buffer_size)
 {
     int n = recv(socket_fd, buffer, buffer_size, MSG_PEEK);
-    assert(n >= 0);
-
-    return n;
+    return n >= 0 ? 0 : -1;
 }
 
-int socket_read(int socket_fd, void *buffer, int buffer_size)
+int _socket_recv(int socket_fd, void *buffer, int buffer_size)
 {
     int n = recv(socket_fd, buffer, buffer_size, MSG_WAITALL);
-    assert(n >= 0);
-
-    return n;
+    return n >= 0 ? 0 : -1;
 }
 
-char* socket_read_string(int socket_fd)
+int socket_recv_int(int socket_fd, int *value)
 {
-    int buffer_size;
-    int n = recv(socket_fd, &buffer_size, sizeof(int), MSG_WAITALL);
-    assert(n >= 0);
-
-    char *string = malloc(buffer_size + 1);
-    n = recv(socket_fd, string, buffer_size, MSG_WAITALL);
-    assert(n >= 0);
-    string[buffer_size] = '\0';
-
-    return string;
+    return _socket_recv(socket_fd, value, sizeof(*value));
 }
 
-t_paquete *socket_read_paquete(int socket_fd)
+int socket_recv_string(int socket_fd, char **string)
 {
-    t_paquete *paquete = paquete_create(PAQUETE);
-    int n = recv(socket_fd, &paquete->codigo_operacion, sizeof(paquete->codigo_operacion), MSG_WAITALL);
-    assert(n >= 0);
-
-    paquete->buffer = malloc(sizeof(t_buffer));
-    n = recv(socket_fd, &paquete->buffer->size, sizeof(paquete->buffer->size), MSG_WAITALL);
-    assert(n >= 0);
-    paquete->buffer->stream = malloc(paquete->buffer->size);
-    n = recv(socket_fd, paquete->buffer->stream, paquete->buffer->size, MSG_WAITALL);
-    assert(n >= 0);
-
-    return paquete;
+    int string_size;
+    int error = _socket_recv(socket_fd, &string_size, sizeof(string_size));
+    if (error == -1) {
+        return -1;
+    }
+    char *_string = malloc(string_size);
+    error = _socket_recv(socket_fd, *string, string_size);
+    if (error == -1) {
+        free(_string);
+        return -1;
+    }
+    *string = _string;
+    return 0;
 }
 
 int socket_recv(int socket_fd, t_paquete **paquete)
@@ -188,25 +176,24 @@ int socket_recv(int socket_fd, t_paquete **paquete)
     return 0;
 }
 
-int socket_write(int socket_fd, void *buffer, int buffer_size)
+int _socket_send(int socket_fd, void *buffer, int buffer_size)
 {
-    int error = send(socket_fd, buffer, buffer_size, 0);
-    error = error >= 0 ? 0 : -1;
-    return error;
+    int n = send(socket_fd, buffer, buffer_size, 0);
+    return n >= 0 ? 0 : -1;
 }
 
-int socket_write_int(int socket_fd, int *buffer)
+int socket_send_int(int socket_fd, int *buffer)
 {
-    return socket_write(socket_fd, (void *)buffer, sizeof(int));
+    return _socket_send(socket_fd, (void *)buffer, sizeof(int));
 }
 
-int socket_write_string(int socket_fd, char *string)
+int socket_send_string(int socket_fd, char *string)
 {
     int buffer_size = sizeof(int) + strlen(string);
     void *buffer = malloc(buffer_size);
     memcpy(buffer, &buffer_size, sizeof(int));
     memcpy(buffer + sizeof(int), string, strlen(string));
-    return socket_write(socket_fd, buffer, buffer_size);
+    return _socket_send(socket_fd, buffer, buffer_size);
 }
 
 int socket_send(int socket_fd, t_paquete *paquete)
@@ -216,7 +203,7 @@ int socket_send(int socket_fd, t_paquete *paquete)
     memcpy(buffer, &paquete->codigo_operacion, sizeof(paquete->codigo_operacion));
     memcpy(buffer + sizeof(paquete->codigo_operacion), &paquete->buffer->size, sizeof(paquete->buffer->size));
     memcpy(buffer + sizeof(paquete->codigo_operacion) + sizeof(paquete->buffer->size), paquete->buffer->stream, paquete->buffer->size);
-    return socket_write(socket_fd, buffer, buffer_size);
+    return _socket_send(socket_fd, buffer, buffer_size);
 }
 
 t_paquete *paquete_create_mread(int dir, int tamanio, int offset_dir) 
