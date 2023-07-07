@@ -139,10 +139,11 @@ void move_in(t_list* lista, int code){
     int dir = *(int *) list_get(lista,0);
     int size = *(int *) list_get(lista, 1);
     int offset = *(int *) list_get(lista, 2);
+    int p_id = *(int *) list_get(lista, 3);
     int pid = buscar_pid(dir);
     void* info = leer_dato(dir,size, offset);
 
-    log_info(flogger, "[MOV_IN]: dir: %d size: %d offset: %d ", dir, size, offset);
+    log_warning(flogger, "[MOV_IN]: dir: %d size: %d offset: %d, pid: %d ", dir, size, offset, p_id);
 
     char* datos = (char*)info;//void_a_string(info,size,&datos);    
   //  printf("lei: %s \n", datos);
@@ -157,8 +158,9 @@ void move_out(t_list* lista, int code){
     char *valor = (char *)list_get(lista, 1);
     int size = *(int *)list_get(lista, 2);
     int offset = *(int *)list_get(lista, 3);
+    int p_id = *(int *)list_get(lista, 4);
 
-    log_info(flogger, "[MOV_OUT]: dir: %d valor: %s size: %d offset: %d \n", dir, valor, size, offset);
+    log_warning(flogger, "[MOV_OUT]: dir: %d valor: %s size: %d offset: %d, pid: %d \n", dir, valor, size, offset, p_id);
 
     printf("valores: %d, %s, %d, %d\n", dir, valor, size, offset);
     int pid = buscar_pid(dir);

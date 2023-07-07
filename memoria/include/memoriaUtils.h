@@ -178,4 +178,6 @@ t_segmento* crear_segmento(int pid, int size);
 
 void crear_seg();
 void crear_proc();
+
+void quitar_tabla(int pid);
 #endif

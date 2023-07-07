@@ -28,6 +28,7 @@ void inicializar_estructuras_planificacion() {
     pthread_mutex_init(&mutex_ready, NULL);
     pthread_mutex_init(&mutex_exec, NULL);
     pthread_mutex_init(&mutex_terminated, NULL);
+    pthread_mutex_init(&operacion_fs_memoria, NULL);
 
     // Inicializo las colas de planificacion.
     cola_new = queue_create();
@@ -61,7 +62,7 @@ void destruir_estructuras_planificacion()
     pthread_mutex_destroy(&mutex_ready);
     pthread_mutex_destroy(&mutex_exec);
     pthread_mutex_destroy(&mutex_terminated);
-
+    pthread_mutex_destroy(&operacion_fs_memoria);
     // Destruyo colas.
     // Habria que primero destruir los elementos de las colas.
     queue_destroy(cola_new);
@@ -172,6 +173,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
     int operacion_de_cpu;
     int tamanio, direccion_fisica;
     int offset;
+    int pid;
     t_recurso *archivo;
 
     recibirOperacion:
@@ -192,7 +194,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
             
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
-            loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
+            //loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
 
 
             agregar_proceso_ready(proceso_en_ejecucion);
@@ -218,7 +220,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
             
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
-            loguear_pcb(proceso_en_ejecucion,logger_kernel_util_extra);
+            //loguear_pcb(proceso_en_ejecucion,logger_kernel_util_extra);
             
 
             pthread_t hilo_io;
@@ -267,7 +269,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_wait);
 
-            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+            //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
             wait_recurso(proceso_a_ejecutar, nombre_recurso);
 
@@ -322,7 +324,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_signal);
 
-            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+            //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
             signal_recurso(proceso_a_ejecutar, nombre_recurso);
 
@@ -367,7 +369,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             pcb* contexto_cs = recibir_contexto_ejecucion(lista_contexto_cs);
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_cs);
-            loguear_pcb(proceso_a_ejecutar, logger_planificador_extra);
+            //loguear_pcb(proceso_a_ejecutar, logger_planificador_extra);
 
             log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Crear Segmento - Id: < %d > - Tamaño:< %d >", proceso_a_ejecutar->pid, nro_segmento_crear, tam_segmento);
             
@@ -411,13 +413,17 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 break;  
 
                 case INICIO_COMPACTAR:
+                    log_warning(logger_planificador_extra, "Revisando que no exista operacion entre FileSystem y Memoria");
+                    
+                    pthread_mutex_lock(&operacion_fs_memoria);
                     
                     enviar_operacion(socketMemoria, INICIO_COMPACTAR);
                     log_info(logger_planificador_extra, "Compactacion: ");
                     log_info(logger_kernel_util_obligatorio, "< Se solicitó compactación >");
-                    // ACA HAY QUE PONER ALGO PARA SABER SI HAY OPERACION ENTRE FILESYSTEM Y MEMORIA
                     
                     actualizar_tablas_segmentos();
+                    
+                    pthread_mutex_unlock(&operacion_fs_memoria);
 
                     goto crear_segmento;
 
@@ -493,7 +499,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fopen);
 
-            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+            //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
             // BUSCAR EN TABLA DE ARCHIVOS ABIERTOS
             if (!dictionary_has_key(tabla_global_archivos_abiertos, nombre_recurso))
@@ -542,8 +548,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
             liberar_contexto_ejecucion(contexto_de_fopen);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
             list_destroy_and_destroy_elements(lista_contexto_fopen,free);
-            //list_destroy(lista_recepcion_valores);
-            //list_destroy(lista_contexto_fopen);
+
+            if(proceso_bloqueado_por_recurso){
+                proceso_bloqueado_por_recurso = false;
+                return;
+            }
             
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
             
@@ -565,7 +574,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fclose);
 
-            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+            //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
             fclose_recurso(proceso_a_ejecutar, nombre_recurso);
 
@@ -604,7 +613,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fseek);
 
-            loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+            //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
             fseek_archivo(proceso_a_ejecutar, nombre_recurso, posicion);
 
@@ -621,13 +630,16 @@ void ejecutar(pcb* proceso_a_ejecutar)
         break;
 
             case F_READ:
+                comunicacion_fs_memoria = true;
+                
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
                 nombre_recurso = list_get(lista_recepcion_valores, 0);
                 tamanio = *(int*) list_get(lista_recepcion_valores, 1);
                 direccion_fisica = *(int*) list_get(lista_recepcion_valores, 2);
                 offset = *(int*) list_get(lista_recepcion_valores, 3);
+                pid = *(int*) list_get(lista_recepcion_valores, 4);
 
-                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d, pid: %d", nombre_recurso, direccion_fisica, tamanio, pid);
 
                 int operacion_fread = recibir_operacion(socketCPU);
                 t_list* lista_contexto_fread = _recibir_paquete(socketCPU);
@@ -637,7 +649,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fread);
 
-                loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+                //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
 
@@ -650,8 +662,11 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_entero_a_paquete(paquete_fread, &direccion_fisica);
                 agregar_entero_a_paquete(paquete_fread, &tamanio);
                 agregar_entero_a_paquete(paquete_fread, &offset);
+                agregar_entero_a_paquete(paquete_fread, &pid);
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
+
+                pthread_mutex_lock(&operacion_fs_memoria);
 
                 enviar_paquete(paquete_fread, socketFS);
                 eliminar_paquete(paquete_fread);
@@ -665,23 +680,26 @@ void ejecutar(pcb* proceso_a_ejecutar)
             break;
 
             case F_WRITE:
+                comunicacion_fs_memoria = true;
+
                 lista_recepcion_valores = _recibir_paquete(socketCPU);
                 nombre_recurso = list_get(lista_recepcion_valores, 0);
                 tamanio = *(int*) list_get(lista_recepcion_valores, 1);
                 direccion_fisica = *(int*) list_get(lista_recepcion_valores, 2);
                 offset = *(int *)list_get(lista_recepcion_valores, 3);
+                pid = *(int*) list_get(lista_recepcion_valores, 4);
 
-                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d", nombre_recurso, direccion_fisica, tamanio);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d, pid: %d", nombre_recurso, direccion_fisica, tamanio, pid);
 
                 int operacion_fwrite = recibir_operacion(socketCPU);
                 t_list* lista_contexto_fwrite = _recibir_paquete(socketCPU);
                 pcb* contexto_de_fwrite = recibir_contexto_ejecucion(lista_contexto_fwrite);
 
-                log_info(logger_planificador_extra, "Contexto recibido por F_READ");
+                log_info(logger_planificador_extra, "Contexto recibido por F_WRITE");
 
                 actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_fwrite);
 
-                loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+                //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
 
@@ -694,9 +712,12 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_entero_a_paquete(paquete_fwrite, &direccion_fisica);
                 agregar_entero_a_paquete(paquete_fwrite, &tamanio);
                 agregar_entero_a_paquete(paquete_fwrite, &offset);
+                agregar_entero_a_paquete(paquete_fwrite, &pid);
+                
 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
-                
+                pthread_mutex_lock(&operacion_fs_memoria);
+
                 enviar_paquete(paquete_fwrite, socketFS);
                 eliminar_paquete(paquete_fwrite);
 
@@ -724,7 +745,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_ftruncate);
 
-                loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
+                //loguear_pcb(proceso_a_ejecutar, logger_kernel_util_extra);
 
                 t_paquete* paquete_ftruncate = crear_paquete_operacion(TRUNCAR_ARCHIVO);
                 int tam = tamanio;
@@ -751,7 +772,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 log_warning(logger_planificador_extra, "Terminando proceso: < %d > por  SEG_FAULT.", proceso_a_ejecutar->pid);
 
                 actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
-                loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
+                //loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);
 
                 terminar_proceso(proceso_en_ejecucion);
 

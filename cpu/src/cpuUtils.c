@@ -394,12 +394,13 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
   agregar_a_paquete(paquete, &cantBytes, sizeof(int));
   agregar_a_paquete(paquete, &DF, sizeof(int));
   agregar_a_paquete(paquete, &offset, sizeof(int));
+  agregar_a_paquete(paquete, &pcb->pid, sizeof(int));
 
   enviar_paquete(paquete, socketKernel);
   eliminar_paquete(paquete);
 
   enviar_contexto_ejecucion(pcb, socketKernel, operacion);
-  log_info(logger, "Solicitud enciada al Kernel!");
+  log_info(logger, "Solicitud enviada al Kernel!");
 
   log_destroy(logger);
 }
@@ -426,6 +427,7 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
   agregar_a_paquete(paquete, &DF, sizeof(int));
   agregar_a_paquete(paquete, &cantDeBytes, sizeof(int));
   agregar_a_paquete(paquete, &offset, sizeof(int));
+  agregar_a_paquete(paquete, &pcb->pid, sizeof(int));
   /**
    * TODO: Agregar para enviarle el offset a memoria
    *  
@@ -491,6 +493,7 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
 
   agregar_a_paquete(paquete, &cantidadDeBytes, sizeof(int));
   agregar_a_paquete(paquete, &offset, sizeof(int));
+  agregar_a_paquete(paquete, &pcb->pid, sizeof(int));
     /**
    * TODO: Agregar para enviarle el offset a memoria
    *  

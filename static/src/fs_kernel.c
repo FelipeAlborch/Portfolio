@@ -67,6 +67,9 @@ t_parametros_kernel *deserializar_parametros_fread(t_buffer *buffer)
     offset += sizeof(int);
 
     memcpy(&params->offset_dir, buffer->stream + offset, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(&params->p_id, buffer->stream + offset, sizeof(int));
 
     return params;
 }
@@ -94,6 +97,9 @@ t_parametros_kernel *deserializar_parametros_fwrite(t_buffer *buffer)
     offset += sizeof(int);
 
     memcpy(&params->offset_dir, buffer->stream + offset, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(&params->p_id, buffer->stream + offset, sizeof(int));
 
     return params;
 }
