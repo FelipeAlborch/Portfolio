@@ -282,5 +282,5 @@ void leer_lista_de_instrucciones(t_list* lista_instrucciones)
 
 void imprimir_instruccion(LineaInstruccion* una_instruccion, int nro_instruccion)
 {
-  printf("INSTRUCCION [%d]: %s %s %s\n", nro_instruccion, una_instruccion->identificador, una_instruccion->parametros[0], una_instruccion->parametros[1], una_instruccion->parametros[2]);
+  printf("INSTRUCCION [%d]: %s %s %s %s\n", nro_instruccion, una_instruccion->identificador, una_instruccion->parametros[0], una_instruccion->parametros[1], una_instruccion->parametros[2]);
 }
