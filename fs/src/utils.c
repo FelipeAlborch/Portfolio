@@ -188,7 +188,7 @@ int bitarray_count_free(t_bitarray *bitarray) {
 
 int bitarray_next_free(FS *fs) {
     for (int i = 0; i < fs->bitmap->size * 8; i++) {
-        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+        log_info(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
             i, bitarray_test_bit(fs->bitmap, i)
         );
         if (!bitarray_test_bit(fs->bitmap, i))
@@ -197,31 +197,47 @@ int bitarray_next_free(FS *fs) {
     return -1;
 }
 
+void file_size_update(FS *fs, FCB *fcb, int blocks_reserved, int target_size) {
+    if (blocks_reserved != block_count(target_size, fs)) {
+        fcb->file_size = blocks_reserved * fs->superbloque->BLOCK_SIZE;
+    } else {
+        fcb->file_size = target_size;
+    }
+}
+
 int fcb_alloc(int size, FCB *fcb, FS *fs) {
+    log_info(fs->log, "[ALLOC INI] - Archivo: %s - File size: %d - Alloc bytes: %d", fcb->file_name, fcb->file_size, size);
+    int target_size = fcb->file_size + size;
     int free_blocks = bitarray_count_free(fs->bitmap);
     int blocks_reserved = block_count(fcb->file_size, fs);
-    int blocks_required = block_count(fcb->file_size + size, fs) - blocks_reserved;
+    int blocks_required = block_count(target_size, fs) - blocks_reserved;
     if (blocks_required > free_blocks) {
         return -1;
+    }
+    if (blocks_required == 0) {
+        file_size_update(fs, fcb, blocks_reserved, target_size);
+        log_info(fs->log, "[ALLOC END] - Archivo: %s - File size: %d", fcb->file_name, fcb->file_size);
+        return fcb_update(fcb);
     }
     if (blocks_reserved == 0 && blocks_required > 0) {
         int free_block = bitarray_next_free(fs);
         assert(free_block != -1);
         bitarray_set_bit(fs->bitmap, free_block);
         fcb->dptr = block_local_address(free_block, fs);
-        log_trace(fs->log, 
-            "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
-            fcb->file_name, blocks_reserved, block_index(fcb->iptr, fs)
-        );
         blocks_reserved ++;
         blocks_required --;
+        file_size_update(fs, fcb, blocks_reserved, target_size);
+        log_info(fs->log, 
+            "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
+            fcb->file_name, blocks_reserved, block_index(fcb->dptr, fs)
+        );
     }
     if (blocks_reserved == 1 && blocks_required > 0) {
         int free_block = bitarray_next_free(fs);
         assert(free_block != -1);
         bitarray_set_bit(fs->bitmap, free_block);
         fcb->iptr = block_local_address(free_block, fs);
-        log_trace(fs->log, 
+        log_info(fs->log, 
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_reserved, block_index(fcb->iptr, fs)
         );
@@ -235,64 +251,87 @@ int fcb_alloc(int size, FCB *fcb, FS *fs) {
         *(uint32_t *)iptr_offset_address = free_block_local_address;
         blocks_reserved ++;
         blocks_required --;
-        log_trace(fs->log, 
+        file_size_update(fs, fcb, blocks_reserved, target_size);
+        log_info(fs->log, 
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_reserved, block_index(free_block_local_address, fs)
         );
     }
-    fcb->file_size += size;
+    log_info(fs->log, "[ALLOC END] - Archivo: %s - File size: %d", fcb->file_name, fcb->file_size);
     return fcb_update(fcb);
 }
 
 int fcb_realloc(int new_size, FCB *fcb, FS *fs) {
     int difference = new_size - fcb->file_size;
     if (difference > 0) {
-        return fcb_alloc(difference, fcb, fs);
+        fcb_alloc(difference, fcb, fs);
     } else if (difference < 0) {
-        return fcb_dealloc(-difference, fcb, fs);
+        fcb_dealloc(-difference, fcb, fs);
     }
     return 0;
 }
 
 int fcb_dealloc(int size, FCB *fcb, FS *fs) {
+    log_info(fs->log, "[DEALLOC INI] - Archivo: %s - File size: %d - Dealloc bytes: %d", fcb->file_name, fcb->file_size, size);
+    int target_size = fcb->file_size - size;
     int blocks_reserved = block_count(fcb->file_size, fs);
-    int blocks_required = blocks_reserved - block_count(fcb->file_size - size, fs);
+    int blocks_required = blocks_reserved - block_count(target_size, fs);
     if (blocks_required > blocks_reserved) {
         return -1;
     }
+    if (blocks_required == 0) {
+        file_size_update(fs, fcb, blocks_reserved, target_size);
+        log_info(fs->log, "[DEALLOC END] - Archivo: %s - File size: %d", fcb->file_name, fcb->file_size);
+        return fcb_update(fcb);
+    }
     while (blocks_reserved > 2 && blocks_required > 0) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_reserved - 2);
+        log_info(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+            block_index(local_adress, fs), bitarray_test_bit(fs->bitmap, block_index(local_adress, fs))
+        );
         bitarray_clean_bit(fs->bitmap, block_index(local_adress, fs));
-        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+        log_info(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
             block_index(local_adress, fs), bitarray_test_bit(fs->bitmap, block_index(local_adress, fs))
         );
         blocks_reserved --;
         blocks_required --;
+        file_size_update(fs, fcb, blocks_reserved, target_size);
     }
     if (blocks_reserved == 2 && blocks_required > 0) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_reserved - 2);
-        bitarray_clean_bit(fs->bitmap, block_index(local_adress, fs));
-        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+        log_info(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
             block_index(local_adress, fs), bitarray_test_bit(fs->bitmap, block_index(local_adress, fs))
         );
+        bitarray_clean_bit(fs->bitmap, block_index(local_adress, fs));
+        log_info(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+            block_index(local_adress, fs), bitarray_test_bit(fs->bitmap, block_index(local_adress, fs))
+        );
+        log_info(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+            block_index(fcb->iptr, fs), bitarray_test_bit(fs->bitmap, block_index(fcb->iptr, fs))
+        );
         bitarray_clean_bit(fs->bitmap, block_index(fcb->iptr, fs));
-        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+        log_info(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
             block_index(fcb->iptr, fs), bitarray_test_bit(fs->bitmap, block_index(fcb->iptr, fs))
         );
         fcb->iptr = 0;
         blocks_reserved --;
         blocks_required --;
+        file_size_update(fs, fcb, blocks_reserved, target_size);
     }
     if (blocks_reserved == 1 && blocks_required > 0) {
+        log_info(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+            block_index(fcb->dptr, fs), bitarray_test_bit(fs->bitmap, block_index(fcb->dptr, fs))
+        );
         bitarray_clean_bit(fs->bitmap, block_index(fcb->dptr, fs));
-        log_trace(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
+        log_info(fs->log, "Acceso a Bitmap - Bloque: %d - Estado: %d", 
             block_index(fcb->dptr, fs), bitarray_test_bit(fs->bitmap, block_index(fcb->dptr, fs))
         );
         fcb->dptr = 0;
         blocks_reserved --;
         blocks_required --;
+        file_size_update(fs, fcb, blocks_reserved, target_size);
     }
-    fcb->file_size -= size;
+    log_info(fs->log, "[DEALLOC END] - Archivo: %s - File size: %d", fcb->file_name, fcb->file_size);
     return fcb_update(fcb);
 }
 
@@ -312,7 +351,7 @@ void superbloque_destroy(Superbloque *superbloque) {
 
 int f_open(char *file_name, FS *fs) {
     
-    log_trace(fs->log, "Abrir Archivo: %s", file_name);
+    log_info(fs->log, "Abrir Archivo: %s", file_name);
     
     char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
     if (access(file_path, F_OK) == -1) {
@@ -326,7 +365,7 @@ int f_open(char *file_name, FS *fs) {
 
 int f_create(char *file_name, FS *fs) {
     
-    log_trace(fs->log, "Crear Archivo: %s", file_name);
+    log_info(fs->log, "Crear Archivo: %s", file_name);
     
     char *file_path = string_from_format("%s%c%s", fs->config->PATH_FCB, '/', file_name);
     if (access(file_path, F_OK) == 0) {
@@ -343,7 +382,7 @@ int f_create(char *file_name, FS *fs) {
 
 int f_truncate(char *file_name, int size, FS *fs) {
     
-    log_trace(fs->log, "Truncar Archivo: %s - size: %d", file_name, size);
+    log_info(fs->log, "Truncar Archivo: %s - size: %d", file_name, size);
     
     FCB *fcb;
     if (fcb_create_from_file(file_name, fs, &fcb) == -1) {
@@ -384,7 +423,7 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
     while (blocks_offset > 0 && blocks_read < blocks_required) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_offset - 1);
         sleep(fs->config->RETARDO_ACCESO_BLOQUE/1000);
-        log_trace(fs->log, 
+        log_info(fs->log, 
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_offset + blocks_read, block_index(local_adress, fs)
         );
@@ -399,7 +438,7 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
     if (blocks_offset == 0 && blocks_read < blocks_required) {
         uint32_t local_adress = fcb->dptr;
         sleep(fs->config->RETARDO_ACCESO_BLOQUE/1000);
-        log_trace(fs->log, 
+        log_info(fs->log, 
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_offset + blocks_read, block_index(local_adress, fs)
         );
@@ -414,7 +453,7 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
     while (blocks_offset == 0 && blocks_read < blocks_required) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_read - 1);
         sleep(fs->config->RETARDO_ACCESO_BLOQUE/1000);
-        log_trace(fs->log, 
+        log_info(fs->log, 
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_offset + blocks_read, block_index(local_adress, fs)
         );
@@ -449,7 +488,7 @@ int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs
     while (blocks_offset > 0 && blocks_written < blocks_required) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_offset - 1);
         sleep(fs->config->RETARDO_ACCESO_BLOQUE/1000);
-        log_trace(fs->log, 
+        log_info(fs->log, 
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_offset + blocks_written, block_index(local_adress, fs)
         );
@@ -460,7 +499,7 @@ int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs
     if (blocks_offset == 0 && blocks_written < blocks_required) {
         uint32_t local_adress = fcb->dptr;
         sleep(fs->config->RETARDO_ACCESO_BLOQUE/1000);
-        log_trace(fs->log, 
+        log_info(fs->log, 
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_offset + blocks_written, block_index(local_adress, fs)
         );
@@ -470,7 +509,7 @@ int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs
     while (blocks_offset == 0 && blocks_written < blocks_required) {
         uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_written - 1);
         sleep(fs->config->RETARDO_ACCESO_BLOQUE/1000);
-        log_trace(fs->log, 
+        log_info(fs->log, 
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_offset + blocks_written, block_index(local_adress, fs)
         );
