@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
    //list_destroy(lista_instrucciones);        //Este list_destroy tira error: corrupted size vs. prev_size Aborted (core dumped)
     eliminar_paquete(paquete_instrucciones);
     
-    log_info(logger_consola, "Instrucciones enviadas correctamente");
+    log_trace(logger_consola, "Instrucciones enviadas correctamente");
     
     
     switch(recibir_operacion(socketKernel))

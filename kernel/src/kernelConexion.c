@@ -71,7 +71,7 @@ void escuchar_consola(int socketConsola)
 			pid_global++;
 			pcb* nuevo_pcb = crear_pcb(lista_instrucciones, pid_global, configuracionKernel.ESTIMACION_INICIAL/1000);
 			
-			log_info(logger_kernel_util_extra, "Se crea el proceso < %d > en NEW", pid_global);
+			log_trace(logger_kernel_util_obligatorio, "Se crea el proceso < %d > en NEW", pid_global);
 			
 			agregar_socket_a_diccionario(nuevo_pcb->pid, socketConsola);
 			leer_diccionario_consolas();
@@ -80,8 +80,7 @@ void escuchar_consola(int socketConsola)
 
 			loguear_pcb(nuevo_pcb,logger_kernel_util_extra);
 			agregar_proceso_new(nuevo_pcb);
-			
-			//list_destroy(lista_instrucciones);
+
 			list_destroy_and_destroy_elements(lista_de_consola, free);
 
 			return;
@@ -137,7 +136,7 @@ int conectar_con_cpu(config_de_kernel configuracionKernel){
 		return EXIT_FAILURE;
 	}
 	
-	log_info(logger, "Conexion con la cpu realizada con exito!");
+	log_trace(logger, "Conexion con la cpu realizada con exito!");
     
 	log_destroy(logger);
 
@@ -158,14 +157,14 @@ int conectar_con_memoria(config_de_kernel configuracion_kernel){
 		return EXIT_FAILURE;
 	}
 	
-	log_info(logger, "Conexion con la Memoria realizada con exito!");
+	log_info(logger, "Conexion con el socket de memoria establecida");
 
-	log_info(logger, "Enviando un mensaje a la Memoria...");
+	log_trace(logger, "Realizando handshake con memoria");
     
 	t_paquete* conectar= crear_paquete();
 	conectar->codigo_operacion= KERNEL;
 	enviar_paquete(conectar, socketMemoria);
-    log_info(logger, "Mensaje enviado!");
+    log_trace(logger, "Conexion con memoria establecida con exito");
     
 	free(conectar->buffer);
 	free(conectar);
@@ -188,7 +187,7 @@ int conectar_con_filesystem(config_de_kernel configuracionKernel)
 		return EXIT_FAILURE;
 	}
 	
-	log_info(logger, "Conexion con el FileSystem realizada con exito!");
+	log_trace(logger, "Conexion con el FileSystem realizada con exito!");
     
 	log_destroy(logger);
 

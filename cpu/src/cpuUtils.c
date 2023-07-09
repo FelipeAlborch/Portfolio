@@ -6,7 +6,7 @@ void ejecutar_lista_instrucciones_del_pcb(pcb *pcb, int socketKernel, int socket
 {
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
 
-  log_info(logger, "Ejecutando instrucciones del PCB Nº %d", pcb->pid);
+  log_debug(logger, "Ejecutando instrucciones del Proceso Nº %d", pcb->pid);
 
   for (int i = pcb->program_counter; i < list_size(pcb->lista_de_instrucciones); i++)
   {
@@ -413,6 +413,12 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
   int cantDeBytes = cantidad_bytes_registro(instruccion->parametros[0]);
   t_list *listaPlana;
 
+  int DL = atoi(instruccion->parametros[1]);
+  int num_seg = obtener_num_segmento(DL);
+  int offset = obtener_desplazamiento_del_segmento(DL);
+  t_segmento* seg = list_get(pcb->tabla_de_segmentos, num_seg);
+  int dirfis = seg->base + offset;
+
   if(DF == -1)
   {
     haySegmentationFault = true;
@@ -420,18 +426,11 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
     enviar_contexto_ejecucion(pcb, socketKernel, SEG_FAULT);
     return;
   }
-
-  int DL = atoi(instruccion->parametros[1]);
-  int offset = obtener_desplazamiento_del_segmento(DL);
   
   agregar_a_paquete(paquete, &DF, sizeof(int));
   agregar_a_paquete(paquete, &cantDeBytes, sizeof(int));
   agregar_a_paquete(paquete, &offset, sizeof(int));
   agregar_a_paquete(paquete, &pcb->pid, sizeof(int));
-  /**
-   * TODO: Agregar para enviarle el offset a memoria
-   *  
-    */
 
   enviar_paquete(paquete, socketMemoria);
   
@@ -441,14 +440,11 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
   {
   case MOV_IN_SUCCES:
     listaPlana = _recibir_paquete(socketMemoria);
-    //void* contenidoMemoria = malloc(cantDeBytes);
-    //contenidoMemoria = list_get(listaPlana, 0);
-    char* lectura = list_get(listaPlana,0); //string_new(); //= malloc(cantDeBytes);
-    //memcpy(&lectura, contenidoMemoria, cantDeBytes);
-    
-    //printf("Leido: %s", lectura);
-    log_info(logger, "Valor obtenido de Memoria es [%s]", lectura);
-    //instruccion->parametros[1] = lectura;
+
+    char* lectura = list_get(listaPlana,0);
+
+    log_trace(logger, "PID: < %d > - Acción: < LEER > - Segmento: < %d > - Dirección Física: < %d > - Valor: < %s > - tamaño: < %d >", pcb->pid, num_seg, dirfis, lectura, cantDeBytes);
+  
 
     strcpy(instruccion->parametros[1], lectura);
     ejecutar_set(pcb, instruccion);
@@ -456,7 +452,7 @@ void ejecutar_mov_in(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria,
     break;
   
   default:
-    log_info(logger, "Ocurrio un error en la lectura de Memoria.. %d");
+    log_error(logger, "Ocurrio un error en la lectura de Memoria.. %d");
     break;
   }
 
@@ -469,6 +465,11 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
   Logger *logger = iniciar_logger_modulo(CPU_LOGGER);
   t_paquete *paquete = crear_paquete_operacion(MOV_OUT_INSTRUCTION);
   int DF = obtener_direccion_fisica(instruccion->parametros[0], pcb, cantidad_bytes_registro(instruccion->parametros[1]));
+  int DL = atoi(instruccion->parametros[0]);
+  int num_seg = obtener_num_segmento(DL);
+  int offset = obtener_desplazamiento_del_segmento(DL);
+  t_segmento* seg = list_get(pcb->tabla_de_segmentos, num_seg);
+  int dirfis = seg->base + offset;
 
   if(DF == -1)
   {
@@ -481,12 +482,11 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
   int cantidadDeBytes = cantidad_bytes_registro(instruccion->parametros[1]);
   char* valorACopiar = valor_del_registro_como_string(obtener_valor_registro(instruccion, pcb), cantidadDeBytes);
   //char* valorACopiar = string_duplicate(obtener_valor_registro(instruccion, pcb));
-  log_info(logger, "Los caracteres a copiar son: %s", valorACopiar);
+  //log_info(logger, "Los caracteres a copiar son: %s", valorACopiar);
+  //log_info(logger, "la cantidad de bytes a copiar son: %d", (int)(strlen(valorACopiar)));
 
-  log_info(logger, "la cantidad de bytes a copiar son: %d", (int)(strlen(valorACopiar)));
+  log_trace(logger, "PID: < %d > - Acción: < ESCRIBIR > - Segmento: < %d > - Dirección Física: < %d > - Valor: < %s > - tamaño: < %d >", pcb->pid, num_seg, dirfis, valorACopiar, cantidadDeBytes);
   
-  int DL = atoi(instruccion->parametros[0]);
-  int offset = obtener_desplazamiento_del_segmento(DL);
   agregar_a_paquete(paquete, &DF, sizeof(int));
 
   agregar_a_paquete(paquete, valorACopiar, strlen(valorACopiar)+1);
@@ -494,16 +494,13 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
   agregar_a_paquete(paquete, &cantidadDeBytes, sizeof(int));
   agregar_a_paquete(paquete, &offset, sizeof(int));
   agregar_a_paquete(paquete, &pcb->pid, sizeof(int));
-    /**
-   * TODO: Agregar para enviarle el offset a memoria
-   *  
-    */
+
   enviar_paquete(paquete, socketMemoria);
 
   int rta_memo;
   recv(socketMemoria, &rta_memo, sizeof(int), MSG_WAITALL);
 
-  log_warning(logger, "ME llego: %d", rta_memo);
+  log_debug(logger, "Recibida respuesta de memoria: %d", rta_memo);
 
   eliminar_paquete(paquete);
   free(valorACopiar);
@@ -555,7 +552,7 @@ void ejecutar_yield(pcb *pcb, int socketKernel)
 
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, YIELD);
-  log_info(logger, "Contexto de ejecucion enviado!");
+  log_debug(logger, "Contexto de ejecucion enviado!");
 
   log_destroy(logger);
 }
@@ -566,7 +563,7 @@ void ejecutar_exit(pcb *pcb, int socketKernel)
 
   log_info(logger, "Enviando el contexto de ejecucion del proceso [%d] a Kernel...", pcb->pid);
   enviar_contexto_ejecucion(pcb, socketKernel, EXIT); // Consultar con Facu
-  log_info(logger, "Contexto de ejecucion enviado!");
+  log_debug(logger, "Contexto de ejecucion enviado!");
 
   log_destroy(logger);
 }
@@ -590,11 +587,9 @@ void estado_de_los_registros(pcb *unPcb)
   char* RCX = valor_del_registro_como_string(unPcb->RCX,16);
   char* RDX = valor_del_registro_como_string(unPcb->RDX,16);
 
-  log_info(logger, "AX: %s | BX: %s | CX: %s | DX: %s", AX, BX, CX, DX);
-
-  log_info(logger, "EAX: %s | EBX: %s | ECX: %s | EDX: %s", EAX, EBX, ECX, EDX);
-
-  log_info(logger, "RAX: %s | RBX: %s | RCX: %s | RDX: %s", RAX, RBX, RCX, RDX);
+  log_debug(logger, "AX: %s | BX: %s | CX: %s | DX: %s", AX, BX, CX, DX);
+  log_debug(logger, "EAX: %s | EBX: %s | ECX: %s | EDX: %s", EAX, EBX, ECX, EDX);
+  log_debug(logger, "RAX: %s | RBX: %s | RCX: %s | RDX: %s", RAX, RBX, RCX, RDX);
 
   free(AX);
   free(BX);
@@ -620,20 +615,20 @@ void logear_instruccion(int pid, LineaInstruccion *instruccion)
   
   if(!strcmp(instruccion->parametros[0], "-1"))
   {
-    log_info(logger, "< PID: %d | Nombre instruccion: %s >", pid, instruccion->identificador);
+    log_trace(logger, "< PID: %d | Nombre instruccion: %s >", pid, instruccion->identificador);
   }
   else if(!strcmp(instruccion->parametros[1], "-1"))
   {
-    log_info(logger, "< PID: %d | Nombre instruccion: %s | Parametros: %s >", pid, instruccion->identificador, instruccion->parametros[0]);
+    log_trace(logger, "< PID: %d | Nombre instruccion: %s | Parametros: %s >", pid, instruccion->identificador, instruccion->parametros[0]);
   }
   else if(!strcmp(instruccion->parametros[2], "-1"))
   {
-    log_info(logger, "< PID: %d | Nombre instruccion: %s | Parametros: %s, %s >",
+    log_trace(logger, "< PID: %d | Nombre instruccion: %s | Parametros: %s, %s >",
     pid, instruccion->identificador, instruccion->parametros[0], instruccion->parametros[1]);
   }
   else
   {
-    log_info(logger, "< PID: %d | Nombre instruccion: %s | Parametros: %s, %s, %s >",
+    log_trace(logger, "< PID: %d | Nombre instruccion: %s | Parametros: %s, %s, %s >",
      pid, instruccion->identificador, instruccion->parametros[0], instruccion->parametros[1], instruccion->parametros[2]);
   }
   

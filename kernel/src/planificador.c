@@ -108,11 +108,11 @@ void* planificador_largo_plazo() {
         sem_wait(&activar_largo_plazo);
         sem_wait(&grado_multiprogramacion);
 
-        log_info(logger_planificador_extra, "El grado de multiprogramacion permite agregar un proceso a ready");
+        log_trace(logger_planificador_extra, "El grado de multiprogramacion permite agregar un proceso a ready");
 
         pcb* proceso = obtener_proceso_new();
 
-        log_info(logger_planificador_extra, "Esperando tabla de segmentos para el nuevo proceso");
+        log_debug(logger_planificador_extra, "Esperando tabla de segmentos para el nuevo proceso");
         esperar_tabla_segmentos(proceso);
 
         leer_segmentos(proceso);
@@ -164,7 +164,7 @@ void* planificador_corto_plazo_hrrn()
 void ejecutar(pcb* proceso_a_ejecutar)
 {
     enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
-    log_info(logger_planificador_extra, "Se envia el proceso: < %d > al CPU.", proceso_a_ejecutar->pid);
+    log_debug(logger_planificador_extra, "Se envia el proceso: < %d > al CPU.", proceso_a_ejecutar->pid);
 
     pcb* contexto_recibido;
     t_list* lista_recepcion_valores;
@@ -211,7 +211,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             proceso_en_ejecucion = desalojar_proceso_en_exec();
             proceso_en_ejecucion->estado = BLOCKED;
             
-            log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < IO >" , proceso_en_ejecucion->pid);
+            log_trace(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < IO >" , proceso_en_ejecucion->pid);
 
             if(!es_fifo)
             {
@@ -244,7 +244,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
             loguear_pcb(proceso_en_ejecucion,logger_planificador_extra);
-            log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < SUCCESS >", proceso_en_ejecucion->pid);
+            log_trace(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < SUCCESS >", proceso_en_ejecucion->pid);
 
             //agregar_proceso_terminated(proceso_en_ejecucion);
             terminar_proceso(proceso_en_ejecucion);
@@ -279,7 +279,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 log_warning(logger_planificador_extra, "El recurso NO EXISTE. Terminando proceso");
                 proceso_en_ejecucion = desalojar_proceso_en_exec();
                 
-                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO EXISTE RECURSO >", proceso_en_ejecucion->pid);
+                log_error(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO EXISTE RECURSO >", proceso_en_ejecucion->pid);
                 
                 terminar_proceso(proceso_en_ejecucion);
 
@@ -288,16 +288,13 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 liberar_contexto_ejecucion(contexto_de_wait);
                 list_destroy_and_destroy_elements(lista_recepcion_valores,free);
                 list_destroy_and_destroy_elements(lista_contexto_wait,free);
-                //list_destroy(lista_recepcion_valores);
-                //list_destroy(lista_contexto_wait);
+
                 return;
             }
 
             liberar_contexto_ejecucion(contexto_de_wait);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
             list_destroy_and_destroy_elements(lista_contexto_wait,free);
-            //list_destroy(lista_recepcion_valores);
-            //list_destroy(lista_contexto_wait);
             
             if(proceso_bloqueado_por_recurso)
             {
@@ -306,6 +303,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
+            log_debug(logger_kernel_util_extra, "Se reenvia el contexto al cpu");
             
             goto recibirOperacion;
         
@@ -333,7 +331,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 log_warning(logger_planificador_extra, "El recurso NO EXISTE. Terminando proceso");
                 proceso_en_ejecucion = desalojar_proceso_en_exec();
                 
-                log_info(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO EXISTE RECURSO >", proceso_en_ejecucion->pid);
+                log_error(logger_planificador_obligatorio, "Finaliza el proceso < %d > - Motivo: < NO EXISTE RECURSO >", proceso_en_ejecucion->pid);
                 
                 terminar_proceso(proceso_en_ejecucion);
                 
@@ -342,8 +340,6 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 liberar_contexto_ejecucion(contexto_de_signal);
                 list_destroy_and_destroy_elements(lista_recepcion_valores,free);
                 list_destroy_and_destroy_elements(lista_contexto_signal,free);
-                //list_destroy(lista_recepcion_valores);
-                //list_destroy(lista_contexto_signal);
                 
                 return;
             }
@@ -351,10 +347,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
             liberar_contexto_ejecucion(contexto_de_signal);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
             list_destroy_and_destroy_elements(lista_contexto_signal,free);
-            //list_destroy(lista_recepcion_valores);
-            //list_destroy(lista_contexto_signal);
+
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
-            
+            log_debug(logger_kernel_util_extra, "Se reenvia el contexto al cpu");
             goto recibirOperacion;
 
         break;
@@ -382,7 +377,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             //recv(socketMemoria, &rta_crecion_memoria, sizeof(int), MSG_WAITALL);
             
             int rta_crecion_memoria = recibir_operacion(socketMemoria);
-            log_error(logger_kernel_util_extra, "lo recibido feu: %d", rta_crecion_memoria);
+            //log_error(logger_kernel_util_extra, "lo recibido feu: %d", rta_crecion_memoria);
             switch(rta_crecion_memoria)
             {
                 case CREATE_SEGMENT:
@@ -394,7 +389,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                     segmento_a_actualizar->base = base;
                     segmento_a_actualizar->size = tam_segmento;
 
-                    printf("El segmento: %d quedo con la base en: %d\n", nro_segmento_crear, segmento_a_actualizar->base);
+                    log_debug(logger_kernel_util_extra,"El segmento: %d quedo con la base en: %d\n", nro_segmento_crear, segmento_a_actualizar->base);
 
                     leer_segmentos(proceso_a_ejecutar);
 
@@ -403,7 +398,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 case OUT_OF_MEMORY:
                     log_error(logger_planificador_extra, "CREATE_SEGMENT ERROR OUT_OF_MEMORY");
-                    log_info(logger_kernel_util_obligatorio, "Finaliza el proceso < %d > - Motivo: < OUT_OF_MEMORY >", proceso_a_ejecutar->pid);
+                    log_error(logger_kernel_util_obligatorio, "Finaliza el proceso < %d > - Motivo: < OUT_OF_MEMORY >", proceso_a_ejecutar->pid);
                     proceso_en_ejecucion = desalojar_proceso_en_exec();
                     terminar_proceso(proceso_en_ejecucion);
                     
@@ -418,7 +413,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                     pthread_mutex_lock(&operacion_fs_memoria);
                     
                     enviar_operacion(socketMemoria, INICIO_COMPACTAR);
-                    log_info(logger_planificador_extra, "Compactacion: ");
+                    log_debug(logger_planificador_extra, "No hay/termino operacion entre FileSystem y Memoria");
                     log_info(logger_kernel_util_obligatorio, "< Se solicitó compactación >");
                     
                     actualizar_tablas_segmentos();
@@ -430,7 +425,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 break;
 
                 default:
-                    log_warning(logger_kernel_util_extra, "Operacion de memoria al crear segmento desconocida");
+                    log_error(logger_kernel_util_extra, "Operacion de memoria al crear segmento desconocida");
                 break;
             }
 
@@ -439,6 +434,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             liberar_contexto_ejecucion(contexto_cs);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
+            log_debug(logger_kernel_util_extra, "Se reenvia el contexto al cpu");
             
             goto recibirOperacion;
 
@@ -454,13 +450,13 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_ds);
 
-            log_info(logger_kernel_util_obligatorio, "PID: < %d > - Eliminar Segmento - Id: < %d >", proceso_a_ejecutar->pid, nro_segmento_eliminar);
+            log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Eliminar Segmento - Id: < %d >", proceso_a_ejecutar->pid, nro_segmento_eliminar);
 
             //log_warning(logger_kernel_util_extra, "DELETE_SEGMENT TODAVIA NO IMPLMENETADO");
 
             solicitar_eliminacion_segmento(nro_segmento_eliminar, proceso_a_ejecutar->pid);
             
-            log_info(logger_kernel_util_extra, "ESPERANDO TABLA ACTUALIZADA");
+            log_debug(logger_kernel_util_extra, "ESPERANDO TABLA ACTUALIZADA");
 
             int rta_eliminacion_memoria = recibir_operacion(socketMemoria);
 
@@ -473,13 +469,13 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
             leer_segmentos(proceso_a_ejecutar);
             
-            //list_destroy_and_destroy_elements(tabla_tras_eliminacion, free);
             list_destroy_and_destroy_elements(valores_tras_eliminacion,free);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
             list_destroy_and_destroy_elements(lista_contexto_ds, free);
             liberar_contexto_ejecucion(contexto_ds);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
+            log_debug(logger_kernel_util_extra, "Se reenvia el contexto al cpu");
 
             goto recibirOperacion;
 
@@ -515,8 +511,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 
                 t_respuesta_fs* res_1 = recibir_respuesta_de_fs(socketFS);
 
-                log_info(logger_planificador_extra, "Respuesta (1/2) de FS: %s (%d)", res_1->nombre_archivo, res_1->error);
-                log_info(logger_planificador_extra, "tamanio - buffer_size: %d (%d)", res_1->tamanio, res_1->buffer_size);
+                log_debug(logger_planificador_extra, "Respuesta (1/2) de FS: %s (%d)", res_1->nombre_archivo, res_1->error);
+                log_debug(logger_planificador_extra, "tamanio - buffer_size: %d (%d)", res_1->tamanio, res_1->buffer_size);
 
                 pthread_mutex_unlock(&mutex_fs);
 
@@ -531,8 +527,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                     t_respuesta_fs *res_2 = recibir_respuesta_de_fs(socketFS);
 
-                    log_info(logger_planificador_extra, "Respuesta (2/2) de FS: %s (%d)", res_2->nombre_archivo, res_2->error);
-                    log_info(logger_planificador_extra, "tamanio - buffer_size: %d (%d)", res_2->tamanio, res_2->buffer_size);
+                    log_debug(logger_planificador_extra, "Respuesta (2/2) de FS: %s (%d)", res_2->nombre_archivo, res_2->error);
+                    log_debug(logger_planificador_extra, "tamanio - buffer_size: %d (%d)", res_2->tamanio, res_2->buffer_size);
 
                     pthread_mutex_unlock(&mutex_fs);
                 }
@@ -555,6 +551,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             }
             
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
+            log_debug(logger_kernel_util_extra, "Se reenvia el contexto al cpu");
             
             goto recibirOperacion;
 
@@ -583,17 +580,17 @@ void ejecutar(pcb* proceso_a_ejecutar)
             {
                 // REMOVER DE LA TABLA DE ARCHIVOS ABIERTOS
                 archivo = dictionary_remove(tabla_global_archivos_abiertos, nombre_recurso);
+                log_debug(logger_kernel_util_extra, "Se remueve la entrada < %s > de la tabla global de archivos abiertos", archivo->nombre);
                 liberar_recurso(archivo);
             }
 
             liberar_contexto_ejecucion(contexto_de_fclose);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
             list_destroy_and_destroy_elements(lista_contexto_fclose,free);
-            //list_destroy(lista_recepcion_valores);
-            //list_destroy(lista_contexto_fclose);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
-            
+            log_debug(logger_kernel_util_extra, "Se reenvia el contexto al cpu");
+
             goto recibirOperacion;
 
         break;
@@ -620,10 +617,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
             liberar_contexto_ejecucion(contexto_de_fseek);
             list_destroy_and_destroy_elements(lista_recepcion_valores, free);
             list_destroy_and_destroy_elements(lista_contexto_fseek, free);
-            //list_destroy(lista_recepcion_valores);
-            //list_destroy(lista_contexto_fseek);
 
             enviar_contexto_ejecucion(proceso_a_ejecutar, socketCPU, CONTEXTO_EJECUCION);
+            log_debug(logger_kernel_util_extra, "Se reenvia el contexto al cpu");
             
             goto recibirOperacion;
 
@@ -653,7 +649,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
 
-                log_info(logger_kernel_util_obligatorio, "PID: < %d > - Leer Archivo: < %s > - Puntero < %d > - Dirección Memoria < %d > - Tamaño < %d >", proceso_a_ejecutar->pid, nombre_recurso, archivo->posicion, direccion_fisica, tamanio);
+                log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Leer Archivo: < %s > - Puntero < %d > - Dirección Memoria < %d > - Tamaño < %d >", proceso_a_ejecutar->pid, nombre_recurso, archivo->posicion, direccion_fisica, tamanio);
 
                 t_paquete* paquete_fread = crear_paquete_operacion(LEER_ARCHIVO);
                 
@@ -703,7 +699,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
 
-                log_info(logger_kernel_util_obligatorio, "PID: < %d > - Escribir Archivo: < %s > - Puntero < %d > - Dirección Memoria < %d > - Tamaño < %d >", proceso_a_ejecutar->pid, nombre_recurso, archivo->posicion, direccion_fisica, tamanio);
+                log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Escribir Archivo: < %s > - Puntero < %d > - Dirección Memoria < %d > - Tamaño < %d >", proceso_a_ejecutar->pid, nombre_recurso, archivo->posicion, direccion_fisica, tamanio);
 
                 t_paquete* paquete_fwrite = crear_paquete_operacion(ESCRIBIR_ARCHIVO);
 
@@ -741,7 +737,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 log_info(logger_planificador_extra, "Contexto recibido por F_TRUNCATE");
                 
-                log_info(logger_kernel_util_obligatorio, "PID: < %d > - Archivo: < %s > - Tamaño: < %d >", proceso_a_ejecutar->pid, nombre_recurso, tamanio);
+                log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Archivo: < %s > - Tamaño: < %d >", proceso_a_ejecutar->pid, nombre_recurso, tamanio);
 
                 actualizar_contexto_ejecucion(proceso_a_ejecutar, contexto_de_ftruncate);
 
@@ -769,7 +765,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 log_warning(logger_planificador_extra, "Contexto del proceso: < %d > recibido por SEG_FAULT.", proceso_a_ejecutar->pid);
                 proceso_en_ejecucion = desalojar_proceso_en_exec();
 
-                log_warning(logger_planificador_extra, "Terminando proceso: < %d > por  SEG_FAULT.", proceso_a_ejecutar->pid);
+                log_error(logger_planificador_obligatorio, "Terminando proceso: < %d > por  SEG_FAULT.", proceso_a_ejecutar->pid);
 
                 actualizar_contexto_ejecucion(proceso_en_ejecucion, contexto_recibido);
                 //loguear_pcb(proceso_en_ejecucion, logger_planificador_extra);

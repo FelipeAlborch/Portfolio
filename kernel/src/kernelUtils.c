@@ -66,13 +66,13 @@ void liberar_recursos(pcb* un_pcb)
         int i = 0;
         t_recurso* un_rec = list_remove(un_pcb->recursos_asignados, i);
         un_rec->instancias++;
-        log_info(logger_kernel_util_extra, "Se libera instancia del recurso: %s. Instancias: %d", un_rec->nombre, un_rec->instancias);
+        log_debug(logger_kernel_util_extra, "Se libera instancia del recurso: %s. Instancias: %d", un_rec->nombre, un_rec->instancias);
         
         if(!queue_is_empty(un_rec->cola_bloqueados))
         {
             pthread_mutex_lock(&(un_rec->mutex_cola));
             pcb* pcb_liberado = queue_pop(un_rec->cola_bloqueados);
-            log_info(logger_kernel_util_obligatorio, "PID: < %d > - Desbloqueado por: < %s >", pcb_liberado->pid, un_rec->nombre);
+            log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Desbloqueado por: < %s >", pcb_liberado->pid, un_rec->nombre);
 
             pthread_mutex_unlock(&(un_rec->mutex_cola));
             agregar_proceso_ready(pcb_liberado);
@@ -183,7 +183,7 @@ void actualizar_tablas_segmentos()
                 lista_de_valores = _recibir_paquete(socketMemoria);
 
                 pid = *(int*) list_get(lista_de_valores, 0);
-                log_info(logger_kernel_util_extra, "Nueva tabla post compactacion del proceso %d recibida", pid);
+                log_debug(logger_kernel_util_extra, "Nueva tabla post compactacion del proceso %d recibida", pid);
                 cantidad_de_segmentos = *(int*) list_get(lista_de_valores, 1);
 
                 t_list* tabla_de_segmentos_actualizada = list_create();
@@ -217,7 +217,7 @@ void actualizar_tablas_segmentos()
             break;
 
             case FIN_COMPACTAR:
-                log_info(logger_kernel_util_obligatorio, "Finalizo el proceso de compactacion");
+                log_warning(logger_kernel_util_obligatorio, "Finalizo el proceso de compactacion");
                 return;
             break;
         }
@@ -290,9 +290,9 @@ void serializar_tablas_de_segmentos(t_paquete *paquete)
 
 void* esperar_io(pcb* un_pcb)
 {
-    log_info(logger_planificador_obligatorio, "PID: < %d > Ejecuta IO < %d >.", un_pcb->pid, un_pcb->tiempo_io);
+    log_trace(logger_planificador_obligatorio, "PID: < %d > Ejecuta IO < %d >.", un_pcb->pid, un_pcb->tiempo_io);
     sleep(un_pcb->tiempo_io);
-    log_info(logger_planificador_extra, "Tiempo de io del proceso < %d > esperado correctamente", un_pcb->pid);
+    log_debug(logger_planificador_extra, "Tiempo de io del proceso < %d > esperado correctamente", un_pcb->pid);
     agregar_proceso_ready(un_pcb);
 }
 
@@ -346,7 +346,7 @@ void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictiona
     } 
 
     recurso->instancias--;
-    log_info(logger_kernel_util_obligatorio, "PID: < %d > - %s: < %s > - Instancias < %d >", un_pcb->pid, operacion, recurso->nombre, recurso->instancias);
+    log_trace(logger_kernel_util_obligatorio, "PID: < %d > - %s: < %s > - Instancias < %d >", un_pcb->pid, operacion, recurso->nombre, recurso->instancias);
 
     if (strcmp(operacion, "F_OPEN") == 0)
         list_add(un_pcb->tabla_archivos_abiertos, recurso);
@@ -371,7 +371,7 @@ void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictiona
 
         pthread_mutex_unlock(&(recurso->mutex_cola));
 
-        log_info(logger_kernel_util_obligatorio, "PID: < %d > - Bloqueado por: < %s >", proceso_en_ejecucion->pid, recurso->nombre);
+        log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Bloqueado por: < %s >", proceso_en_ejecucion->pid, recurso->nombre);
         
     }
 
@@ -398,7 +398,7 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
     } 
 
     recurso->instancias++;
-    log_info(logger_kernel_util_obligatorio, "PID: < %d > - %s: < %s > - Instancias < %d >", un_pcb->pid, operacion, recurso->nombre, recurso->instancias);
+    log_trace(logger_kernel_util_obligatorio, "PID: < %d > - %s: < %s > - Instancias < %d >", un_pcb->pid, operacion, recurso->nombre, recurso->instancias);
 
 
     if (strcmp(operacion, "F_CLOSE") == 0)
@@ -412,7 +412,7 @@ void signal_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictio
         pthread_mutex_lock(&(recurso->mutex_cola));
 
         pcb* proceso_bloqueado = queue_pop(recurso->cola_bloqueados);
-        log_info(logger_kernel_util_obligatorio, "PID: < %d > - Desbloqueado por: < %s >", proceso_bloqueado->pid, recurso->nombre);
+        log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Desbloqueado por: < %s >", proceso_bloqueado->pid, recurso->nombre);
         recurso->posicion = 0;
 
         pthread_mutex_unlock(&(recurso->mutex_cola));
@@ -433,7 +433,7 @@ void fseek_archivo(pcb* un_pcb, char* un_recurso, int posicion) {
     }
 
     archivo->posicion = posicion;
-    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Actualizar puntero Archivo: < %s > - Puntero < %d >", un_pcb->pid, archivo->nombre, archivo->posicion);
+    log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Actualizar puntero Archivo: < %s > - Puntero < %d >", un_pcb->pid, archivo->nombre, archivo->posicion);
 }
 
 void esperar_listo_de_fs(char* nombre_recurso)
@@ -446,7 +446,7 @@ void esperar_listo_de_fs(char* nombre_recurso)
     }
     proceso_desalojado->estado = BLOCKED;
 
-    log_info(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_desalojado->pid, nombre_recurso);    
+    log_trace(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_desalojado->pid, nombre_recurso);    
 
     t_respuesta_fs* res = recibir_respuesta_de_fs(socketFS);
 

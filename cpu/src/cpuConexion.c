@@ -5,7 +5,7 @@ int socketMemoriaUtil;
 int conectar_con_memoria(config_de_cpu configuracionCPU){  
 
 	Logger* logger = iniciar_logger_modulo(CPU_LOGGER);
-	log_info(logger, "Conectando con memoria");
+	log_trace(logger, "Conectando con memoria");
 
 	int socketMemoria = crear_conexion(configuracionCPU.IP_MEMORIA, configuracionCPU.PUERTO_MEMORIA);
 
@@ -15,14 +15,13 @@ int conectar_con_memoria(config_de_cpu configuracionCPU){
 		return EXIT_FAILURE;
 	}
 
-	log_info(logger, "Conexion con Memoria realizada");
-  log_info(logger, "Enviando mensaje al servidor Memoria...");
+  log_info(logger, "Realizando handshake con Memoria");
 
 
   t_paquete* conectar= crear_paquete();
 	conectar->codigo_operacion= CPU;
 	enviar_paquete(conectar, socketMemoria);
-	log_info(logger, "Mensaje enviado correctamente!");
+	log_info(logger, "Conexion con Memoria realizada con exito");
 
  // eliminar_paquete(conectar);
 
@@ -38,7 +37,7 @@ void esperar_kernel_dispatch(int socketCpu)
 
   while (true)
   {
-    log_info(logger, "Esperando a Kernel que se conecte al puerto Dispatch...");
+    log_trace(logger, "Esperando a Kernel que se conecte al puerto Dispatch...");
     int socketKernel = esperar_cliente(socketCpu);
 
     if (socketKernel < 0)
@@ -48,7 +47,7 @@ void esperar_kernel_dispatch(int socketCpu)
       return;
     }
 
-    log_info(logger, "Conexión con Kernel en puerto Dispatch establecida.");
+    log_trace(logger, "Conexión con Kernel en puerto Dispatch establecida.");
 
     desconecto = manejar_paquete_kernel_dispatch(socketKernel);
 
@@ -83,7 +82,7 @@ bool manejar_paquete_kernel_dispatch(int socketKernel)
             t_list* lista_recepcion_valores = _recibir_paquete(socketKernel);
             //log_info(logger, "Paquete recibido correctamente");
             pcb *contexto_recibido = recibir_contexto_ejecucion(lista_recepcion_valores);
-            log_info(logger, "PCB recibido de Kernel.");
+            log_debug(logger, "Contexto de ejecucion recibido de Kernel.");
             //dump(contexto_recibido->lista_de_instrucciones);
             
             ejecutar_lista_instrucciones_del_pcb(contexto_recibido, socketKernel, socketMemoriaUtil);
