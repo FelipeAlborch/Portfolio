@@ -52,9 +52,10 @@ void remover_recurso_si_esta(t_list* lista,t_recurso* un_recurso)
     for(int i = 0; i < list_size(lista); i++)
     {
         t_recurso* un_rec = list_get(lista, i);
-        if(un_recurso->nombre == un_rec->nombre)
+        if(string_equals_ignore_case(un_rec->nombre, un_recurso->nombre))
         {
             list_remove(lista, i);
+            log_debug(logger_kernel_util_extra, "Recurso encontrado y removido lista/tabla: %s", un_recurso->nombre);
         }
     }
 }
