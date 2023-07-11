@@ -30,10 +30,10 @@ int main(int argc, char *argv[]) {
     t_list* lista_instrucciones = enlistar_instrucciones(archivo_pseudocodigo);
     leer_lista_de_instrucciones(lista_instrucciones);
 
-    //t_paquete* paquete_instrucciones = crear_paquete_operacion(LISTA_INSTRUCCIONES);
-    //empaquetar_instrucciones(paquete_instrucciones, lista_instrucciones);
+    t_paquete* paquete_instrucciones = crear_paquete_operacion(LISTA_INSTRUCCIONES);
+    empaquetar_instrucciones(paquete_instrucciones, lista_instrucciones);
 
-    //enviar_paquete(paquete_instrucciones, socketKernel);
+    enviar_paquete(paquete_instrucciones, socketKernel);
 
     //list_destroy_and_destroy_elements(lista_instrucciones, (void*) liberar_instruccion);
     for(int i = 0; i < list_size(lista_instrucciones); i++)
@@ -42,27 +42,27 @@ int main(int argc, char *argv[]) {
         liberar_instruccion(instr);
     }
    //list_destroy(lista_instrucciones);        //Este list_destroy tira error: corrupted size vs. prev_size Aborted (core dumped)
-    //eliminar_paquete(paquete_instrucciones);
+    eliminar_paquete(paquete_instrucciones);
     
     log_trace(logger_consola, "Instrucciones enviadas correctamente");
     
     
-    //switch(recibir_operacion(socketKernel))
-    //{
-    //    case EXIT:
-    //        log_info(logger_consola, "Voy a terminar! :D");
-    //        fclose(archivo_pseudocodigo);
-    //        log_destroy(logger_consola);
-    //        config_destroy(consola_config);
-    //        close(socketKernel);
-//
-    //        exit(1);
-    //    break;
-//
-    //    default:
-    //        log_warning(logger_consola, "Operacion desconocida, no fue exit");
-    //    break;
-    //}
+    switch(recibir_operacion(socketKernel))
+    {
+        case EXIT:
+            log_info(logger_consola, "Voy a terminar! :D");
+            fclose(archivo_pseudocodigo);
+            log_destroy(logger_consola);
+            config_destroy(consola_config);
+            close(socketKernel);
+
+            exit(1);
+        break;
+
+        default:
+            log_warning(logger_consola, "Operacion desconocida, no fue exit");
+        break;
+    }
 
     return 0;
 }
