@@ -218,7 +218,7 @@ void inicializar_parametros(char** parametros, int cantidad_valores)
 
 char** identificar_parametros(char* linea)
 {
-  int cantidad_valores = cantidad_de_valores(linea);
+  int cantidad_valores = cantidad_de_valores(linea); 
   char** parametros = string_n_split(linea, cantidad_valores, " ");
   inicializar_parametros(parametros, cantidad_valores);
 
@@ -233,7 +233,13 @@ LineaInstruccion* leer_instruccion(FILE* archivo)
   LineaInstruccion* instruccion_leida = malloc(sizeof(LineaInstruccion));
   
   crear_instruccion(instruccion_leida, parametros);
-    
+  
+  //int cantidad_valores = cantidad_de_valores(linea);
+  //for (int i = 0; i < cantidad_valores; i++) {
+  //  free(parametros[i]);
+  //}
+  //free(parametros);
+  
   free(linea);
 
   return instruccion_leida;
