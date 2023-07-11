@@ -23,6 +23,8 @@ int conectar_con_memoria(config_de_cpu configuracionCPU){
 	enviar_paquete(conectar, socketMemoria);
 	log_info(logger, "Conexion con Memoria realizada con exito");
 
+  free(conectar->buffer);
+  free(conectar);
  // eliminar_paquete(conectar);
 
 	log_destroy(logger);

@@ -265,6 +265,9 @@ void loggear(int code, int pid, void* algo, int id, int size, int base){
       case FIN_PROCESO:
         log_info(loggerMemoria,"Eliminación de Proceso PID: %d",pid);
         break;
+      case OUT_OF_MEMORY:
+        log_error(loggerMemoria,"Error: OUT_OF_MEMORY");
+        break;
       default:
         log_error(loggerMemoria,"Error en la operación, código de error: %d",code);
         break;
@@ -309,7 +312,7 @@ void imprimir_huecos(){
   pthread_mutex_lock(&m_huecos_libres);
     t_list_iterator* iterador = list_iterator_create(huecos_libres);
   pthread_mutex_unlock(&m_huecos_libres);
-  t_hueco_libre* hueco = malloc(sizeof(t_hueco_libre));
+  t_hueco_libre* hueco;// = malloc(sizeof(t_hueco_libre));
  // log_debug(klogger,"Listado de Huecos libres: %d\n",list_size(huecos_libres));
   while (list_iterator_has_next(iterador)) {
     hueco = list_iterator_next(iterador);
