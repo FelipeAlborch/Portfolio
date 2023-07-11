@@ -404,7 +404,7 @@ int size_to_read(int size, int blocks_read, FS *fs) {
 
 int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs) {
 
-    log_error(fs->log, "Leer Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, dir, size);
+    log_trace(fs->log, "Leer Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, dir, size);
 
     FCB *fcb;
     if (fcb_create_from_file(file_name, fs, &fcb) == -1) {
@@ -470,7 +470,7 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
 
 int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs) {
     
-    log_error(fs->log, "Escribir Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, dir, size);
+    log_trace(fs->log, "Escribir Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, dir, size);
     
     FCB *fcb;
     if (fcb_create_from_file(file_name, fs, &fcb) == -1) {
