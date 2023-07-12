@@ -332,7 +332,10 @@ void modificar_hueco(int index, int inicio, int tam, int estado){
     int indice = buscar_hueco_base(inicio);
    
     liberar_hueco(indice);
-    actualizar_memoria(tam,LIBRE);
+    if(inicio != 0){
+        actualizar_memoria(tam,LIBRE);
+    }
+    
 }
 
 void consolidar_hueco(int indice){

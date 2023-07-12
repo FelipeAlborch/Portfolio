@@ -138,12 +138,12 @@ void liberar_pcb(pcb* un_pcb)
     list_destroy_and_destroy_elements(un_pcb->tabla_archivos_abiertos, free);
     list_destroy_and_destroy_elements(un_pcb->recursos_asignados,free);
     
-    if(un_pcb->llegada_ready != NULL){
-        temporal_destroy(un_pcb->llegada_ready);
-    }
-    if(un_pcb->tiempo_ejecucion != NULL){
-        temporal_destroy(un_pcb->tiempo_ejecucion);
-    }
+    //if(un_pcb->llegada_ready != NULL){
+    //    temporal_destroy(un_pcb->llegada_ready);
+    //}
+    //if(un_pcb->tiempo_ejecucion != NULL){
+    //    temporal_destroy(un_pcb->tiempo_ejecucion);
+    //}
     //temporal_destroy(un_pcb->llegada_ready);      Estos temporals despues se destruyen
     //temporal_destroy(un_pcb->tiempo_ejecucion);
 

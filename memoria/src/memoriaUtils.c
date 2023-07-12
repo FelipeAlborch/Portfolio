@@ -280,6 +280,7 @@ void actualizar_memoria(int size, int estado){
     }else{
         config_memo.bytes_libres=config_memo.bytes_libres-size;
     }
+    printf("bytes libres: %d", config_memo.bytes_libres);
     pthread_mutex_unlock(&m_config);
 }
 void imprimir_tabla(t_list* lista){
