@@ -2,6 +2,65 @@
 #include <utils.h>
 #include <config.h>
 
+
+START_TEST(test_f_write)
+{
+    FILE *fp;
+    char *file_name = "test-file";
+    char *file_path = "drive/fcb/test-file";
+    char *path_config = "drive/test-fs.config";
+    char *path_bitmap = "drive/test-bitmap.dat";
+    char *path_bloques = "drive/test-bloques.dat";
+    char *path_superbloque = "drive/test-superbloque.dat";
+    int block_size = 20;
+    int block_count = 100;
+
+    fp = fopen(path_config, "w");
+    fprintf(fp, "IP_FSYSTEM=127.0.0.1\n");
+    fprintf(fp, "IP_MEMORIA=127.0.0.1\n");
+    fprintf(fp, "PUERTO_MEMORIA=8002\n");
+    fprintf(fp, "PUERTO_ESCUCHA=8003\n");
+    fprintf(fp, "PATH_SUPERBLOQUE=%s\n", path_superbloque);
+    fprintf(fp, "PATH_BITMAP=%s\n", path_bitmap);
+    fprintf(fp, "PATH_BLOQUES=%s\n", path_bloques);
+    fprintf(fp, "PATH_FCB=drive/fcb\n");
+    fprintf(fp, "RETARDO_ACCESO_BLOQUE=10\n");
+    fclose(fp);
+    
+    fp = fopen(path_superbloque, "w");
+    fprintf(fp, "BLOCK_SIZE=%d\n", block_size);
+    fprintf(fp, "BLOCK_COUNT=%d\n", block_count);
+    fclose(fp);
+
+    FCB *fcb;
+    int error;
+    FS *fs = fs_create(path_config);
+
+    error = fcb_create(file_name, fs, &fcb);
+    assert(error == 0);
+    error = fcb_realloc(48, fcb, fs);
+    assert(error == 0);
+
+    char* cadena = "1234567890abcdefghijklmnop1234567890a";
+
+    error = f_write(file_name, 0, string_length(cadena), 0, cadena, fs);
+    assert(error == 0);
+
+    // unallocate the memory
+    munmap(fs->bloques, block_size * block_count);
+    munmap(fs->bitmap->bitarray, block_count);
+
+    // delete created files
+    if (access(file_path, F_OK) != -1) remove(file_path);
+    if (access(path_config, F_OK) != -1) remove(path_config);
+    if (access(path_bitmap, F_OK) != -1) remove(path_bitmap);
+    if (access(path_bloques, F_OK) != -1) remove(path_bloques);
+    if (access(path_superbloque, F_OK) != -1) remove(path_superbloque);
+
+    ck_assert(true);
+}
+END_TEST
+
 START_TEST(test_files_and_memory)
 {
     FILE *fp;
@@ -258,6 +317,7 @@ Suite *utils_test_suite(void)
     tcase_add_test(tc, test_superbloque_config);
     tcase_add_test(tc, test_fs_config);
     tcase_add_test(tc, test_files_and_memory);
+    tcase_add_test(tc, test_f_write);
     // tcase_add_unchecked_fixture(tc, utils_unchecked_setup, utils_unchecked_teardown);
     suite_add_tcase(s, tc);
 

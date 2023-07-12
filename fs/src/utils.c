@@ -246,7 +246,7 @@ int fcb_alloc(int size, FCB *fcb, FS *fs) {
         int free_block = bitarray_next_free(fs);
         assert(free_block != -1);
         bitarray_set_bit(fs->bitmap, free_block);
-        uintptr_t iptr_offset_address = ptr_address(fcb->iptr, fs) + blocks_reserved - 1;
+        uintptr_t iptr_offset_address = ptr_address(fcb->iptr, fs) + (blocks_reserved - 1) * sizeof(int);
         uint32_t free_block_local_address = block_local_address(free_block, fs);
         *(uint32_t *)iptr_offset_address = free_block_local_address;
         blocks_reserved ++;
@@ -468,6 +468,13 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
     return 0;
 }
 
+int size_to_write(int size, int blocks_written, FS *fs) {
+    int bytes_to_write = size - blocks_written * fs->superbloque->BLOCK_SIZE;
+    return bytes_to_write < fs->superbloque->BLOCK_SIZE 
+        ? bytes_to_write
+        : fs->superbloque->BLOCK_SIZE;
+}
+
 int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs) {
     
     log_trace(fs->log, "Escribir Archivo: %s - Puntero: %d - Memoria: %d - Tamaño: %d", file_name, offset, dir, size);
@@ -492,7 +499,11 @@ int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_offset + blocks_written, block_index(local_adress, fs)
         );
-        memcpy((void *)ptr_address(local_adress, fs), buffer + blocks_written * fs->superbloque->BLOCK_SIZE, fs->superbloque->BLOCK_SIZE);
+        memcpy(
+            (void *)ptr_address(local_adress, fs),
+            buffer + blocks_written * fs->superbloque->BLOCK_SIZE,
+            size_to_write(size, blocks_written, fs)
+        );
         blocks_offset --;
         blocks_written ++;
     }
@@ -503,7 +514,11 @@ int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_offset + blocks_written, block_index(local_adress, fs)
         );
-        memcpy((void *)ptr_address(local_adress, fs), buffer + blocks_written * fs->superbloque->BLOCK_SIZE, fs->superbloque->BLOCK_SIZE);
+        memcpy(
+            (void *)ptr_address(local_adress, fs),
+            buffer + blocks_written * fs->superbloque->BLOCK_SIZE,
+            size_to_write(size, blocks_written, fs)
+        );
         blocks_written ++;
     }
     while (blocks_offset == 0 && blocks_written < blocks_required) {
@@ -513,8 +528,12 @@ int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
             fcb->file_name, blocks_offset + blocks_written, block_index(local_adress, fs)
         );
-        memcpy((void *)ptr_address(local_adress, fs), buffer + blocks_written * fs->superbloque->BLOCK_SIZE, fs->superbloque->BLOCK_SIZE);
-        blocks_written ++;
+        memcpy(
+            (void *)ptr_address(local_adress, fs),
+            buffer + blocks_written * fs->superbloque->BLOCK_SIZE,
+            size_to_write(size, blocks_written, fs)
+        );
+        blocks_written++;
     }
     fcb_destroy(fcb);
     return 0;
