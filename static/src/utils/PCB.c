@@ -26,7 +26,7 @@ pcb* crear_pcb(t_list* lista_de_instrucciones, int p_id, int estimado_rafaga)
     proceso->estimado_prox_rafaga = estimado_rafaga;
     proceso->tiempo_io = 0;
     proceso->lista_de_instrucciones = lista_de_instrucciones;
-    proceso->tabla_de_segmentos = list_create();
+    //proceso->tabla_de_segmentos = list_create();
     proceso->tabla_archivos_abiertos = list_create();
     proceso->recursos_asignados = list_create();
 

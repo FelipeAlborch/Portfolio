@@ -32,7 +32,7 @@ void ejecutar_kernel(){
 
     log_trace(mlogger, "Por ejecutar las tareas del kernel");
 
-    t_list* lista = list_create();
+    t_list* lista;// = list_create();
     int pid = -1;
     int run = 6;
     while (running_k) {

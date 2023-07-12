@@ -404,6 +404,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                     
                     list_destroy_and_destroy_elements(lista_contexto_cs,free);
                     liberar_contexto_ejecucion(contexto_cs);
+                    list_destroy_and_destroy_elements(lista_recepcion_valores, free);
                     return;
                 break;  
 
@@ -513,7 +514,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 log_debug(logger_planificador_extra, "Respuesta (1/2) de FS: %s (%d)", res_1->nombre_archivo, res_1->error);
                 log_debug(logger_planificador_extra, "tamanio - buffer_size: %d (%d)", res_1->tamanio, res_1->buffer_size);
-
+                
                 pthread_mutex_unlock(&mutex_fs);
 
                 if(res_1->error == ARCHIVO_NO_EXISTE) {
@@ -529,7 +530,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                     log_debug(logger_planificador_extra, "Respuesta (2/2) de FS: %s (%d)", res_2->nombre_archivo, res_2->error);
                     log_debug(logger_planificador_extra, "tamanio - buffer_size: %d (%d)", res_2->tamanio, res_2->buffer_size);
-
+                    free(res_2->nombre_archivo);
+                    free(res_2);
+                    eliminar_paquete(paquete_a_fs);
                     pthread_mutex_unlock(&mutex_fs);
                 }
                 
@@ -537,6 +540,8 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 archivo->posicion = 0;
 
                 dictionary_put(tabla_global_archivos_abiertos, nombre_recurso, archivo);
+                free(res_1->nombre_archivo);
+                free(res_1);
             }
 
             fopen_recurso(proceso_a_ejecutar, nombre_recurso);
@@ -666,10 +671,15 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 enviar_paquete(paquete_fread, socketFS);
                 eliminar_paquete(paquete_fread);
+                log_trace(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_a_ejecutar->pid, nombre_recurso);
 
                 pthread_t* hilo_fread;
                 pthread_create(&hilo_fread, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
                 pthread_detach(hilo_fread);
+
+                liberar_contexto_ejecucion(contexto_de_fread);
+                list_destroy_and_destroy_elements(lista_recepcion_valores, free);
+                list_destroy_and_destroy_elements(lista_contexto_fread, free);
 
                 return;
 
@@ -716,11 +726,15 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 enviar_paquete(paquete_fwrite, socketFS);
                 eliminar_paquete(paquete_fwrite);
+                log_trace(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_a_ejecutar->pid, nombre_recurso);
 
                 pthread_t* hilo_fwrite;
                 pthread_create(&hilo_fwrite, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
                 pthread_detach(hilo_fwrite);
 
+                liberar_contexto_ejecucion(contexto_de_fwrite);
+                list_destroy_and_destroy_elements(lista_recepcion_valores, free);
+                list_destroy_and_destroy_elements(lista_contexto_fwrite, free);
                 return;
 
             break;
@@ -752,10 +766,16 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 
                 enviar_paquete(paquete_ftruncate, socketFS);
                 eliminar_paquete(paquete_ftruncate);
+                log_trace(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_a_ejecutar->pid, nombre_recurso);    
+
 
                 pthread_t* hilo_ftruncate;
                 pthread_create(&hilo_ftruncate, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
                 pthread_detach(hilo_ftruncate);
+
+                liberar_contexto_ejecucion(contexto_de_ftruncate);
+                list_destroy_and_destroy_elements(lista_recepcion_valores, free);
+                list_destroy_and_destroy_elements(lista_contexto_truncate, free);
 
                 return;
 

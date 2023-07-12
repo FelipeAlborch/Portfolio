@@ -320,6 +320,8 @@ void abrir_o_cerrar_archivo(pcb *pcb, LineaInstruccion *instruccion, int socketK
   enviar_contexto_ejecucion(pcb, socketKernel, operacion);
   log_info(logger, "Solicitud enviada al Kernel!");
 
+  eliminar_paquete(paquete);
+
   log_destroy(logger);
 }
 
@@ -338,6 +340,8 @@ void ejecutar_f_seek(pcb *pcb, LineaInstruccion *instruccion, int socketKernel)
 
   log_info(logger, "Solicitud enviada al Kernel!");
 
+  eliminar_paquete(paquete);
+
   log_destroy(logger);
 }
 
@@ -355,6 +359,8 @@ void ejecutar_f_truncate(pcb *pcb, LineaInstruccion *instruccion, int socketKern
   enviar_contexto_ejecucion(pcb, socketKernel, F_TRUNCATE);
 
   log_info(logger, "Solicitud enviada al Kernel!");
+
+  eliminar_paquete(paquete);
 
   log_destroy(logger);
 }
@@ -476,6 +482,8 @@ void ejecutar_mov_out(pcb *pcb, LineaInstruccion *instruccion, int socketMemoria
     haySegmentationFault = true;
     log_warning(logger, "Termiando el proceso, hay SEGMENTATION FAULT...");
     enviar_contexto_ejecucion(pcb, socketKernel, SEG_FAULT);
+    log_destroy(logger);
+    eliminar_paquete(paquete);
     return;
   }
 

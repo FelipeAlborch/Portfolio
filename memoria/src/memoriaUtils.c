@@ -93,7 +93,7 @@ void liberar_conexion_memoria(){
 };
 void liberar_t_config(){
   //free(config_memo.algoritmo);
-  free(config_memo.ip);
+  //free(config_memo.ip);
   //free(config_memo.puerto);
   log_debug(mlogger,"config liberada");
 };

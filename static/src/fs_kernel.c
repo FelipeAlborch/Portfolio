@@ -174,5 +174,7 @@ t_respuesta_fs *recibir_respuesta_de_fs(int socket)
         offset += respuesta->buffer_size;
     }
 
+    eliminar_paquete(paquete);
+
     return respuesta;
 }

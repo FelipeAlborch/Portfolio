@@ -19,6 +19,7 @@ int obtener_direccion_fisica(char* direccionLogica, pcb *pcb, int cantBytes)
     
     if(segmento->size <= desplazamientoSegmento + cantBytes){
       log_error(logger, "PID: < %d > - Error SEG_FAULT - Segmento: < %d > - Offset: < %d > - Tamaño: < %d >", pcb->pid, numeroSegmento, desplazamientoSegmento, cantBytes);
+      log_destroy(logger);
       return -1;
     }
     //int DF = desplazamientoSegmento + segmento->base;

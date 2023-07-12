@@ -447,7 +447,7 @@ void esperar_listo_de_fs(char* nombre_recurso)
     }
     proceso_desalojado->estado = BLOCKED;
 
-    log_trace(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_desalojado->pid, nombre_recurso);    
+    //log_trace(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_desalojado->pid, nombre_recurso);    
 
     t_respuesta_fs* res = recibir_respuesta_de_fs(socketFS);
 
@@ -461,6 +461,8 @@ void esperar_listo_de_fs(char* nombre_recurso)
         pthread_mutex_unlock(&operacion_fs_memoria);
         comunicacion_fs_memoria = false;
     }
+    free(res->nombre_archivo);
+    free(res);
 
     agregar_proceso_ready(proceso_desalojado);
 }
