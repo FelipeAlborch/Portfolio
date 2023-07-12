@@ -11,10 +11,12 @@ void init_sockets(FS *fs);
 void init_threads(FS *fs);
 void teardown(FS *fs);
 void *kernel_handler(void *fs);
-
+FS *fs;
 int main(int argc, char **argv)
 {
-    FS *fs;
+    startSigHandlers();
+
+    //FS *fs;
 
     validate(argc, argv);
 
@@ -77,6 +79,7 @@ void *kernel_handler(void *arg)
 
             parametros_destroy(params);
             paquete_destroy(paquete);
+            free(respuesta);
             break;
         }
         case CREAR_ARCHIVO:
@@ -104,6 +107,7 @@ void *kernel_handler(void *arg)
 
             parametros_destroy(params);
             paquete_destroy(paquete);
+            free(respuesta);
             break;
         }
         case TRUNCAR_ARCHIVO:
@@ -131,6 +135,7 @@ void *kernel_handler(void *arg)
 
             parametros_destroy(params);
             paquete_destroy(paquete);
+            free(respuesta);
             break;
         }
         case LEER_ARCHIVO:
@@ -178,6 +183,8 @@ void *kernel_handler(void *arg)
 
             parametros_destroy(params);
             paquete_destroy(paquete);
+            free(respuesta);
+            free(bytes);
             break;
         }
         case ESCRIBIR_ARCHIVO:
@@ -235,6 +242,8 @@ void *kernel_handler(void *arg)
 
             parametros_destroy(params);
             paquete_destroy(paquete);
+            free(respuesta);
+            free(dato);
             break;
         }
         default:
@@ -279,6 +288,7 @@ void init_sockets(FS *fs)
     else
     {
         t_paquete *paquete = paquete_create(FILE_SYSTEM);
+        paquete->buffer = buffer_create(1);
         socket_send(fs->socket_memory, paquete);
         paquete_destroy(paquete);
 
@@ -316,4 +326,17 @@ void teardown(FS *fs)
     conn_close(fs->socket_memory);
 
     fs_destroy(fs);
+}
+
+void startSigHandlers(void) {
+	signal(SIGINT, sigHandler_sigint);
+}
+
+void sigHandler_sigint(int signo) {
+	log_warning(fs->log,"Tiraste un CTRL+C, macho, abortaste el proceso.");
+
+	teardown(fs);
+	printf("-------------------FINAL POR CTRL+C-------------------\n");
+
+	exit(-1);
 }

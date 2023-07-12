@@ -35,6 +35,7 @@ void config_print_fs(fs_config *config) {
 }
 
 void config_destroy_fs(fs_config *config) {
+    free(config->IP_FSYSTEM);
     free(config->IP_MEMORIA);
     free(config->PUERTO_MEMORIA);
     free(config->PUERTO_ESCUCHA);

@@ -179,6 +179,7 @@ int socket_recv(int socket_fd, t_paquete **paquete)
 int _socket_send(int socket_fd, void *buffer, int buffer_size)
 {
     int n = send(socket_fd, buffer, buffer_size, 0);
+    free(buffer);
     return n >= 0 ? 0 : -1;
 }
 
@@ -233,7 +234,6 @@ t_paquete *paquete_create(int codigo_operacion)
 {
     t_paquete *paquete = malloc(sizeof(t_paquete));
     paquete->codigo_operacion = codigo_operacion;
-    paquete->buffer = buffer_create(1);
     return paquete;
 }
 

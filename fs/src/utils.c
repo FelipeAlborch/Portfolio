@@ -1,7 +1,9 @@
 #include <utils.h>
 
 void print_cwd() {
-    printf("PWD = %s\n", getcwd(NULL, 0));
+    char* cwd = getcwd(NULL,0);
+    printf("PWD = %s\n", cwd);
+    free(cwd);
 }
 
 int data_byte_count(Superbloque *superbloque) {
@@ -23,17 +25,14 @@ FS *fs_create(char *config_path) {
     config_print_fs(fs->config);
 
     fs->superbloque = superbloque_create_from_file(fs->config->PATH_SUPERBLOQUE);
-    fs->bloques = malloc(data_byte_count(fs->superbloque));
 
     if (access(fs->config->PATH_BITMAP, F_OK) != -1) {
         int fd = open(fs->config->PATH_BITMAP, O_RDONLY);
-        char *content = malloc(bitmap_byte_count(fs->superbloque));
-        error = read(fd, content, bitmap_byte_count(fs->superbloque));
-        assert(error == bitmap_byte_count(fs->superbloque));
+        char *content;
         fs->bitmap = bitarray_create_with_mode(content, fs->superbloque->BLOCK_COUNT, MSB_FIRST);
         close(fd);
     } else {
-        char *zeroes = calloc(bitmap_byte_count(fs->superbloque), 8);
+        char *zeroes;// = calloc(bitmap_byte_count(fs->superbloque), 8);
         fs->bitmap = bitarray_create_with_mode(zeroes, bitmap_byte_count(fs->superbloque), MSB_FIRST);
     }
 
@@ -47,9 +46,10 @@ FS *fs_create(char *config_path) {
 }
 
 void fs_destroy(FS *fs) {
+    munmap(fs->bloques, data_byte_count(fs->superbloque));
+    munmap(fs->bitmap, fs->superbloque->BLOCK_COUNT);
     superbloque_destroy(fs->superbloque);
     bitarray_destroy(fs->bitmap);
-    free(fs->bloques);
     config_destroy_fs(fs->config);
     log_destroy(fs->log);
     free(fs);

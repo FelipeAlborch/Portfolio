@@ -222,4 +222,8 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
  */
 int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs);
 
+void startSigHandlers(void);
+
+void sigHandler_sigint(int signo);
+
 #endif
