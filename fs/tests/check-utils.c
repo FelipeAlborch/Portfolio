@@ -12,8 +12,8 @@ START_TEST(test_f_write)
     char *path_bitmap = "drive/test-bitmap.dat";
     char *path_bloques = "drive/test-bloques.dat";
     char *path_superbloque = "drive/test-superbloque.dat";
-    int block_size = 20;
-    int block_count = 100;
+    int block_size = 64;
+    int block_count = 1024;
 
     fp = fopen(path_config, "w");
     fprintf(fp, "IP_FSYSTEM=127.0.0.1\n");
@@ -38,10 +38,10 @@ START_TEST(test_f_write)
 
     error = fcb_create(file_name, fs, &fcb);
     assert(error == 0);
-    error = fcb_realloc(48, fcb, fs);
+    error = fcb_realloc(256, fcb, fs);
     assert(error == 0);
 
-    char* cadena = "1234567890abcdefghijklmnop1234567890a";
+    char* cadena = "SonyPlaystation1SonyPlaystation2SonyPlaystation3SonyPlaystation4SonyPlaystation5";
 
     error = f_write(file_name, 0, string_length(cadena), 0, cadena, fs);
     assert(error == 0);
