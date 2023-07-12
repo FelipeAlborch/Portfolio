@@ -140,10 +140,10 @@ void inicializar_memoria(){
 };
 void inicializar_logs(){
     loggerMemoria = log_create("logs/memoria.log","Memoria",true,LOG_LEVEL_TRACE);
-    mlogger = log_create("logs/info.log","Info Memoria",false,LOG_LEVEL_TRACE);
-    klogger = log_create("logs/kernel.log","Memoria -> Kernel",true,LOG_LEVEL_TRACE);
-    clogger = log_create("logs/cpu.log","Memoria -> CPU",true,LOG_LEVEL_TRACE);
-    flogger = log_create("logs/file_system.log","Memoria -> FileSystem",true,LOG_LEVEL_TRACE);
+    mlogger = log_create("logs/info.log","Info Memoria",true,LOG_LEVEL_TRACE);
+    klogger = log_create("logs/kernel.log","Memoria -> Kernel",false,LOG_LEVEL_TRACE);
+    clogger = log_create("logs/cpu.log","Memoria -> CPU",false,LOG_LEVEL_TRACE);
+    flogger = log_create("logs/file_system.log","Memoria -> FileSystem",false,LOG_LEVEL_TRACE);
 }
 void inicializar_segmentos(){
     t_tabla_segmentos* tabla = crear_tabla_segmentos(0,0,0,config_memo.tam_seg_0);
@@ -174,7 +174,7 @@ void respuestas(int cliente, int code,void* algo){
     return;
   }
 
-  log_info(mlogger, "[RESPUESTAS]: %d - %s ", code, algo);
+  //log_info(mlogger, "[RESPUESTAS]: %d - %s ", code, algo);
   
   t_paquete* paquete=crear_paquete_operacion(code);
   
@@ -202,6 +202,7 @@ void respuestas(int cliente, int code,void* algo){
 config_de_memoria config_memo;
 
 void obtener_valores_de_configuracion_memoria(t_config* memoriaConfig){
+    config_memo.ip = config_get_string_value(memoriaConfig, "IP_MEMORIA");
     config_memo.puerto = config_get_string_value(memoriaConfig, "PUERTO_ESCUCHA");
     config_memo.tam_memo = config_get_int_value(memoriaConfig, "TAM_MEMORIA");
     config_memo.tam_seg_0 = config_get_int_value(memoriaConfig,"TAM_SEGMENTO_0");
@@ -210,11 +211,16 @@ void obtener_valores_de_configuracion_memoria(t_config* memoriaConfig){
     config_memo.compactacion = config_get_int_value(memoriaConfig,"RETARDO_COMPACTACION");
     config_memo.algoritmo = config_get_string_value(memoriaConfig,"ALGORITMO_ASIGNACION");
     config_memo.cant_seg_max = config_memo.tam_memo / config_memo.tam_seg_0;
-    config_memo.ip = string_duplicate(LOCALHOST);
+    
+    if(config_memo.ip == NULL){
+      config_memo.ip = string_duplicate(LOCALHOST);
+    }
+    
     config_memo.bytes_libres=config_memo.tam_memo;
     algoritmos();
 }
 void mostrar_valores_de_configuracion_memoria (){
+    printf("ip = %s\n", config_memo.ip);
     printf("puerto = %s\n", config_memo.puerto);
     printf("tam_memo = %d\n" , config_memo.tam_memo);
     printf("tam_seg_0 = %d\n" , config_memo.tam_seg_0);
@@ -280,7 +286,6 @@ void actualizar_memoria(int size, int estado){
     }else{
         config_memo.bytes_libres=config_memo.bytes_libres-size;
     }
-    printf("bytes libres: %d", config_memo.bytes_libres);
     pthread_mutex_unlock(&m_config);
 }
 void imprimir_tabla(t_list* lista){
@@ -288,9 +293,7 @@ void imprimir_tabla(t_list* lista){
     for (size_t i = 0; i < size ; i++)
     {
         t_segmento* segmentos = list_get(lista,i);
-        log_info(mlogger,"%ld - base: %d, size: %d\n",i,segmentos->base,segmentos->size);
-        //printf("%ld - base: %d, size: %d\n",i,segmentos->base,segmentos->size);
-    
+        log_trace(mlogger,"%ld - base: %d, size: %d\n",i,segmentos->base,segmentos->size);    
     } 
 }
 void imprimir_tabla_gral(){
@@ -302,7 +305,7 @@ void imprimir_tabla_gral(){
     while(list_iterator_has_next(iterador)){
         t_tabla_segmentos* tabla= list_iterator_next(iterador);
         //printf("%d- \tpid: %d, \tdir: %d, \tindex: %d,\tbase: %d,\t size: %d\n",i,tabla->pid,tabla->direcion_fisica,tabla->index,tabla->segmento->base,tabla->segmento->size);
-        log_info(mlogger,"%d- \tpid: %d, \tdir: %d, \tindex: %d,\tbase: %d,\t size: %d\n",i,tabla->pid,tabla->direcion_fisica,tabla->index,tabla->segmento->base,tabla->segmento->size);
+        log_trace(mlogger,"%d- \tpid: %d, \tdir: %d, \tindex: %d,\tbase: %d,\t size: %d\n",i,tabla->pid,tabla->direcion_fisica,tabla->index,tabla->segmento->base,tabla->segmento->size);
         i++;
     }
     list_iterator_destroy(iterador);
@@ -313,7 +316,7 @@ void imprimir_huecos(){
   pthread_mutex_lock(&m_huecos_libres);
     t_list_iterator* iterador = list_iterator_create(huecos_libres);
   pthread_mutex_unlock(&m_huecos_libres);
-  t_hueco_libre* hueco;// = malloc(sizeof(t_hueco_libre));
+  t_hueco_libre* hueco;
  // log_debug(klogger,"Listado de Huecos libres: %d\n",list_size(huecos_libres));
   while (list_iterator_has_next(iterador)) {
     hueco = list_iterator_next(iterador);
@@ -431,8 +434,6 @@ void compactar(){
     //sleep(config_memo.compactacion/1000);
     
     mover_bases_huecos();
-    
-    //loggear(FIN_COMPACTAR,0,NULL,0,0,0);
 }
 void mover_bases(int dir, int base){
     

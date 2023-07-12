@@ -152,9 +152,7 @@ void eliminar_segmento(int pid, int id){
     t_tabla_segmentos* tabla = buscar_en_tabla_id(pid,id);
     
     if (tabla->index == M_ERROR){
-        /* t_paquete* paquete = crear_paquete_operacion(M_ERROR);
-        enviar_paquete(paquete,config_memo.kernel);
-        eliminar_paquete(paquete);  */
+        log_error(klogger,"No se encontro el segmento %d del proceso %d",id,pid);
         respuestas(config_memo.kernel,M_ERROR,NULL);
         loggear(M_ERROR,pid,NULL,id,0,0);
         return;
