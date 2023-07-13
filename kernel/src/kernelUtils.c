@@ -351,8 +351,12 @@ void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictiona
 
     if (strcmp(operacion, "F_OPEN") == 0)
         list_add(un_pcb->tabla_archivos_abiertos, recurso);
-    else
-        list_add(un_pcb->recursos_asignados, recurso);
+    else{
+        if(recurso->instancias >= 0){
+            list_add(un_pcb->recursos_asignados, recurso);
+        }
+    }
+        //list_add(un_pcb->recursos_asignados, recurso);
 
     if(recurso->instancias < 0)
     {
