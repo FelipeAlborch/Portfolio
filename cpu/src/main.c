@@ -28,7 +28,6 @@ int main(int argc, char *argv[]) {
   pthread_create(&hiloKernelDispatch, NULL, (void *)esperar_kernel_dispatch, (void *)socketCpuDispatch);
   pthread_join(hiloKernelDispatch, NULL);
 
-  free(configuracionCPU.IP_SERVER);
   log_destroy(logger_cpu);
   config_destroy(cpuConfig);
 
