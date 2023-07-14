@@ -26,15 +26,9 @@ FS *fs_create(char *config_path) {
 
     fs->superbloque = superbloque_create_from_file(fs->config->PATH_SUPERBLOQUE);
 
-    if (access(fs->config->PATH_BITMAP, F_OK) != -1) {
-        int fd = open(fs->config->PATH_BITMAP, O_RDONLY);
-        char *content;
-        fs->bitmap = bitarray_create_with_mode(content, fs->superbloque->BLOCK_COUNT, MSB_FIRST);
-        close(fd);
-    } else {
-        char *zeroes;// = calloc(bitmap_byte_count(fs->superbloque), 8);
-        fs->bitmap = bitarray_create_with_mode(zeroes, bitmap_byte_count(fs->superbloque), MSB_FIRST);
-    }
+    char *zeroes = calloc(bitmap_byte_count(fs->superbloque), sizeof(char));
+    fs->bitmap = bitarray_create_with_mode(zeroes, bitmap_byte_count(fs->superbloque), MSB_FIRST);
+    free(zeroes);
 
     error = mmap_file_sync(fs->config->PATH_BITMAP, bitmap_byte_count(fs->superbloque), &fs->bitmap->bitarray);
     assert(error != -1);
@@ -238,8 +232,8 @@ int fcb_alloc(int size, FCB *fcb, FS *fs) {
         bitarray_set_bit(fs->bitmap, free_block);
         fcb->iptr = block_local_address(free_block, fs);
         log_info(fs->log, 
-            "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
-            fcb->file_name, blocks_reserved, block_index(fcb->iptr, fs)
+            "Acceso Bloque - Archivo: %s - Bloque Archivo: * - Bloque File System %d", 
+            fcb->file_name, block_index(fcb->iptr, fs)
         );
     }
     while (blocks_reserved >= 1 && blocks_required > 0) {

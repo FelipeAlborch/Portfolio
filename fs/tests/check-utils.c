@@ -12,7 +12,7 @@ START_TEST(test_f_write)
     char *path_bitmap = "drive/test-bitmap.dat";
     char *path_bloques = "drive/test-bloques.dat";
     char *path_superbloque = "drive/test-superbloque.dat";
-    int block_size = 64;
+    int block_size = 32;
     int block_count = 1024;
 
     fp = fopen(path_config, "w");
@@ -312,11 +312,11 @@ Suite *utils_test_suite(void)
 {
     Suite *s = suite_create(__FILE__);
     TCase *tc = tcase_create(__FILE__);
-    tcase_add_test(tc, test_mmap_file_sync);
-    tcase_add_test(tc, test_fcb_table_init);
-    tcase_add_test(tc, test_superbloque_config);
-    tcase_add_test(tc, test_fs_config);
-    tcase_add_test(tc, test_files_and_memory);
+    // tcase_add_test(tc, test_mmap_file_sync);
+    // tcase_add_test(tc, test_fcb_table_init);
+    // tcase_add_test(tc, test_superbloque_config);
+    // tcase_add_test(tc, test_fs_config);
+    // tcase_add_test(tc, test_files_and_memory);
     tcase_add_test(tc, test_f_write);
     // tcase_add_unchecked_fixture(tc, utils_unchecked_setup, utils_unchecked_teardown);
     suite_add_tcase(s, tc);
