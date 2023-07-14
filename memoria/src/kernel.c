@@ -32,7 +32,7 @@ void ejecutar_kernel(){
 
     log_trace(mlogger, "Por ejecutar las tareas del kernel");
 
-    t_list* lista;// = list_create();
+    t_list* lista;
     int pid = -1;
     int run = 6;
     while (running_k) {
@@ -202,4 +202,5 @@ void tablas_compactadas(){
         list_clean(lista);
        // list_clean_and_destroy_elements(lista,free); 
     }
+    list_destroy(lista);
 }

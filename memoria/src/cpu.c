@@ -36,7 +36,7 @@ void ejecutar_cpu(){
         int conectar=config_memo.cpu;
     pthread_mutex_unlock(&m_config);
     log_trace(clogger, "Por ejecutar las tareas del CPU");
-    t_list* lista = list_create();
+    t_list* lista;
     
     while (running_cpu){
         switch (recibir_operacion(conectar)){
@@ -125,6 +125,7 @@ void ejecutar_fs()
             log_warning(mlogger, "operacion desconocida");
             break;
         }
+        eliminar_paquete(paquete);
         // running_fs=false;
     }
     

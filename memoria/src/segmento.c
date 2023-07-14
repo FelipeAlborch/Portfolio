@@ -353,6 +353,7 @@ void consolidar_hueco(int indice){
             
             list_replace(huecos_libres,indice,hueco);
             list_remove(huecos_libres,siguiente);
+            free(huecoSig);
             log_info(mlogger,"Hueco consolidado con el siguiente");   
         }else{
             log_info(mlogger,"No se puede consolidar con el siguiente");
@@ -369,6 +370,7 @@ void consolidar_hueco(int indice){
             hueco->inicio = huecoAnt->inicio;
             list_remove(huecos_libres,indice);
             list_replace(huecos_libres,anterior,hueco);
+            free(huecoAnt);
             log_info(mlogger,"Hueco consolidado con el anterior");   
         }else{
             log_info(mlogger,"No se puede consolidar con el anterior");
