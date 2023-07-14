@@ -6,13 +6,15 @@
 START_TEST(test_f_write)
 {
     FILE *fp;
-    char *file_name = "test-file";
-    char *file_path = "drive/fcb/test-file";
+    char *file_name_1 = "Consoles";
+    char *file_name_2 = "Videogames";
+    char *file_path_1 = "drive/fcb/Consoles";
+    char *file_path_2 = "drive/fcb/Videogames";
     char *path_config = "drive/test-fs.config";
     char *path_bitmap = "drive/test-bitmap.dat";
     char *path_bloques = "drive/test-bloques.dat";
     char *path_superbloque = "drive/test-superbloque.dat";
-    int block_size = 32;
+    int block_size = 64;
     int block_count = 1024;
 
     fp = fopen(path_config, "w");
@@ -36,14 +38,20 @@ START_TEST(test_f_write)
     int error;
     FS *fs = fs_create(path_config);
 
-    error = fcb_create(file_name, fs, &fcb);
+    char* cadena = "SonyPlaystation1SonyPlaystation2SonyPlaystation3SonyPlaystation4SonyPlaystation5";
+    
+    error = fcb_create(file_name_1, fs, &fcb);
     assert(error == 0);
     error = fcb_realloc(256, fcb, fs);
     assert(error == 0);
+    error = f_write(file_name_1, 128, 80, 0, cadena, fs);
+    assert(error == 0);
 
-    char* cadena = "SonyPlaystation1SonyPlaystation2SonyPlaystation3SonyPlaystation4SonyPlaystation5";
-
-    error = f_write(file_name, 0, string_length(cadena), 0, cadena, fs);
+    error = fcb_create(file_name_2, fs, &fcb);
+    assert(error == 0);
+    error = fcb_realloc(64, fcb, fs);
+    assert(error == 0);
+    error = f_write(file_name_2, 0, 16, 0, cadena, fs);
     assert(error == 0);
 
     // unallocate the memory
@@ -51,7 +59,8 @@ START_TEST(test_f_write)
     munmap(fs->bitmap->bitarray, block_count);
 
     // delete created files
-    if (access(file_path, F_OK) != -1) remove(file_path);
+    if (access(file_path_1, F_OK) != -1) remove(file_path_1);
+    if (access(file_path_2, F_OK) != -1) remove(file_path_2);
     if (access(path_config, F_OK) != -1) remove(path_config);
     if (access(path_bitmap, F_OK) != -1) remove(path_bitmap);
     if (access(path_bloques, F_OK) != -1) remove(path_bloques);

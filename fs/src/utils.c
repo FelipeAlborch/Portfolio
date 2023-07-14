@@ -415,7 +415,7 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
     int blocks_offset = block_count(offset, fs);
     int blocks_read = 0;
     while (blocks_offset > 0 && blocks_read < blocks_required) {
-        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_offset - 1);
+        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_offset + blocks_read - 1);
         sleep(fs->config->RETARDO_ACCESO_BLOQUE/1000);
         log_info(fs->log, 
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
@@ -426,7 +426,7 @@ int f_read(char *file_name, int offset, int size, int dir, void **buffer, FS *fs
             (void *)ptr_address(local_adress, fs),
             size_to_read(size, blocks_read, fs)
         );
-        blocks_offset --;
+        // blocks_offset --;
         blocks_read ++;
     }
     if (blocks_offset == 0 && blocks_read < blocks_required) {
@@ -487,7 +487,7 @@ int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs
     int blocks_offset = block_count(offset, fs);
     int blocks_written = 0;
     while (blocks_offset > 0 && blocks_written < blocks_required) {
-        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_offset - 1);
+        uint32_t local_adress = *((uint32_t *)ptr_address(fcb->iptr, fs) + blocks_offset + blocks_written - 1);
         sleep(fs->config->RETARDO_ACCESO_BLOQUE/1000);
         log_info(fs->log, 
             "Acceso Bloque - Archivo: %s - Bloque Archivo: %d - Bloque File System %d", 
@@ -498,7 +498,7 @@ int f_write(char *file_name, int offset, int size, int dir, void *buffer, FS *fs
             buffer + blocks_written * fs->superbloque->BLOCK_SIZE,
             size_to_write(size, blocks_written, fs)
         );
-        blocks_offset --;
+        // blocks_offset --;
         blocks_written ++;
     }
     if (blocks_offset == 0 && blocks_written < blocks_required) {
