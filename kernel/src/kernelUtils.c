@@ -455,9 +455,9 @@ void esperar_listo_de_fs(char* nombre_recurso)
 
     t_respuesta_fs* res = recibir_respuesta_de_fs(socketFS);
 
-    log_warning(logger_planificador_extra, "Respuesta de FS: %s (%d)", res->nombre_archivo, res->error);
-    log_warning(logger_planificador_extra, "tamanio %d - buffer_size: (%d)", res->tamanio, res->buffer_size);
-    log_warning(logger_planificador_extra, "buff: %x", res->buffer);
+    //log_warning(logger_planificador_extra, "Respuesta de FS: %s (%d)", res->nombre_archivo, res->error);
+    //log_warning(logger_planificador_extra, "tamanio %d - buffer_size: (%d)", res->tamanio, res->buffer_size);
+    //log_warning(logger_planificador_extra, "buff: %x", res->buffer);
 
     pthread_mutex_unlock(&mutex_fs);    // Se desbloquea el socket
     

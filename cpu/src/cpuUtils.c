@@ -397,7 +397,7 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
       pcb->pid,instruccion->parametros[0], cantBytes, dirfis);
   }
 
-  log_info(logger, "\n\n\nOffset: %d - DL: %d", offset, DL);
+  //log_info(logger, "\n\n\nOffset: %d - DL: %d", offset, DL);
 
   agregar_a_paquete(paquete, instruccion->parametros[0], strlen(instruccion->parametros[0]) + 1);
   agregar_a_paquete(paquete, &cantBytes, sizeof(int));

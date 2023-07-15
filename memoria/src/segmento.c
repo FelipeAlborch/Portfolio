@@ -202,7 +202,7 @@ int buscar_hueco_base(int base){
         t_hueco_libre* hueco = list_iterator_next(iterador);
         if (hueco->inicio == base){
             i = list_iterator_index(iterador);
-            printf("i: %d\n",i);
+            //printf("i: %d\n",i);
             list_iterator_destroy(iterador);
             return i;
         }
@@ -261,7 +261,7 @@ void liberar_proceso(int pid) {
 void liberar_hueco(int index){
     if (index <= 0)
     {
-        log_error(mlogger,"No se puede liberar el hueco error índice");
+        log_debug(mlogger,"No se puede liberar el hueco error índice");
         return;
     }
     
