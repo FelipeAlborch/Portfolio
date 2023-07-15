@@ -773,7 +773,6 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 eliminar_paquete(paquete_ftruncate);
                 log_trace(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_a_ejecutar->pid, nombre_recurso);    
 
-
                 pthread_t* hilo_ftruncate;
                 pthread_create(&hilo_ftruncate, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
                 pthread_detach(hilo_ftruncate);

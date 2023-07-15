@@ -334,6 +334,7 @@ void wait_recurso(pcb* un_pcb, char* un_recurso) {
 }
 
 void fopen_recurso(pcb* un_pcb, char* un_recurso) {
+    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Abrir Archivo: < %s >", un_pcb->pid, un_recurso);
     wait_recurso_generico(un_pcb, un_recurso, tabla_global_archivos_abiertos, "F_OPEN");
 }
 
@@ -389,6 +390,7 @@ void signal_recurso(pcb* un_pcb, char* un_recurso) {
 }
 
 void fclose_recurso(pcb* un_pcb, char* un_recurso) {
+    log_info(logger_kernel_util_obligatorio, "PID: < %d > - Cerrar Archivo: < %s >", un_pcb->pid, un_recurso);
     signal_recurso_generico(un_pcb, un_recurso, tabla_global_archivos_abiertos, "F_CLOSE");
 }
 
