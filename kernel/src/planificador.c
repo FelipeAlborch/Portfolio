@@ -668,11 +668,13 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 enviar_paquete(paquete_fread, socketFS);
                 eliminar_paquete(paquete_fread);
-                log_trace(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_a_ejecutar->pid, nombre_recurso);
-
+            
                 pthread_t* hilo_fread;
                 pthread_create(&hilo_fread, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
                 pthread_detach(hilo_fread);
+
+                log_trace(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_a_ejecutar->pid, nombre_recurso);
+
 
                 liberar_contexto_ejecucion(contexto_de_fread);
                 list_destroy_and_destroy_elements(lista_recepcion_valores, free);
@@ -765,11 +767,12 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 
                 enviar_paquete(paquete_ftruncate, socketFS);
                 eliminar_paquete(paquete_ftruncate);
-                log_trace(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_a_ejecutar->pid, nombre_recurso);    
-
+            
                 pthread_t* hilo_ftruncate;
                 pthread_create(&hilo_ftruncate, NULL, esperar_listo_de_fs, (void*) nombre_recurso);
                 pthread_detach(hilo_ftruncate);
+
+                log_trace(logger_planificador_obligatorio, "PID: < %d > - Bloqueado por: < %s >" , proceso_a_ejecutar->pid, nombre_recurso);    
 
                 liberar_contexto_ejecucion(contexto_de_ftruncate);
                 list_destroy_and_destroy_elements(lista_recepcion_valores, free);

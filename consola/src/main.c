@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     {
         case EXIT:
             log_info(logger_consola, "Voy a terminar! :D");
-            fclose(archivo_pseudocodigo);
+            //fclose(archivo_pseudocodigo);
             log_destroy(logger_consola);
             config_destroy(consola_config);
             close(socketKernel);
