@@ -116,7 +116,7 @@ void loguear_rr_de_procesos(t_log* logger)
     {
         proceso = list_get(lista_ready_hrrn, i);
         double rr = calcular_response_ratio(proceso);
-        log_info(logger, "El RR de %d, es %f\n", proceso->pid, rr);
+        log_info(logger, "El RR de del proceso: < %d >, es %f", proceso->pid, rr);
     }
 }
 /*****************************************************************************
