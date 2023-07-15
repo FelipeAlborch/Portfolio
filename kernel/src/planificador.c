@@ -666,6 +666,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_entero_a_paquete(paquete_fread, &tamanio);
                 agregar_entero_a_paquete(paquete_fread, &offset);
                 agregar_entero_a_paquete(paquete_fread, &pid);
+                agregar_entero_a_paquete(paquete_fread, &df_real);
                 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
 
@@ -722,6 +723,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 agregar_entero_a_paquete(paquete_fwrite, &tamanio);
                 agregar_entero_a_paquete(paquete_fwrite, &offset);
                 agregar_entero_a_paquete(paquete_fwrite, &pid);
+                agregar_entero_a_paquete(paquete_fwrite, &df_real);
                 
 
                 pthread_mutex_lock(&mutex_fs);  // Se bloquea al hilo antes de enviar el paquete (realizar la solicitud)
