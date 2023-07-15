@@ -372,6 +372,12 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
   int cantBytes = atoi(instruccion->parametros[2]);
   int DF = obtener_direccion_fisica(instruccion->parametros[1], pcb, cantBytes);
 
+  int DL = atoi(instruccion->parametros[1]);
+  int num_seg = obtener_num_segmento(DL);
+  int offset = obtener_desplazamiento_del_segmento(DL);
+  t_segmento* seg = list_get(pcb->tabla_de_segmentos, num_seg);
+  int dirfis = seg->base + offset;
+
   if(DF == -1)
   {
     haySegmentationFault = true;
@@ -382,17 +388,14 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
 
   if(operacion == F_READ)
   {
-    log_info(logger, "Solicitandole al Kernel que lea del archivo [%s], [%d] bytes, en la DF [%d]...", 
-      instruccion->parametros[0], cantBytes, DF);
+    log_trace(logger, "PID: < %d > solicita lectura del archivo < %s >, < %d > bytes, en la DF < %d >", 
+      pcb->pid,instruccion->parametros[0], cantBytes, dirfis);
   }
   else 
   {
-    log_info(logger, "Solicitandole al Kernel que escriba en el archivo [%s], [%d] bytes, en la DF [%d]...", 
-      instruccion->parametros[0], cantBytes, DF);
+    log_trace(logger, "PID: < %d > solicita escritura del archivo < %s >, < %d > bytes, en la DF < %d >", 
+      pcb->pid,instruccion->parametros[0], cantBytes, dirfis);
   }
-
-  int DL = atoi(instruccion->parametros[1]);
-  int offset = obtener_desplazamiento_del_segmento(DL);
 
   log_info(logger, "\n\n\nOffset: %d - DL: %d", offset, DL);
 
@@ -401,6 +404,7 @@ void ejecutar_f_read_o_f_write(pcb *pcb, LineaInstruccion *instruccion, int sock
   agregar_a_paquete(paquete, &DF, sizeof(int));
   agregar_a_paquete(paquete, &offset, sizeof(int));
   agregar_a_paquete(paquete, &pcb->pid, sizeof(int));
+  agregar_a_paquete(paquete, &dirfis, sizeof(int));
 
   enviar_paquete(paquete, socketKernel);
   eliminar_paquete(paquete);

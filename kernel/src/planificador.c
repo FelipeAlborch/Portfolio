@@ -174,6 +174,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
     int tamanio, direccion_fisica;
     int offset;
     int pid;
+    int df_real;
     t_recurso *archivo;
 
     recibirOperacion:
@@ -639,8 +640,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 direccion_fisica = *(int*) list_get(lista_recepcion_valores, 2);
                 offset = *(int*) list_get(lista_recepcion_valores, 3);
                 pid = *(int*) list_get(lista_recepcion_valores, 4);
+                df_real = *(int*) list_get(lista_recepcion_valores, 5);
 
-                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d, pid: %d", nombre_recurso, direccion_fisica, tamanio, pid);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_READ: %s, dir: %d, tamanio: %d, pid: %d", nombre_recurso, df_real, tamanio, pid);
 
                 int operacion_fread = recibir_operacion(socketCPU);
                 t_list* lista_contexto_fread = _recibir_paquete(socketCPU);
@@ -654,7 +656,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
 
-                log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Leer Archivo: < %s > - Puntero < %d > - Dirección Memoria < %d > - Tamaño < %d >", proceso_a_ejecutar->pid, nombre_recurso, archivo->posicion, direccion_fisica, tamanio);
+                log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Leer Archivo: < %s > - Puntero < %d > - Dirección Memoria < %d > - Tamaño < %d >", proceso_a_ejecutar->pid, nombre_recurso, archivo->posicion, df_real, tamanio);
 
                 t_paquete* paquete_fread = crear_paquete_operacion(LEER_ARCHIVO);
                 
@@ -694,8 +696,9 @@ void ejecutar(pcb* proceso_a_ejecutar)
                 direccion_fisica = *(int*) list_get(lista_recepcion_valores, 2);
                 offset = *(int *)list_get(lista_recepcion_valores, 3);
                 pid = *(int*) list_get(lista_recepcion_valores, 4);
+                df_real = *(int*) list_get(lista_recepcion_valores, 5);
 
-                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d, pid: %d", nombre_recurso, direccion_fisica, tamanio, pid);
+                log_info(logger_planificador_extra,"Nombre de archivo para realizar F_WRITE: %s, dir: %d, tamanio: %d, pid: %d", nombre_recurso, df_real, tamanio, pid);
 
                 int operacion_fwrite = recibir_operacion(socketCPU);
                 t_list* lista_contexto_fwrite = _recibir_paquete(socketCPU);
@@ -709,7 +712,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                 archivo = dictionary_get(tabla_global_archivos_abiertos, nombre_recurso);
 
-                log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Escribir Archivo: < %s > - Puntero < %d > - Dirección Memoria < %d > - Tamaño < %d >", proceso_a_ejecutar->pid, nombre_recurso, archivo->posicion, direccion_fisica, tamanio);
+                log_trace(logger_kernel_util_obligatorio, "PID: < %d > - Escribir Archivo: < %s > - Puntero < %d > - Dirección Memoria < %d > - Tamaño < %d >", proceso_a_ejecutar->pid, nombre_recurso, archivo->posicion, df_real, tamanio);
 
                 t_paquete* paquete_fwrite = crear_paquete_operacion(ESCRIBIR_ARCHIVO);
 
