@@ -148,7 +148,8 @@ void move_in(t_list* lista, int code){
     log_warning(flogger, "[MOV_IN]: dir: %d size: %d offset: %d, pid: %d ", dir, size, offset, pid);
 
     char* datos = (char*)info;
-    responder_cpu_fs(pid, code, datos, dir, size);
+    int dirF= offset + buscar_base_dir(dir);
+    responder_cpu_fs(pid, code, datos, dirF, size);
     //free(datos);
     free(info);
 }
@@ -168,8 +169,8 @@ void move_out(t_list* lista, int code){
         log_error(mlogger,"No se pudo escribir en la memoria");
         return;
     }
-    
-    responder_cpu_fs(pid, code, NULL, dir, size);
+    int dirF= offset + buscar_base_dir(dir);
+    responder_cpu_fs(pid, code, NULL, dirF, size);
     
 }
 
