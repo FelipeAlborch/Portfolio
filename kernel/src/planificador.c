@@ -386,7 +386,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
 
                     log_debug(logger_kernel_util_extra,"El segmento: %d quedo con la base en: %d\n", nro_segmento_crear, segmento_a_actualizar->base);
 
-                    leer_segmentos(proceso_a_ejecutar);
+                    //leer_segmentos(proceso_a_ejecutar);
 
                     list_destroy_and_destroy_elements(valor_de_base, free);
                 break;
@@ -463,7 +463,7 @@ void ejecutar(pcb* proceso_a_ejecutar)
             list_destroy_and_destroy_elements(proceso_a_ejecutar->tabla_de_segmentos,free);
             proceso_a_ejecutar->tabla_de_segmentos = tabla_tras_eliminacion;
 
-            leer_segmentos(proceso_a_ejecutar);
+            //leer_segmentos(proceso_a_ejecutar);
             
             list_destroy_and_destroy_elements(valores_tras_eliminacion,free);
             list_destroy_and_destroy_elements(lista_recepcion_valores,free);
