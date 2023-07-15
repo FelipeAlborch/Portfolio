@@ -74,7 +74,7 @@ void escuchar_consola(int socketConsola)
 			log_trace(logger_kernel_util_obligatorio, "Se crea el proceso < %d > en NEW", pid_global);
 			
 			agregar_socket_a_diccionario(nuevo_pcb->pid, socketConsola);
-			leer_diccionario_consolas();
+			//leer_diccionario_consolas();
 			
 			agregar_proceso_a_tabla(nuevo_pcb);
 

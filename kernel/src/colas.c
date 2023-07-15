@@ -10,7 +10,7 @@ t_queue* cola_ready_fifo;
 t_queue* cola_exec;
 t_queue* cola_terminated;
 
-// Lista para procesos en ready por HRRN. tiene que ser una lista asi la puedo filtrar por Response Ration
+// Lista para procesos en ready por HRRN. tiene que ser una lista asi la puedo filtrar por Response Ratio
 t_list* lista_ready_hrrn;
 
 // Semaforos mutex para las colas de los procesos.
@@ -75,7 +75,6 @@ void agregar_proceso_exec(pcb* un_pcb)
 {
     pthread_mutex_lock(&mutex_exec);
 
-
     un_pcb->estado = RUNNING;
     queue_push(cola_exec, un_pcb);
     log_trace(logger_planificador_obligatorio, "El proceso < %d > se movio a EXEC", un_pcb->pid);
@@ -86,7 +85,6 @@ void agregar_proceso_exec(pcb* un_pcb)
 void agregar_proceso_terminated(pcb* un_pcb)
 {
     pthread_mutex_lock(&mutex_terminated);
-
 
     un_pcb->estado = TERMINATED;
     queue_push(cola_terminated, un_pcb);

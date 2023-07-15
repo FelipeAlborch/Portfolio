@@ -357,7 +357,6 @@ void wait_recurso_generico(pcb* un_pcb, char* un_recurso, t_dictionary* dictiona
             list_add(un_pcb->recursos_asignados, recurso);
         }
     }
-        //list_add(un_pcb->recursos_asignados, recurso);
 
     if(recurso->instancias < 0)
     {
